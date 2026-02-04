@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.github
+.idea
+.vscode
+.env*.local
+.env
+*.md
+!README.md
+coverage
+docker-compose.override.yml

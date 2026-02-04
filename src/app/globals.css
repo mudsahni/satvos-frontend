@@ -1,0 +1,299 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Custom easing */
+    --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* ===== LIGHT MODE (Default) ===== */
+    /* Inspired by Notion, Stripe, Linear - clean, professional */
+
+    /* Background layers */
+    --background: 0 0% 100%;           /* Pure white #ffffff */
+    --background-elevated: 0 0% 98%;   /* Slightly off-white for elevation */
+    --background-subtle: 220 14% 96%;  /* Soft gray hover states #f4f5f7 */
+
+    /* Foreground / Text */
+    --foreground: 222 47% 11%;         /* Near black #1e293b */
+    --muted-foreground: 215 16% 47%;   /* Secondary text #64748b */
+
+    /* Card */
+    --card: 0 0% 100%;                 /* White cards */
+    --card-foreground: 222 47% 11%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary - Indigo (#6366f1) */
+    --primary: 239 84% 67%;            /* #6366f1 - Buttons, links */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 220 14% 96%;          /* Soft gray */
+    --secondary-foreground: 222 47% 11%;
+
+    /* Muted */
+    --muted: 220 14% 96%;              /* #f4f5f7 */
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent */
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Accent colors */
+    --accent-purple: 270 76% 60%;      /* #a855f7 */
+    --accent-cyan: 192 85% 45%;        /* #06b6d4 */
+    --accent-pink: 330 75% 60%;        /* #ec4899 */
+
+    /* Destructive */
+    --destructive: 0 84% 60%;          /* #ef4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Status colors - accessible in light mode */
+    --success: 142 71% 35%;            /* #16a34a - Green */
+    --success-foreground: 0 0% 100%;
+    --success-bg: 142 76% 96%;         /* Light green bg */
+    --success-border: 142 55% 75%;
+
+    --warning: 32 95% 44%;             /* #ca8a04 - Amber (darker for contrast) */
+    --warning-foreground: 0 0% 100%;
+    --warning-bg: 48 96% 95%;          /* Light amber bg */
+    --warning-border: 48 80% 70%;
+
+    --error: 0 72% 51%;                /* #dc2626 - Red */
+    --error-foreground: 0 0% 100%;
+    --error-bg: 0 86% 97%;             /* Light red bg */
+    --error-border: 0 70% 80%;
+
+    /* Borders */
+    --border: 220 13% 91%;             /* Light borders #e2e8f0 */
+    --border-hover: 239 84% 67%;       /* Primary on hover */
+
+    /* Input */
+    --input: 220 13% 91%;
+
+    /* Ring */
+    --ring: 239 84% 67%;
+
+    /* Charts */
+    --chart-1: 239 84% 67%;            /* Primary indigo */
+    --chart-2: 142 71% 45%;            /* Success green */
+    --chart-3: 32 95% 44%;             /* Warning amber */
+    --chart-4: 270 76% 60%;            /* Accent purple */
+    --chart-5: 192 85% 45%;            /* Accent cyan */
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 99%;    /* Almost white */
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 239 84% 67%;
+
+    /* Radius */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* ===== DARK MODE ===== */
+    /* Rich dark blue-black theme */
+
+    /* Background layers */
+    --background: 222 47% 6%;           /* #0d1117 - Rich dark blue-black */
+    --background-elevated: 220 40% 9%;  /* #131a24 - Cards, dialogs */
+    --background-subtle: 220 35% 12%;   /* #1a2332 - Hover states */
+
+    /* Foreground / Text */
+    --foreground: 210 40% 98%;          /* #f8fafc - Primary text */
+    --muted-foreground: 215 20% 65%;    /* #94a3b8 - Secondary text */
+
+    /* Card */
+    --card: 220 40% 9%;                 /* Elevated background */
+    --card-foreground: 210 40% 98%;
+
+    /* Popover */
+    --popover: 220 40% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary - Indigo (slightly brighter for dark mode) */
+    --primary: 239 84% 67%;             /* #6366f1 - Same indigo */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary */
+    --secondary: 220 35% 14%;           /* Slightly lighter than background */
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted */
+    --muted: 220 35% 14%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent */
+    --accent: 220 35% 16%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Accent colors (Vibrant) */
+    --accent-purple: 270 95% 75%;       /* #a855f7 */
+    --accent-cyan: 192 95% 68%;         /* #22d3ee */
+    --accent-pink: 330 85% 70%;         /* #f472b6 */
+
+    /* Destructive */
+    --destructive: 0 84% 60%;           /* #ef4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Status colors (Vibrant for dark mode) */
+    --success: 142 76% 46%;             /* #22c55e - Emerald green */
+    --success-foreground: 0 0% 100%;
+    --success-bg: 142 76% 15%;          /* Dark green bg */
+    --success-border: 142 76% 30%;
+
+    --warning: 38 92% 50%;              /* #f59e0b - Amber */
+    --warning-foreground: 0 0% 100%;
+    --warning-bg: 38 92% 12%;
+    --warning-border: 38 92% 30%;
+
+    --error: 0 84% 60%;                 /* #ef4444 - Red */
+    --error-foreground: 0 0% 100%;
+    --error-bg: 0 84% 12%;
+    --error-border: 0 84% 30%;
+
+    /* Borders */
+    --border: 220 20% 18%;              /* Subtle borders */
+    --border-hover: 239 84% 67%;        /* Primary on hover */
+
+    /* Input */
+    --input: 220 20% 18%;
+
+    /* Ring */
+    --ring: 239 84% 67%;
+
+    /* Charts */
+    --chart-1: 239 84% 67%;             /* Primary indigo */
+    --chart-2: 142 76% 46%;             /* Success green */
+    --chart-3: 38 92% 50%;              /* Warning amber */
+    --chart-4: 270 95% 75%;             /* Accent purple */
+    --chart-5: 192 95% 68%;             /* Accent cyan */
+
+    /* Sidebar (Premium dark) */
+    --sidebar-background: 222 47% 5%;   /* Even darker than main bg */
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 35% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 20% 12%;
+    --sidebar-ring: 239 84% 67%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  /* Gradient backgrounds */
+  .bg-gradient-card {
+    @apply bg-gradient-to-b from-[hsl(var(--card))] to-[hsl(var(--background))];
+  }
+
+  .bg-gradient-elevated {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
+  }
+
+  /* Soft shadows for light mode */
+  .shadow-soft-sm {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .shadow-soft {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .shadow-soft-md {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  .shadow-soft-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
+  .shadow-soft-xl {
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+
+  /* Elevation on hover */
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  .hover-lift:hover {
+    @apply shadow-soft-lg -translate-y-0.5;
+  }
+
+  /* Dark mode glow shadows (only apply in dark mode) */
+  .dark .shadow-glow-primary {
+    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.4);
+  }
+
+  .dark .shadow-glow-success {
+    box-shadow: 0 0 15px -5px hsl(var(--success) / 0.5);
+  }
+
+  .dark .shadow-glow-warning {
+    box-shadow: 0 0 15px -5px hsl(var(--warning) / 0.5);
+  }
+
+  .dark .shadow-glow-error {
+    box-shadow: 0 0 15px -5px hsl(var(--error) / 0.5);
+  }
+
+  .dark .border-glow-primary {
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 0 0 10px -3px hsl(var(--primary) / 0.3);
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Shimmer skeleton animation */
+  .animate-shimmer-skeleton {
+    background: linear-gradient(90deg, hsl(var(--muted)) 0%, hsl(var(--muted-foreground) / 0.08) 50%, hsl(var(--muted)) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+}

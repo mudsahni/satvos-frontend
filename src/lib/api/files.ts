@@ -1,0 +1,58 @@
+import apiClient from "./client";
+import { ApiResponse, ApiPaginatedResponse, PaginatedResponse, transformPagination } from "@/types/api";
+import { FileRecord, FileListParams, UploadFileResponse } from "@/types/file";
+
+export async function getFiles(
+  params?: FileListParams
+): Promise<PaginatedResponse<FileRecord>> {
+  const response = await apiClient.get<ApiPaginatedResponse<FileRecord>>(
+    "/files",
+    { params }
+  );
+  return transformPagination(response.data.data, response.data.meta);
+}
+
+export async function getFile(id: string): Promise<FileRecord> {
+  const response = await apiClient.get<ApiResponse<FileRecord>>(`/files/${id}`);
+  return response.data.data;
+}
+
+export async function uploadFile(
+  file: File,
+  collectionId: string,
+  onProgress?: (progress: number) => void
+): Promise<UploadFileResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("collection_id", collectionId);
+
+  const response = await apiClient.post<ApiResponse<UploadFileResponse>>(
+    "/files/upload",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
+    }
+  );
+  return response.data.data;
+}
+
+export async function deleteFile(id: string): Promise<void> {
+  await apiClient.delete(`/files/${id}`);
+}
+
+export async function getFileDownloadUrl(id: string): Promise<string> {
+  const response = await apiClient.get<ApiResponse<{ url: string }>>(
+    `/files/${id}/download`
+  );
+  return response.data.data.url;
+}
