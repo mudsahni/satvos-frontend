@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { renderWithProviders, userEvent } from "@/test/test-utils";
 import { StructuredDataViewer } from "../structured-data-viewer";
 import { StructuredInvoiceData } from "@/types/document";
