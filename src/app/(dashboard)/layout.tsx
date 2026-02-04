@@ -57,7 +57,7 @@ export default function DashboardLayout({
         <div className="flex flex-1 flex-col">
           <TopNav onSearchClick={() => setSearchOpen(true)} />
           <SidebarInset className="flex-1">
-            <main className="h-full overflow-auto p-4 md:p-6">{children}</main>
+            <main className="h-full overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
           </SidebarInset>
         </div>
       </div>

@@ -33,7 +33,7 @@ interface ReviewActionsProps {
 
 export function ReviewActions({ document }: ReviewActionsProps) {
   const [notes, setNotes] = useState("");
-  const [confirmAction, setConfirmAction] = useState<"approve" | "reject" | null>(
+  const [confirmAction, setConfirmAction] = useState<"approved" | "rejected" | null>(
     null
   );
 
@@ -45,7 +45,7 @@ export function ReviewActions({ document }: ReviewActionsProps) {
     await reviewDocument.mutateAsync({
       id: document.id,
       data: {
-        action: confirmAction,
+        status: confirmAction,
         notes: notes || undefined,
       },
     });
@@ -111,15 +111,15 @@ export function ReviewActions({ document }: ReviewActionsProps) {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => setConfirmAction("approve")}
-              className="bg-success hover:bg-success/90 text-success-foreground"
+              onClick={() => setConfirmAction("approved")}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
               Approve
             </Button>
             <Button
               variant="destructive"
-              onClick={() => setConfirmAction("reject")}
+              onClick={() => setConfirmAction("rejected")}
             >
               <XCircle className="mr-2 h-4 w-4" />
               Reject
@@ -135,12 +135,12 @@ export function ReviewActions({ document }: ReviewActionsProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction === "approve"
+              {confirmAction === "approved"
                 ? "Approve Document"
                 : "Reject Document"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction === "approve"
+              {confirmAction === "approved"
                 ? "Are you sure you want to approve this document? This indicates the document has been reviewed and verified."
                 : "Are you sure you want to reject this document? You may want to add a note explaining the reason."}
             </AlertDialogDescription>
@@ -150,15 +150,15 @@ export function ReviewActions({ document }: ReviewActionsProps) {
             <AlertDialogAction
               onClick={handleReview}
               className={
-                confirmAction === "approve"
-                  ? "bg-success hover:bg-success/90 text-success-foreground"
+                confirmAction === "approved"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
               }
             >
               {reviewDocument.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {confirmAction === "approve" ? "Approve" : "Reject"}
+              {confirmAction === "approved" ? "Approve" : "Reject"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -15,12 +15,14 @@ interface CollectionHeaderProps {
   collection: Collection | undefined;
   isLoading?: boolean;
   canUpload?: boolean;
+  documentCount?: number;
 }
 
 export function CollectionHeader({
   collection,
   isLoading,
   canUpload = false,
+  documentCount,
 }: CollectionHeaderProps) {
   const router = useRouter();
 
@@ -41,7 +43,7 @@ export function CollectionHeader({
   const isOwner = collection.user_permission === "owner";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Title row */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-3">
@@ -53,36 +55,42 @@ export function CollectionHeader({
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <FolderOpen className="h-5 w-5" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <FolderOpen className="h-4.5 w-4.5" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight">
+              <h1 className="text-2xl font-semibold tracking-tight truncate">
                 {collection.name}
               </h1>
+            </div>
+            {collection.description && (
+              <p className="text-sm text-muted-foreground mt-1.5 ml-[46px]">
+                {collection.description}
+              </p>
+            )}
+            {/* Metadata row */}
+            <div className="flex items-center gap-3 mt-2 ml-[46px] text-sm text-muted-foreground flex-wrap">
               <Badge
                 variant="outline"
                 className={cn(
-                  "capitalize",
-                  collection.user_permission === "owner" && "border-primary/30 text-primary",
-                  collection.user_permission === "editor" && "border-warning/30 text-warning"
+                  "capitalize text-xs",
+                  collection.user_permission === "owner" && "border-transparent bg-primary/10 text-primary",
+                  collection.user_permission === "editor" && "border-transparent bg-warning-bg text-warning"
                 )}
               >
                 {collection.user_permission || "viewer"}
               </Badge>
+              <span className="flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                {documentCount ?? getCollectionDocumentCount(collection)} documents
+              </span>
+              <span className="text-border">·</span>
+              <span>Created {formatDate(collection.created_at)}</span>
             </div>
-            {collection.description && (
-              <p className="text-muted-foreground mt-1 ml-12">
-                {collection.description}
-              </p>
-            )}
-            <p className="text-sm text-muted-foreground mt-1 ml-12">
-              Created {formatDate(collection.created_at)}
-            </p>
           </div>
         </div>
-        <div className="flex gap-2 ml-12 sm:ml-0">
+        <div className="flex gap-2 ml-12 sm:ml-0 shrink-0">
           {canUpload && (
             <Button asChild>
               <Link href={`/upload?collection=${collection.id}`}>
@@ -99,14 +107,6 @@ export function CollectionHeader({
               </Link>
             </Button>
           )}
-        </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="flex items-center gap-6 ml-12 text-sm">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <FileText className="h-4 w-4" />
-          <span>{getCollectionDocumentCount(collection)} documents</span>
         </div>
       </div>
     </div>

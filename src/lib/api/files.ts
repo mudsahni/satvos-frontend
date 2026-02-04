@@ -1,6 +1,6 @@
 import apiClient from "./client";
 import { ApiResponse, ApiPaginatedResponse, PaginatedResponse, transformPagination } from "@/types/api";
-import { FileRecord, FileListParams, UploadFileResponse } from "@/types/file";
+import { FileRecord, FileWithDownloadURL, FileListParams, UploadFileResponse } from "@/types/file";
 
 export async function getFiles(
   params?: FileListParams
@@ -12,8 +12,8 @@ export async function getFiles(
   return transformPagination(response.data.data, response.data.meta);
 }
 
-export async function getFile(id: string): Promise<FileRecord> {
-  const response = await apiClient.get<ApiResponse<FileRecord>>(`/files/${id}`);
+export async function getFile(id: string): Promise<FileWithDownloadURL> {
+  const response = await apiClient.get<ApiResponse<FileWithDownloadURL>>(`/files/${id}`);
   return response.data.data;
 }
 
@@ -51,8 +51,8 @@ export async function deleteFile(id: string): Promise<void> {
 }
 
 export async function getFileDownloadUrl(id: string): Promise<string> {
-  const response = await apiClient.get<ApiResponse<{ url: string }>>(
-    `/files/${id}/download`
+  const response = await apiClient.get<ApiResponse<FileWithDownloadURL>>(
+    `/files/${id}`
   );
-  return response.data.data.url;
+  return response.data.data.download_url;
 }

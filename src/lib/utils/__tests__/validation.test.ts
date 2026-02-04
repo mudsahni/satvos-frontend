@@ -559,43 +559,43 @@ describe("createDocumentSchema", () => {
 });
 
 describe("reviewDocumentSchema", () => {
-  it("validates approve action", () => {
+  it("validates approved status", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "approve",
+      status: "approved",
     });
     expect(result.success).toBe(true);
   });
 
-  it("validates reject action", () => {
+  it("validates rejected status", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "reject",
+      status: "rejected",
     });
     expect(result.success).toBe(true);
   });
 
   it("validates with optional notes", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "approve",
+      status: "approved",
       notes: "Looks good to me",
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects invalid action", () => {
+  it("rejects invalid status", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "pending",
+      status: "pending",
     });
     expect(result.success).toBe(false);
   });
 
-  it("rejects missing action", () => {
+  it("rejects missing status", () => {
     const result = reviewDocumentSchema.safeParse({});
     expect(result.success).toBe(false);
   });
 
   it("rejects notes that are too long (over 1000 characters)", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "reject",
+      status: "rejected",
       notes: "x".repeat(1001),
     });
     expect(result.success).toBe(false);
@@ -603,7 +603,7 @@ describe("reviewDocumentSchema", () => {
 
   it("accepts notes at maximum length (1000 characters)", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "reject",
+      status: "rejected",
       notes: "x".repeat(1000),
     });
     expect(result.success).toBe(true);
@@ -611,15 +611,15 @@ describe("reviewDocumentSchema", () => {
 
   it("accepts empty notes", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "approve",
+      status: "approved",
       notes: "",
     });
     expect(result.success).toBe(true);
   });
 
-  it("accepts action without notes (notes is optional)", () => {
+  it("accepts status without notes (notes is optional)", () => {
     const result = reviewDocumentSchema.safeParse({
-      action: "reject",
+      status: "rejected",
     });
     expect(result.success).toBe(true);
     if (result.success) {

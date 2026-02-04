@@ -14,8 +14,14 @@ import {
   ReviewStatusFilter,
 } from "@/components/collections/collection-filters";
 import { DocumentsTable } from "@/components/documents/documents-table";
+import { BulkActionsBar } from "@/components/documents/bulk-actions-bar";
 import { useCollection } from "@/lib/hooks/use-collections";
-import { useDocuments } from "@/lib/hooks/use-documents";
+import {
+  useDocuments,
+  useReviewDocument,
+  useDeleteDocument,
+} from "@/lib/hooks/use-documents";
+import { toast } from "@/lib/hooks/use-toast";
 import { useAuthStore } from "@/store/auth-store";
 import { canUpload } from "@/lib/constants";
 
@@ -42,7 +48,54 @@ export default function CollectionDetailPage({
     limit: 100,
   });
 
+  const reviewDocument = useReviewDocument();
+  const deleteDocument = useDeleteDocument();
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
   const documents = useMemo(() => documentsData?.items || [], [documentsData]);
+
+  const handleBulkApprove = async () => {
+    setIsBulkProcessing(true);
+    try {
+      await Promise.all(
+        selectedIds.map((docId) =>
+          reviewDocument.mutateAsync({ id: docId, data: { status: "approved" } })
+        )
+      );
+      setSelectedIds([]);
+      toast({ title: "Documents approved", description: `${selectedIds.length} documents approved.` });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    setIsBulkProcessing(true);
+    try {
+      await Promise.all(
+        selectedIds.map((docId) =>
+          reviewDocument.mutateAsync({ id: docId, data: { status: "rejected" } })
+        )
+      );
+      setSelectedIds([]);
+      toast({ title: "Documents rejected", description: `${selectedIds.length} documents rejected.` });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setIsBulkProcessing(true);
+    try {
+      await Promise.all(
+        selectedIds.map((docId) => deleteDocument.mutateAsync(docId))
+      );
+      setSelectedIds([]);
+      toast({ title: "Documents deleted", description: `${selectedIds.length} documents deleted.` });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
 
   // Filter documents based on filters
   const filteredDocuments = useMemo(() => {
@@ -107,6 +160,7 @@ export default function CollectionDetailPage({
         collection={collection}
         isLoading={collectionLoading}
         canUpload={canUploadDocs || false}
+        documentCount={documents.length}
       />
 
       {/* Filters */}
@@ -120,6 +174,18 @@ export default function CollectionDetailPage({
         totalFiltered={filteredDocuments.length}
         total={documents.length}
       />
+
+      {/* Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <BulkActionsBar
+          selectedCount={selectedIds.length}
+          onDeselect={() => setSelectedIds([])}
+          onApprove={handleBulkApprove}
+          onReject={handleBulkReject}
+          onDelete={handleBulkDelete}
+          isProcessing={isBulkProcessing}
+        />
+      )}
 
       {/* Documents table */}
       <Card>

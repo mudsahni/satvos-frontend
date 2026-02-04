@@ -20,7 +20,7 @@ import {
   CreateDocumentRequest,
   UpdateDocumentRequest,
   ReviewDocumentRequest,
-  AddTagRequest,
+  AddTagsRequest,
 } from "@/types/document";
 import { toast } from "@/lib/hooks/use-toast";
 import { getErrorMessage } from "@/lib/api/client";
@@ -200,10 +200,10 @@ export function useReviewDocument() {
       queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
       toast({
         title:
-          variables.data.action === "approve"
+          variables.data.status === "approved"
             ? "Document approved"
             : "Document rejected",
-        description: `The document has been ${variables.data.action}d.`,
+        description: `The document has been ${variables.data.status}.`,
       });
     },
     onError: (error) => {
@@ -229,7 +229,7 @@ export function useAddDocumentTag() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: AddTagRequest }) =>
+    mutationFn: ({ id, data }: { id: string; data: AddTagsRequest }) =>
       addDocumentTag(id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

@@ -7,10 +7,11 @@ import { useState, useEffect, useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/store/auth-store";
 import { getUser } from "@/lib/api/users";
+import { decodeJwtPayload } from "@/types/auth";
 
 // Component to ensure auth hydration happens and user profile is complete
 function AuthHydrationGuard({ children }: { children: React.ReactNode }) {
-  const { isHydrated, setHydrated, isAuthenticated, user, setUser } =
+  const { isHydrated, setHydrated, isAuthenticated, user, accessToken, setUser } =
     useAuthStore();
   const fetchedRef = useRef(false);
 
@@ -31,15 +32,22 @@ function AuthHydrationGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || fetchedRef.current) return;
     if (user?.role && user?.full_name) return; // already complete
-    if (!user?.id) return; // need at least the user ID
+
+    // Get user ID from stored user or decode from JWT
+    let userId = user?.id;
+    if (!userId && accessToken) {
+      const payload = decodeJwtPayload(accessToken);
+      userId = (payload?.user_id ?? payload?.sub) as string | undefined;
+    }
+    if (!userId) return;
 
     fetchedRef.current = true;
-    getUser(user.id)
+    getUser(userId)
       .then((fullUser) => setUser(fullUser))
       .catch(() => {
         // Silent fail — user stays with partial data
       });
-  }, [isHydrated, isAuthenticated, user, setUser]);
+  }, [isHydrated, isAuthenticated, user, accessToken, setUser]);
 
   return <>{children}</>;
 }

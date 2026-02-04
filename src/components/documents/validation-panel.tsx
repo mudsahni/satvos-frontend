@@ -26,10 +26,10 @@ function ValidationResultCard({ result }: { result: ValidationResult }) {
       className={cn(
         "p-4 border rounded-lg",
         result.passed
-          ? "border-success-border bg-success-bg"
+          ? "border-transparent bg-success-bg"
           : result.severity === "error"
-          ? "border-error-border bg-error-bg"
-          : "border-warning-border bg-warning-bg"
+          ? "border-transparent bg-error-bg"
+          : "border-transparent bg-warning-bg"
       )}
     >
       <div className="flex items-start gap-3">
@@ -179,8 +179,8 @@ export function ValidationPanel(props: ValidationPanelProps) {
                 "mt-4 p-4 rounded-lg",
                 summary.reconciliation_critical_passed ===
                   summary.reconciliation_critical_total
-                  ? "bg-success-bg border border-success-border"
-                  : "bg-warning-bg border border-warning-border"
+                  ? "bg-success-bg border border-transparent"
+                  : "bg-warning-bg border border-transparent"
               )}
             >
               <div className="flex items-center gap-2">

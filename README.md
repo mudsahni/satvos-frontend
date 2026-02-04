@@ -15,8 +15,8 @@ A modern, light-mode-first document processing and validation frontend built wit
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- Node.js 20+
+- npm
 
 ### Installation
 
@@ -110,14 +110,16 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 
 The frontend expects a backend API with the following endpoints:
 
-- `POST /auth/login` - Authentication
+- `POST /auth/login` - Authentication (returns tokens only, no user object)
+- `POST /auth/refresh` - Refresh access token
+- `GET /users/:id` - Get user details (used after login via JWT-decoded user_id)
 - `GET /collections` - List collections
 - `GET /collections/:id` - Get collection detail
 - `GET /documents` - List documents
 - `GET /documents/:id` - Get document detail with parsed_data
 - `POST /documents/:id/parse` - Trigger parsing
 - `POST /documents/:id/validate` - Trigger validation
-- `POST /documents/:id/review` - Submit review (approve/reject)
+- `PUT /documents/:id/review` - Submit review (`{ status: "approved" | "rejected" }`)
 - `GET /files/:id/download` - Get S3 pre-signed URL
 
 ## Design System
@@ -130,14 +132,50 @@ See `DESIGN_SYSTEM.md` for comprehensive documentation on:
 - Shadow/elevation levels
 - Animation guidelines
 
+## Testing
+
+Tests use [Vitest](https://vitest.dev/) with React Testing Library:
+
+```bash
+npm run test            # Run all tests once
+npm run test:watch      # Watch mode
+npm run test:coverage   # With coverage report
+```
+
+347+ tests covering utilities, stores, API client, hooks, and UI components.
+
+## Docker
+
+Build and run the production Docker image:
+
+```bash
+docker build -t docflow .
+docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1 docflow
+```
+
+Uses a multi-stage build (deps → builder → runner) with Next.js standalone output.
+
+## CI/CD
+
+GitHub Actions workflows in `.github/workflows/`:
+
+- **ci.yml** - Lint, typecheck, test (parallel), then build. Runs on PRs and pushes to main.
+- **docker.yml** - Docker build & push to GHCR on pushes to main/tags.
+
 ## Scripts
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+- `npm run typecheck` - TypeScript type checking
+- `npm run test` - Run tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage
 
 ## Documentation
 
 - `CLAUDE.md` - Development guide for AI assistants
 - `DESIGN_SYSTEM.md` - Visual design specifications
+- `FRONTEND_GUIDE.md` - Frontend architecture reference
+- `API.md` - Backend API reference

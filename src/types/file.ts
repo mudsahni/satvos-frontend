@@ -1,23 +1,34 @@
+export type FileType = "pdf" | "jpg" | "png";
+export type FileStatus = "pending" | "uploaded" | "failed" | "deleted";
+
 export interface FileRecord {
   id: string;
   tenant_id: string;
-  collection_id: string;
-  original_name: string;
-  stored_name: string;
-  mime_type: string;
-  size: number;
-  storage_path: string;
   uploaded_by: string;
+  file_name: string;
+  original_name: string;
+  file_type: FileType;
+  file_size: number;
+  s3_bucket: string;
+  s3_key: string;
+  content_type: string;
+  status: FileStatus;
   created_at: string;
   updated_at: string;
+}
+
+export interface FileWithDownloadURL {
+  file: FileRecord;
+  download_url: string;
 }
 
 export interface UploadFileResponse {
   id: string;
   original_name: string;
-  mime_type: string;
-  size: number;
-  collection_id: string;
+  file_type: FileType;
+  file_size: number;
+  content_type: string;
+  status: FileStatus;
   created_at: string;
 }
 

@@ -9,7 +9,7 @@ interface AuthState {
   tenantSlug: string | null;
   isAuthenticated: boolean;
   isHydrated: boolean;
-  login: (tokens: TokenPair, user: User, tenantSlug: string) => void;
+  login: (tokens: TokenPair, user: User | null, tenantSlug: string) => void;
   logout: () => void;
   setTokens: (tokens: Partial<TokenPair>) => void;
   setUser: (user: User) => void;

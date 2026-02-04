@@ -178,7 +178,7 @@ export default function CollectionSettingsPage({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight">
             Collection Settings
           </h1>
           <p className="text-muted-foreground">{collection.name}</p>

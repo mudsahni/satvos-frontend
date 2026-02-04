@@ -5,7 +5,6 @@ import {
   LoginResponse,
   RefreshRequest,
   RefreshResponse,
-  User,
 } from "@/types/auth";
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -23,11 +22,6 @@ export async function refreshToken(
     "/auth/refresh",
     data
   );
-  return response.data.data;
-}
-
-export async function getCurrentUser(): Promise<User> {
-  const response = await apiClient.get<ApiResponse<User>>("/auth/me");
   return response.data.data;
 }
 

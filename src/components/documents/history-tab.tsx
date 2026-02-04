@@ -128,12 +128,22 @@ export function HistoryTab({ document }: HistoryTabProps) {
     });
   }
 
-  // Sort by timestamp (most recent first)
+  // Pipeline order for tiebreaking when timestamps are equal
+  const pipelineOrder: Record<TimelineEvent["type"], number> = {
+    created: 0,
+    parsed: 1,
+    validated: 2,
+    reviewed: 3,
+  };
+
+  // Sort chronologically (oldest first) with pipeline-order tiebreaker
   const sortedEvents = events
     .filter((e) => e.timestamp)
     .sort((a, b) => {
       if (!a.timestamp || !b.timestamp) return 0;
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      const timeDiff = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      if (timeDiff !== 0) return timeDiff;
+      return pipelineOrder[a.type] - pipelineOrder[b.type];
     });
 
   // Add pending events at the end
@@ -162,13 +172,13 @@ export function HistoryTab({ document }: HistoryTabProps) {
   const getStatusColor = (status: TimelineEvent["status"]) => {
     switch (status) {
       case "success":
-        return "bg-success/10 text-success border-success/30";
+        return "bg-success-bg text-success border-transparent";
       case "warning":
-        return "bg-warning/10 text-warning border-warning/30";
+        return "bg-warning-bg text-warning border-transparent";
       case "error":
-        return "bg-error/10 text-error border-error/30";
+        return "bg-error-bg text-error border-transparent";
       case "pending":
-        return "bg-primary/10 text-primary border-primary/30 animate-pulse";
+        return "bg-primary/10 text-primary border-transparent animate-pulse";
       default:
         return "bg-muted text-muted-foreground border-border";
     }

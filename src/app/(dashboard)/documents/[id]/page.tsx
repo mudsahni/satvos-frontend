@@ -11,7 +11,6 @@ import {
   X,
   Loader2,
   RefreshCw,
-  MoreHorizontal,
   CheckCircle,
   XCircle,
 } from "lucide-react";
@@ -32,12 +31,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -54,13 +47,19 @@ import {
 } from "react-resizable-panels";
 import {
   useDocument,
+  useDocumentTags,
+  useUpdateDocument,
   useReviewDocument,
   useTriggerParsing,
   useTriggerValidation,
   useAddDocumentTag,
   useDeleteDocumentTag,
 } from "@/lib/hooks/use-documents";
+import { StructuredInvoiceData } from "@/types/document";
 import { useFileUrl } from "@/lib/hooks/use-files";
+import { useCollection } from "@/lib/hooks/use-collections";
+import { useAuthStore } from "@/store/auth-store";
+import { hasRole, ROLES } from "@/lib/constants";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { PDFViewer } from "@/components/documents/pdf-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
@@ -77,12 +76,16 @@ export default function DocumentDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const isMobile = useIsMobile();
+  const { user } = useAuthStore();
 
   const { data: document, isLoading } = useDocument(id);
+  const { data: tags } = useDocumentTags(id);
   const { data: fileUrl, isLoading: fileLoading } = useFileUrl(document?.file_id);
+  const { data: collection } = useCollection(document?.collection_id ?? "");
 
   const triggerParsing = useTriggerParsing();
   const triggerValidation = useTriggerValidation();
+  const updateDoc = useUpdateDocument();
   const reviewDocument = useReviewDocument();
   const addTag = useAddDocumentTag();
   const deleteTag = useDeleteDocumentTag();
@@ -91,7 +94,7 @@ export default function DocumentDetailPage({
   const [newTagKey, setNewTagKey] = useState("");
   const [newTagValue, setNewTagValue] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
-  const [confirmAction, setConfirmAction] = useState<"approve" | "reject" | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"approved" | "rejected" | null>(null);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -107,10 +110,10 @@ export default function DocumentDetailPage({
 
       if (e.key === "a" || e.key === "A") {
         e.preventDefault();
-        setConfirmAction("approve");
+        setConfirmAction("approved");
       } else if (e.key === "r" || e.key === "R") {
         e.preventDefault();
-        setConfirmAction("reject");
+        setConfirmAction("rejected");
       }
     };
 
@@ -158,12 +161,20 @@ export default function DocumentDetailPage({
     );
   }
 
+  // Permission check: allow edit if user is admin/manager OR has editor/owner on the collection
+  const userRole = user?.role;
+  const collectionPermission = collection?.user_permission;
+  const canEditData =
+    (userRole && hasRole(userRole, ROLES.MEMBER)) ||
+    collectionPermission === "owner" ||
+    collectionPermission === "editor";
+
   const handleAddTag = async () => {
     if (!newTagKey.trim() || !newTagValue.trim()) return;
 
     await addTag.mutateAsync({
       id: document.id,
-      data: { key: newTagKey, value: newTagValue },
+      data: { tags: { [newTagKey]: newTagValue } },
     });
 
     setNewTagKey("");
@@ -183,13 +194,22 @@ export default function DocumentDetailPage({
     await triggerValidation.mutateAsync(document.id);
   };
 
+  const handleSaveEdits = async (updatedData: StructuredInvoiceData) => {
+    await updateDoc.mutateAsync({
+      id: document.id,
+      data: { structured_data: updatedData },
+    });
+    // Auto re-validate after save
+    await triggerValidation.mutateAsync(document.id);
+  };
+
   const handleReview = async () => {
     if (!confirmAction) return;
 
     await reviewDocument.mutateAsync({
       id: document.id,
       data: {
-        action: confirmAction,
+        status: confirmAction,
         notes: reviewNotes || undefined,
       },
     });
@@ -200,58 +220,184 @@ export default function DocumentDetailPage({
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col -m-4 md:-m-6">
-      {/* Compact Header */}
-      <header className="flex items-center justify-between px-4 lg:px-6 py-3 border-b bg-background">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className="shrink-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold truncate">{document.name}</h1>
-            {document.collection_id && (
-              <Link
-                href={`/collections/${document.collection_id}`}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                View Collection
-              </Link>
+      {/* Header */}
+      <header className="border-b bg-background">
+        {/* Row 1: Navigation + Title + Review Actions */}
+        <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.back()}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold truncate">{document.name}</h1>
+              {document.collection_id && (
+                <Link
+                  href={`/collections/${document.collection_id}`}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  View Collection
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Review Actions */}
+            {document.parsing_status === "completed" && (
+              <>
+                {document.review_status === "pending" ? (
+                  <>
+                    <span className="text-xs text-muted-foreground mr-1 hidden lg:inline">
+                      A to approve, R to reject
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={() => setConfirmAction("approved")}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setConfirmAction("rejected")}
+                    >
+                      <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                      Reject
+                    </Button>
+                  </>
+                ) : (
+                  <Badge
+                    variant={document.review_status === "approved" ? "success" : "error"}
+                    className="py-1"
+                  >
+                    {document.review_status === "approved" ? (
+                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                    ) : (
+                      <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {document.review_status === "approved" ? "Approved" : "Rejected"}
+                  </Badge>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <StatusBadge status={document.parsing_status} type="parsing" />
-          <StatusBadge status={document.validation_status} type="validation" />
-          <StatusBadge status={document.review_status} type="review" />
+        {/* Row 2: Status badges + Re-parse / Re-validate */}
+        <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-2 border-t border-border/50">
+          <div className="flex items-center gap-2">
+            <StatusBadge status={document.parsing_status} type="parsing" showType />
+            <StatusBadge status={document.validation_status} type="validation" showType />
+            <StatusBadge status={document.review_status} type="review" showType />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReparse}
+              disabled={triggerParsing.isPending}
+            >
+              <RefreshCw className={cn("mt-0.5 h-3 w-3", triggerParsing.isPending && "animate-spin")} />
+              {triggerParsing.isPending ? "Re-arsing..." : "Re-Parse"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRevalidate}
+              disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
+            >
+              <RefreshCw className={cn("mt-0.5 h-3 w-3", triggerValidation.isPending && "animate-spin")} />
+              {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
+            </Button>
+          </div>
+        </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="ml-2">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={handleReparse}
-                disabled={triggerParsing.isPending}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {triggerParsing.isPending ? "Re-parsing..." : "Re-parse Document"}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleRevalidate}
-                disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {triggerValidation.isPending ? "Validating..." : "Re-validate"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Row 3: Tags (wrapping) */}
+        <div className="px-4 lg:px-6 py-2 border-t border-border/50 bg-muted/30">
+          <div className="flex flex-wrap items-center gap-2">
+            {tags && tags.length > 0 ? (
+              tags.map((tag) => (
+                <Badge
+                  key={tag.id}
+                  variant="secondary"
+                  className="flex items-center gap-1.5"
+                >
+                  <Tag className="h-3 w-3" />
+                  <span className="font-medium">{tag.key}:</span>
+                  <span className="font-normal">{tag.value}</span>
+                  {tag.source === "user" && (
+                    <button
+                      onClick={() => handleDeleteTag(tag.id)}
+                      className="ml-0.5 hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">No tags</span>
+            )}
+
+            <Dialog open={showAddTagDialog} onOpenChange={setShowAddTagDialog}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 text-xs">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Tag
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Tag</DialogTitle>
+                  <DialogDescription>
+                    Add a custom tag to this document for organization.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tag-key">Key</Label>
+                    <Input
+                      id="tag-key"
+                      placeholder="e.g., vendor, project"
+                      value={newTagKey}
+                      onChange={(e) => setNewTagKey(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tag-value">Value</Label>
+                    <Input
+                      id="tag-value"
+                      placeholder="e.g., Acme Corp, Q4 2024"
+                      value={newTagValue}
+                      onChange={(e) => setNewTagValue(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    onClick={handleAddTag}
+                    disabled={
+                      !newTagKey.trim() ||
+                      !newTagValue.trim() ||
+                      addTag.isPending
+                    }
+                  >
+                    {addTag.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Add Tag
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </header>
 
@@ -265,6 +411,8 @@ export default function DocumentDetailPage({
             parsingStatus={document.parsing_status}
             onRevalidate={handleRevalidate}
             isRevalidating={triggerValidation.isPending}
+            onSaveEdits={canEditData ? handleSaveEdits : undefined}
+            isSaving={updateDoc.isPending}
           />
         ) : (
           // Desktop: Split view with PDF and tabs
@@ -300,142 +448,23 @@ export default function DocumentDetailPage({
                 parsingStatus={document.parsing_status}
                 onRevalidate={handleRevalidate}
                 isRevalidating={triggerValidation.isPending}
+                onSaveEdits={canEditData ? handleSaveEdits : undefined}
+                isSaving={updateDoc.isPending}
               />
             </Panel>
           </PanelGroup>
         )}
       </div>
 
-      {/* Compact Footer */}
-      <footer className="flex items-center justify-between px-4 lg:px-6 py-3 border-t bg-background">
-        {/* Tags */}
-        <div className="flex items-center gap-2 min-w-0 overflow-x-auto scrollbar-thin">
-          {document.tags && document.tags.length > 0 ? (
-            document.tags.map((tag) => (
-              <Badge
-                key={tag.id}
-                variant="secondary"
-                className="flex items-center gap-1.5 shrink-0"
-              >
-                <Tag className="h-3 w-3" />
-                <span className="font-medium">{tag.key}:</span>
-                <span className="font-normal">{tag.value}</span>
-                {tag.source === "user" && (
-                  <button
-                    onClick={() => handleDeleteTag(tag.id)}
-                    className="ml-0.5 hover:text-destructive transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-sm text-muted-foreground">No tags</span>
-          )}
-
-          <Dialog open={showAddTagDialog} onOpenChange={setShowAddTagDialog}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="shrink-0">
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                Add Tag
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Tag</DialogTitle>
-                <DialogDescription>
-                  Add a custom tag to this document for organization.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tag-key">Key</Label>
-                  <Input
-                    id="tag-key"
-                    placeholder="e.g., vendor, project"
-                    value={newTagKey}
-                    onChange={(e) => setNewTagKey(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tag-value">Value</Label>
-                  <Input
-                    id="tag-value"
-                    placeholder="e.g., Acme Corp, Q4 2024"
-                    value={newTagValue}
-                    onChange={(e) => setNewTagValue(e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={handleAddTag}
-                  disabled={
-                    !newTagKey.trim() ||
-                    !newTagValue.trim() ||
-                    addTag.isPending
-                  }
-                >
-                  {addTag.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Add Tag
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Review Actions */}
-        {document.parsing_status === "completed" && (
-          <div className="flex items-center gap-2 shrink-0">
-            {document.review_status === "pending" ? (
-              <>
-                <span className="text-xs text-muted-foreground mr-2 hidden sm:inline">
-                  Press A to approve, R to reject
-                </span>
-                <Button
-                  onClick={() => setConfirmAction("approve")}
-                  className="bg-success hover:bg-success/90 text-success-foreground"
-                >
-                  <CheckCircle className="mr-1.5 h-4 w-4" />
-                  Approve
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => setConfirmAction("reject")}
-                >
-                  <XCircle className="mr-1.5 h-4 w-4" />
-                  Reject
-                </Button>
-              </>
-            ) : (
-              <Badge
-                variant={document.review_status === "approved" ? "success" : "error"}
-                className="py-1.5"
-              >
-                {document.review_status === "approved" ? (
-                  <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                ) : (
-                  <XCircle className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                {document.review_status === "approved" ? "Approved" : "Rejected"}
-              </Badge>
-            )}
-          </div>
-        )}
-      </footer>
-
       {/* Review Confirmation Dialog */}
       <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmAction === "approve" ? "Approve Document" : "Reject Document"}
+              {confirmAction === "approved" ? "Approve Document" : "Reject Document"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction === "approve"
+              {confirmAction === "approved"
                 ? "Are you sure you want to approve this document? This indicates the document has been reviewed and verified."
                 : "Are you sure you want to reject this document? You may want to add a note explaining the reason."}
             </AlertDialogDescription>
@@ -456,15 +485,15 @@ export default function DocumentDetailPage({
             <AlertDialogAction
               onClick={handleReview}
               className={cn(
-                confirmAction === "approve"
-                  ? "bg-success hover:bg-success/90 text-success-foreground"
+                confirmAction === "approved"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
               )}
             >
               {reviewDocument.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {confirmAction === "approve" ? "Approve" : "Reject"}
+              {confirmAction === "approved" ? "Approve" : "Reject"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

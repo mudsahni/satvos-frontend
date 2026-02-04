@@ -219,7 +219,7 @@ export default function UploadPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Upload Documents</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Upload Documents</h1>
         <p className="text-muted-foreground">
           Create a collection and upload documents for processing
         </p>

@@ -16,8 +16,7 @@ const mockUser: User = {
 const mockTokens: TokenPair = {
   access_token: "access-token-123",
   refresh_token: "refresh-token-456",
-  expires_in: 3600,
-  token_type: "Bearer",
+  expires_at: "2025-12-31T23:59:59Z",
 };
 
 const initialState = {

@@ -77,7 +77,7 @@ export default function ExceptionsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Exceptions</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Exceptions</h1>
         <p className="text-muted-foreground">
           Documents requiring validation review or approval
         </p>

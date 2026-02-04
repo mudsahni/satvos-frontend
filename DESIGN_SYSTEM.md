@@ -70,15 +70,15 @@ A comprehensive guide to maintaining visual consistency across the DocFlow appli
 
 ### Font Family
 
-- **Primary**: `var(--font-geist-sans)` - Geist Sans
+- **Primary**: `var(--font-jakarta)` - Plus Jakarta Sans
 - **Monospace**: `var(--font-geist-mono)` - Geist Mono (code, timestamps)
 
 ### Type Scale
 
 | Name | Size | Line Height | Weight | Usage |
 |------|------|-------------|--------|-------|
-| Display | 36px (2.25rem) | 1.2 | 700 | Page titles, hero text |
-| H1 | 30px (1.875rem) | 1.3 | 700 | Section headers |
+| Display | 36px (2.25rem) | 1.2 | 600 | Page titles, hero text |
+| H1 | 30px (1.875rem) | 1.3 | 600 | Section headers |
 | H2 | 24px (1.5rem) | 1.35 | 600 | Card titles, subsections |
 | H3 | 20px (1.25rem) | 1.4 | 600 | Component headers |
 | H4 | 18px (1.125rem) | 1.4 | 600 | Labels, small headers |
@@ -91,7 +91,7 @@ A comprehensive guide to maintaining visual consistency across the DocFlow appli
 
 ```tsx
 // Page titles
-<h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 
 // Section headers
 <h2 className="text-2xl font-semibold">Collections</h2>
@@ -393,7 +393,7 @@ All spacing is based on a **4px** base unit.
 ```tsx
 <div className="flex flex-col gap-4 pb-6 md:flex-row md:items-center md:justify-between">
   <div>
-    <h1 className="text-2xl font-bold tracking-tight">Page Title</h1>
+    <h1 className="text-2xl font-semibold tracking-tight">Page Title</h1>
     <p className="text-muted-foreground">Page description or subtitle</p>
   </div>
   <div className="flex items-center gap-2">

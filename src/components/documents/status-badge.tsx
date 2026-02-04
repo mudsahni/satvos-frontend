@@ -27,8 +27,16 @@ interface StatusBadgeProps {
   status: Status;
   type: StatusType;
   showIcon?: boolean;
+  showType?: boolean;
   className?: string;
 }
+
+const typeLabels: Record<StatusType, string> = {
+  parsing: "Parsing",
+  validation: "Validation",
+  review: "Review",
+  reconciliation: "Reconciliation",
+};
 
 const statusConfig: Record<
   Status,
@@ -86,9 +94,10 @@ const statusConfig: Record<
 };
 
 export function StatusBadge(props: StatusBadgeProps) {
-  const { status, showIcon = true, className } = props;
+  const { status, type, showIcon = true, showType = false, className } = props;
   const config = statusConfig[status];
   const Icon = config.icon;
+  const label = showType ? `${typeLabels[type]}: ${config.label}` : config.label;
 
   return (
     <Badge variant={config.variant} className={cn("gap-1.5", className)}>
@@ -100,7 +109,7 @@ export function StatusBadge(props: StatusBadgeProps) {
           )}
         />
       )}
-      {config.label}
+      {label}
     </Badge>
   );
 }

@@ -69,7 +69,7 @@ export const createDocumentSchema = z.object({
 export type CreateDocumentFormData = z.infer<typeof createDocumentSchema>;
 
 export const reviewDocumentSchema = z.object({
-  action: z.enum(["approve", "reject"]),
+  status: z.enum(["approved", "rejected"]),
   notes: z.string().max(1000, "Notes are too long").optional(),
 });
 

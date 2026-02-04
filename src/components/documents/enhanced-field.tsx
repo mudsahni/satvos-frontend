@@ -93,9 +93,9 @@ export function EnhancedField({
       className={cn(
         "group relative rounded-lg border px-4 py-3 transition-all",
         status.status === "invalid" &&
-          "border-error/50 bg-error-bg/30",
+          "border-transparent bg-error-bg/50",
         status.status === "warning" &&
-          "border-warning/50 bg-warning-bg/30",
+          "border-transparent bg-warning-bg/50",
         status.status === "valid" && "border-border hover:border-border/80",
         status.status === "unsure" && "border-border/50",
         className

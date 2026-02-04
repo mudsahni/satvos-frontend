@@ -114,7 +114,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
           <p className="text-muted-foreground">Manage users in your organization</p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
