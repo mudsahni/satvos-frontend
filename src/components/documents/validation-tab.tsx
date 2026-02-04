@@ -62,10 +62,10 @@ function ValidationResultCard({ result }: { result: ValidationResult }) {
       className={cn(
         "p-4 border rounded-lg transition-all",
         result.passed
-          ? "border-success/30 bg-success-bg"
+          ? "border-transparent bg-success-bg"
           : severity === "error"
-          ? "border-error/30 bg-error-bg"
-          : "border-warning/30 bg-warning-bg"
+          ? "border-transparent bg-error-bg"
+          : "border-transparent bg-warning-bg"
       )}
     >
       <div className="flex items-start gap-3">
@@ -241,8 +241,8 @@ export function ValidationTab({
         <Card
           className={cn(
             summary.reconciliation_critical_passed === summary.reconciliation_critical_total
-              ? "border-success/30 bg-success-bg"
-              : "border-error/30 bg-error-bg"
+              ? "border-transparent bg-success-bg"
+              : "border-transparent bg-error-bg"
           )}
         >
           <CardContent className="p-4">

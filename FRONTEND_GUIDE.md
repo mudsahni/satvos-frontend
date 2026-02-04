@@ -43,7 +43,7 @@ The frontend should provide an intuitive interface for all these workflows.
 
 | Component | Recommendation | Alternatives |
 |-----------|---------------|--------------|
-| Framework | Next.js 14+ (App Router) | React + Vite, Remix |
+| Framework | Next.js 16 (App Router) | React + Vite, Remix |
 | Language | TypeScript | - |
 | Styling | Tailwind CSS | styled-components, CSS Modules |
 | UI Components | shadcn/ui | Radix UI, Headless UI, Ant Design |
@@ -59,11 +59,10 @@ The frontend should provide an intuitive interface for all these workflows.
 
 ### Development Tools
 
-- ESLint + Prettier for code quality
-- Husky for git hooks
-- Storybook for component development
-- Playwright or Cypress for E2E testing
+- ESLint for code quality
+- Vitest + React Testing Library for unit/component testing
 - MSW for API mocking
+- Playwright or Cypress for E2E testing (optional)
 
 ---
 
@@ -140,6 +139,8 @@ export const auth = new AuthManager();
 
 ### Login Flow
 
+The login API returns only tokens (no user object). User details must be fetched separately by decoding the JWT to get the user_id, then calling `GET /users/{id}`.
+
 ```typescript
 // components/LoginForm.tsx
 interface LoginFormData {
@@ -164,8 +165,17 @@ async function handleLogin(data: LoginFormData) {
     throw new Error(error.error?.message || "Login failed");
   }
 
+  // Login returns only tokens: { access_token, refresh_token, expires_at }
   const { data: tokens } = await response.json();
   auth.setTokens(tokens.access_token, tokens.refresh_token);
+
+  // Decode JWT to get user_id, then fetch full user profile
+  const payload = decodeJwtPayload(tokens.access_token);
+  const userId = payload?.user_id ?? payload?.sub;
+  if (userId) {
+    const user = await getUser(userId);
+    authStore.setUser(user);
+  }
 
   // Redirect to dashboard
   router.push("/dashboard");

@@ -50,24 +50,24 @@
     --accent-pink: 330 75% 60%;        /* #ec4899 */
 
     /* Destructive */
-    --destructive: 0 84% 60%;          /* #ef4444 */
+    --destructive: 0 55% 48%;          /* Muted red #b83b3b */
     --destructive-foreground: 0 0% 100%;
 
-    /* Status colors - accessible in light mode */
-    --success: 142 71% 35%;            /* #16a34a - Green */
+    /* Status colors - muted, professional tones */
+    --success: 152 56% 28%;            /* Dark teal-green for text */
     --success-foreground: 0 0% 100%;
-    --success-bg: 142 76% 96%;         /* Light green bg */
-    --success-border: 142 55% 75%;
+    --success-bg: 148 40% 93%;         /* Soft sage green bg */
+    --success-border: 148 30% 85%;
 
-    --warning: 32 95% 44%;             /* #ca8a04 - Amber (darker for contrast) */
+    --warning: 30 68% 32%;             /* Dark warm brown for text */
     --warning-foreground: 0 0% 100%;
-    --warning-bg: 48 96% 95%;          /* Light amber bg */
-    --warning-border: 48 80% 70%;
+    --warning-bg: 42 70% 93%;          /* Soft warm sand bg */
+    --warning-border: 42 50% 84%;
 
-    --error: 0 72% 51%;                /* #dc2626 - Red */
+    --error: 0 50% 40%;                /* Muted dark red for text */
     --error-foreground: 0 0% 100%;
-    --error-bg: 0 86% 97%;             /* Light red bg */
-    --error-border: 0 70% 80%;
+    --error-bg: 0 50% 95%;             /* Soft blush pink bg */
+    --error-border: 0 40% 87%;
 
     /* Borders */
     --border: 220 13% 91%;             /* Light borders #e2e8f0 */
@@ -143,24 +143,24 @@
     --accent-pink: 330 85% 70%;         /* #f472b6 */
 
     /* Destructive */
-    --destructive: 0 84% 60%;           /* #ef4444 */
+    --destructive: 0 55% 52%;           /* Muted red */
     --destructive-foreground: 0 0% 100%;
 
-    /* Status colors (Vibrant for dark mode) */
-    --success: 142 76% 46%;             /* #22c55e - Emerald green */
+    /* Status colors (Muted for dark mode) */
+    --success: 152 45% 55%;             /* Soft sage green text */
     --success-foreground: 0 0% 100%;
-    --success-bg: 142 76% 15%;          /* Dark green bg */
-    --success-border: 142 76% 30%;
+    --success-bg: 152 30% 13%;          /* Dark muted green bg */
+    --success-border: 152 30% 22%;
 
-    --warning: 38 92% 50%;              /* #f59e0b - Amber */
+    --warning: 38 60% 55%;              /* Warm muted amber text */
     --warning-foreground: 0 0% 100%;
-    --warning-bg: 38 92% 12%;
-    --warning-border: 38 92% 30%;
+    --warning-bg: 38 40% 13%;
+    --warning-border: 38 40% 22%;
 
-    --error: 0 84% 60%;                 /* #ef4444 - Red */
+    --error: 0 50% 58%;                 /* Muted rose-red text */
     --error-foreground: 0 0% 100%;
-    --error-bg: 0 84% 12%;
-    --error-border: 0 84% 30%;
+    --error-bg: 0 35% 13%;
+    --error-border: 0 35% 22%;
 
     /* Borders */
     --border: 220 20% 18%;              /* Subtle borders */

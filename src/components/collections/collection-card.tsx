@@ -34,7 +34,7 @@ export function CollectionCard({
   canDelete = false,
 }: CollectionCardProps) {
   return (
-    <Card className="group relative overflow-hidden transition-all duration-200 hover:shadow-soft-lg hover:-translate-y-0.5 dark:hover:shadow-glow-sm">
+    <Card className="group relative overflow-hidden transition-all duration-200 hover:shadow-soft-lg hover:-translate-y-0.5">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <Link
@@ -107,9 +107,9 @@ export function CollectionCard({
             variant="outline"
             className={cn(
               "capitalize text-xs",
-              collection.user_permission === "owner" && "border-primary/30 text-primary",
-              collection.user_permission === "editor" && "border-warning/30 text-warning",
-              collection.user_permission === "viewer" && "border-muted-foreground/30"
+              collection.user_permission === "owner" && "border-transparent bg-primary/10 text-primary",
+              collection.user_permission === "editor" && "border-transparent bg-warning-bg text-warning",
+              collection.user_permission === "viewer" && "border-transparent bg-muted"
             )}
           >
             {collection.user_permission || "viewer"}

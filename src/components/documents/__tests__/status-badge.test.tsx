@@ -98,6 +98,35 @@ describe("StatusBadge", () => {
     });
   });
 
+  describe("showType prop", () => {
+    it("hides type prefix by default", () => {
+      renderWithProviders(
+        <StatusBadge status="completed" type="parsing" />
+      );
+      expect(screen.getByText("Completed")).toBeInTheDocument();
+      expect(screen.queryByText("Parsing: Completed")).not.toBeInTheDocument();
+    });
+
+    it("shows type prefix when showType is true", () => {
+      renderWithProviders(
+        <StatusBadge status="completed" type="parsing" showType />
+      );
+      expect(screen.getByText("Parsing: Completed")).toBeInTheDocument();
+    });
+
+    it.each([
+      { type: "parsing" as const, label: "Parsing" },
+      { type: "validation" as const, label: "Validation" },
+      { type: "review" as const, label: "Review" },
+      { type: "reconciliation" as const, label: "Reconciliation" },
+    ])("renders '$label' prefix for type '$type'", ({ type, label }) => {
+      renderWithProviders(
+        <StatusBadge status="pending" type={type} showType />
+      );
+      expect(screen.getByText(`${label}: Pending`)).toBeInTheDocument();
+    });
+  });
+
   describe("unknown status fallback", () => {
     it("falls back gracefully for unknown status", () => {
       // TypeScript would normally prevent this, but at runtime it could happen.

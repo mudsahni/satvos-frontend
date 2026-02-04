@@ -6,7 +6,7 @@ import {
   CreateDocumentRequest,
   UpdateDocumentRequest,
   ReviewDocumentRequest,
-  AddTagRequest,
+  AddTagsRequest,
   DocumentListParams,
 } from "@/types/document";
 import { ValidationResult } from "@/types/validation";
@@ -59,7 +59,7 @@ export async function triggerParsing(
   parseMode?: "single" | "dual"
 ): Promise<Document> {
   const response = await apiClient.post<ApiResponse<Document>>(
-    `/documents/${id}/parse`,
+    `/documents/${id}/retry`,
     { parse_mode: parseMode }
   );
   return response.data.data;
@@ -87,7 +87,7 @@ export async function reviewDocument(
   id: string,
   data: ReviewDocumentRequest
 ): Promise<Document> {
-  const response = await apiClient.post<ApiResponse<Document>>(
+  const response = await apiClient.put<ApiResponse<Document>>(
     `/documents/${id}/review`,
     data
   );
@@ -104,9 +104,9 @@ export async function getDocumentTags(id: string): Promise<DocumentTag[]> {
 
 export async function addDocumentTag(
   id: string,
-  data: AddTagRequest
-): Promise<DocumentTag> {
-  const response = await apiClient.post<ApiResponse<DocumentTag>>(
+  data: AddTagsRequest
+): Promise<DocumentTag[]> {
+  const response = await apiClient.post<ApiResponse<DocumentTag[]>>(
     `/documents/${id}/tags`,
     data
   );

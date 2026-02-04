@@ -55,7 +55,7 @@ export default function CollectionsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Collections</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Collections</h1>
           <p className="text-muted-foreground">
             Organize and manage your document collections
           </p>

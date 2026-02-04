@@ -17,6 +17,15 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -40,6 +49,9 @@ interface StructuredDataViewerProps {
   data: StructuredInvoiceData;
   confidenceScores?: ConfidenceScores;
   validationResults?: ValidationResult[];
+  isEditing?: boolean;
+  editedValues?: Record<string, string>;
+  onFieldChange?: (fieldPath: string, value: string) => void;
 }
 
 // Helper to format currency
@@ -91,6 +103,9 @@ function DataField({
   fieldPath,
   validationResults,
   format = "text",
+  isEditing,
+  editedValues,
+  onFieldChange,
 }: {
   label: string;
   value: string | number | boolean | undefined | null;
@@ -98,8 +113,12 @@ function DataField({
   fieldPath?: string;
   validationResults?: ValidationResult[];
   format?: "text" | "currency" | "date" | "boolean";
+  isEditing?: boolean;
+  editedValues?: Record<string, string>;
+  onFieldChange?: (fieldPath: string, value: string) => void;
 }) {
-  if (value === undefined || value === null || value === "") {
+  // In read mode, hide empty fields
+  if (!isEditing && (value === undefined || value === null || value === "")) {
     return null;
   }
 
@@ -107,15 +126,82 @@ function DataField({
     ? getFieldValidationStatus(validationResults, fieldPath)
     : { status: "none" as const, messages: [] };
 
+  // Determine the display/edit value
+  const editValue = fieldPath && editedValues?.[fieldPath] !== undefined
+    ? editedValues[fieldPath]
+    : String(value ?? "");
+
   let displayValue: string;
   if (format === "currency" && typeof value === "number") {
     displayValue = formatCurrency(value);
   } else if (format === "boolean") {
     displayValue = value ? "Yes" : "No";
   } else {
-    displayValue = String(value);
+    displayValue = String(value ?? "");
   }
 
+  if (isEditing && fieldPath && onFieldChange) {
+    // Edit mode rendering
+    if (format === "boolean") {
+      const currentBoolValue = editedValues?.[fieldPath] !== undefined
+        ? editedValues[fieldPath]
+        : String(value ?? "false");
+
+      return (
+        <div className="py-2.5 border-b border-border/50 last:border-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm text-muted-foreground">{label}</span>
+          </div>
+          <Select
+            value={currentBoolValue}
+            onValueChange={(val) => onFieldChange(fieldPath, val)}
+          >
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    const inputType = format === "currency" ? "number" : "text";
+    const step = format === "currency" ? "0.01" : undefined;
+
+    return (
+      <div className="py-2.5 border-b border-border/50 last:border-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm text-muted-foreground">{label}</span>
+          {validationStatus.status !== "none" && (
+            <span title={validationStatus.messages.join("; ")}>
+              {validationStatus.status === "valid" && (
+                <CheckCircle className="h-3.5 w-3.5 text-success" />
+              )}
+              {validationStatus.status === "warning" && (
+                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+              )}
+              {validationStatus.status === "error" && (
+                <XCircle className="h-3.5 w-3.5 text-error" />
+              )}
+            </span>
+          )}
+        </div>
+        <Input
+          type={inputType}
+          step={step}
+          value={editValue}
+          onChange={(e) => onFieldChange(fieldPath, e.target.value)}
+          className="h-8 text-sm"
+          placeholder={label}
+        />
+      </div>
+    );
+  }
+
+  // Read mode rendering
   return (
     <div className="flex items-start justify-between py-2.5 border-b border-border/50 last:border-0">
       <div className="flex-1 min-w-0">
@@ -194,6 +280,9 @@ export function StructuredDataViewer({
   data,
   confidenceScores,
   validationResults,
+  isEditing = false,
+  editedValues = {},
+  onFieldChange,
 }: StructuredDataViewerProps) {
   const getConfidence = (section: string, field: string): number | undefined => {
     if (!confidenceScores) return undefined;
@@ -207,6 +296,12 @@ export function StructuredDataViewer({
     return confidenceScores.line_items[index][field];
   };
 
+  const editProps = {
+    isEditing,
+    editedValues,
+    onFieldChange,
+  };
+
   return (
     <div className="space-y-4">
       {/* Invoice Details */}
@@ -218,6 +313,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("invoice", "invoice_number")}
             fieldPath="invoice.invoice_number"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Invoice Date"
@@ -226,6 +322,7 @@ export function StructuredDataViewer({
             fieldPath="invoice.invoice_date"
             format="date"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Due Date"
@@ -234,6 +331,7 @@ export function StructuredDataViewer({
             fieldPath="invoice.due_date"
             format="date"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Invoice Type"
@@ -241,6 +339,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("invoice", "invoice_type")}
             fieldPath="invoice.invoice_type"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Currency"
@@ -248,6 +347,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("invoice", "currency")}
             fieldPath="invoice.currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Place of Supply"
@@ -255,6 +355,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("invoice", "place_of_supply")}
             fieldPath="invoice.place_of_supply"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Reverse Charge"
@@ -263,6 +364,7 @@ export function StructuredDataViewer({
             fieldPath="invoice.reverse_charge"
             format="boolean"
             validationResults={validationResults}
+            {...editProps}
           />
         </div>
       </Section>
@@ -276,6 +378,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("seller", "name")}
             fieldPath="seller.name"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="GSTIN"
@@ -283,6 +386,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("seller", "gstin")}
             fieldPath="seller.gstin"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="PAN"
@@ -290,6 +394,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("seller", "pan")}
             fieldPath="seller.pan"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="State"
@@ -297,6 +402,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("seller", "state")}
             fieldPath="seller.state"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="State Code"
@@ -304,6 +410,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("seller", "state_code")}
             fieldPath="seller.state_code"
             validationResults={validationResults}
+            {...editProps}
           />
           <div className="sm:col-span-2">
             <DataField
@@ -312,6 +419,7 @@ export function StructuredDataViewer({
               confidence={getConfidence("seller", "address")}
               fieldPath="seller.address"
               validationResults={validationResults}
+              {...editProps}
             />
           </div>
         </div>
@@ -326,6 +434,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("buyer", "name")}
             fieldPath="buyer.name"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="GSTIN"
@@ -333,6 +442,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("buyer", "gstin")}
             fieldPath="buyer.gstin"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="PAN"
@@ -340,6 +450,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("buyer", "pan")}
             fieldPath="buyer.pan"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="State"
@@ -347,6 +458,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("buyer", "state")}
             fieldPath="buyer.state"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="State Code"
@@ -354,6 +466,7 @@ export function StructuredDataViewer({
             confidence={getConfidence("buyer", "state_code")}
             fieldPath="buyer.state_code"
             validationResults={validationResults}
+            {...editProps}
           />
           <div className="sm:col-span-2">
             <DataField
@@ -362,13 +475,14 @@ export function StructuredDataViewer({
               confidence={getConfidence("buyer", "address")}
               fieldPath="buyer.address"
               validationResults={validationResults}
+              {...editProps}
             />
           </div>
         </div>
       </Section>
 
       {/* Line Items */}
-      {data.line_items && data.line_items.length > 0 && (
+      {(data.line_items && data.line_items.length > 0) && (
         <Section
           title="Line Items"
           icon={Package}
@@ -403,6 +517,92 @@ export function StructuredDataViewer({
                     item.sgst_rate && `SGST ${item.sgst_rate}%`,
                     item.igst_rate && `IGST ${item.igst_rate}%`,
                   ].filter(Boolean).join(", ");
+
+                  if (isEditing && onFieldChange) {
+                    const getVal = (field: string, original: string | number | undefined) => {
+                      const path = `line_items.${index}.${field}`;
+                      return editedValues[path] !== undefined
+                        ? editedValues[path]
+                        : String(original ?? "");
+                    };
+
+                    const handleChange = (field: string, val: string) => {
+                      onFieldChange(`line_items.${index}.${field}`, val);
+                    };
+
+                    return (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Input
+                            type="text"
+                            value={getVal("description", item.description)}
+                            onChange={(e) => handleChange("description", e.target.value)}
+                            className="h-7 text-sm min-w-[180px]"
+                            placeholder="Description"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="text"
+                            value={getVal("hsn_sac_code", item.hsn_sac_code)}
+                            onChange={(e) => handleChange("hsn_sac_code", e.target.value)}
+                            className="h-7 text-sm w-24"
+                            placeholder="HSN"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={getVal("quantity", item.quantity)}
+                            onChange={(e) => handleChange("quantity", e.target.value)}
+                            className="h-7 text-sm w-20 text-right"
+                            placeholder="Qty"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={getVal("unit_price", item.unit_price)}
+                            onChange={(e) => handleChange("unit_price", e.target.value)}
+                            className="h-7 text-sm w-24 text-right"
+                            placeholder="Rate"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={getVal("taxable_amount", item.taxable_amount)}
+                            onChange={(e) => handleChange("taxable_amount", e.target.value)}
+                            className="h-7 text-sm w-24 text-right"
+                            placeholder="Taxable"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={getVal("igst_amount", item.igst_amount)}
+                            onChange={(e) => handleChange("igst_amount", e.target.value)}
+                            className="h-7 text-sm w-24 text-right"
+                            placeholder="Tax"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={getVal("total", item.total)}
+                            onChange={(e) => handleChange("total", e.target.value)}
+                            className="h-7 text-sm w-24 text-right"
+                            placeholder="Total"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
 
                   return (
                     <TableRow key={index}>
@@ -468,6 +668,7 @@ export function StructuredDataViewer({
             fieldPath="totals.subtotal"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Total Discount"
@@ -476,6 +677,7 @@ export function StructuredDataViewer({
             fieldPath="totals.total_discount"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Taxable Amount"
@@ -484,6 +686,7 @@ export function StructuredDataViewer({
             fieldPath="totals.taxable_amount"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="CGST"
@@ -492,6 +695,7 @@ export function StructuredDataViewer({
             fieldPath="totals.cgst"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="SGST"
@@ -500,6 +704,7 @@ export function StructuredDataViewer({
             fieldPath="totals.sgst"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="IGST"
@@ -508,6 +713,7 @@ export function StructuredDataViewer({
             fieldPath="totals.igst"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="CESS"
@@ -516,6 +722,7 @@ export function StructuredDataViewer({
             fieldPath="totals.cess"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
           <DataField
             label="Round Off"
@@ -524,74 +731,114 @@ export function StructuredDataViewer({
             fieldPath="totals.round_off"
             format="currency"
             validationResults={validationResults}
+            {...editProps}
           />
         </div>
         <div className="mt-4 pt-4 border-t">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-lg font-semibold">Grand Total</span>
-              {data.totals.amount_in_words && (
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {data.totals.amount_in_words}
-                </p>
-              )}
+          {isEditing && onFieldChange ? (
+            <div className="space-y-3">
+              <div>
+                <span className="text-sm text-muted-foreground">Grand Total</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={
+                    editedValues["totals.total"] !== undefined
+                      ? editedValues["totals.total"]
+                      : String(data.totals.total ?? "")
+                  }
+                  onChange={(e) => onFieldChange("totals.total", e.target.value)}
+                  className="h-9 text-lg font-bold mt-1"
+                  placeholder="Grand Total"
+                />
+              </div>
+              <div>
+                <span className="text-sm text-muted-foreground">Amount in Words</span>
+                <Input
+                  type="text"
+                  value={
+                    editedValues["totals.amount_in_words"] !== undefined
+                      ? editedValues["totals.amount_in_words"]
+                      : String(data.totals.amount_in_words ?? "")
+                  }
+                  onChange={(e) => onFieldChange("totals.amount_in_words", e.target.value)}
+                  className="h-8 text-sm mt-1"
+                  placeholder="Amount in words"
+                />
+              </div>
             </div>
-            <div className="text-right">
-              <span className="text-2xl font-bold text-primary">
-                {formatCurrency(data.totals.total)}
-              </span>
-              {getConfidence("totals", "total") !== undefined && (
-                <Badge
-                  variant={getConfidenceVariant(getConfidence("totals", "total") || 0)}
-                  className="ml-2"
-                >
-                  {Math.round((getConfidence("totals", "total") || 0) * 100)}%
-                </Badge>
-              )}
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-lg font-semibold">Grand Total</span>
+                {data.totals.amount_in_words && (
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {data.totals.amount_in_words}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-primary">
+                  {formatCurrency(data.totals.total)}
+                </span>
+                {getConfidence("totals", "total") !== undefined && (
+                  <Badge
+                    variant={getConfidenceVariant(getConfidence("totals", "total") || 0)}
+                    className="ml-2"
+                  >
+                    {Math.round((getConfidence("totals", "total") || 0) * 100)}%
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Section>
 
       {/* Payment Details */}
-      {data.payment && (
-        <Section title="Payment Details" icon={CreditCard} defaultOpen={false}>
+      {(data.payment || isEditing) && (
+        <Section title="Payment Details" icon={CreditCard} defaultOpen={isEditing || !!data.payment}>
           <div className="grid gap-x-6 sm:grid-cols-2">
             <DataField
               label="Bank Name"
-              value={data.payment.bank_name}
+              value={data.payment?.bank_name}
               confidence={getConfidence("payment", "bank_name")}
               fieldPath="payment.bank_name"
               validationResults={validationResults}
+              {...editProps}
             />
             <DataField
               label="Account Number"
-              value={data.payment.account_number}
+              value={data.payment?.account_number}
               confidence={getConfidence("payment", "account_number")}
               fieldPath="payment.account_number"
               validationResults={validationResults}
+              {...editProps}
             />
             <DataField
               label="IFSC Code"
-              value={data.payment.ifsc_code}
+              value={data.payment?.ifsc_code}
               confidence={getConfidence("payment", "ifsc_code")}
               fieldPath="payment.ifsc_code"
               validationResults={validationResults}
+              {...editProps}
             />
             <DataField
               label="Branch"
-              value={data.payment.branch}
+              value={data.payment?.branch}
               confidence={getConfidence("payment", "branch")}
               fieldPath="payment.branch"
               validationResults={validationResults}
+              {...editProps}
             />
             <div className="sm:col-span-2">
               <DataField
                 label="Payment Terms"
-                value={data.payment.payment_terms}
+                value={data.payment?.payment_terms}
                 confidence={getConfidence("payment", "payment_terms")}
                 fieldPath="payment.payment_terms"
                 validationResults={validationResults}
+                {...editProps}
               />
             </div>
           </div>
@@ -599,11 +846,24 @@ export function StructuredDataViewer({
       )}
 
       {/* Notes */}
-      {data.notes && (
-        <Section title="Notes" icon={StickyNote} defaultOpen={false}>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap py-2">
-            {data.notes}
-          </p>
+      {(data.notes || isEditing) && (
+        <Section title="Notes" icon={StickyNote} defaultOpen={isEditing || !!data.notes}>
+          {isEditing && onFieldChange ? (
+            <Textarea
+              value={
+                editedValues["notes"] !== undefined
+                  ? editedValues["notes"]
+                  : String(data.notes ?? "")
+              }
+              onChange={(e) => onFieldChange("notes", e.target.value)}
+              className="text-sm min-h-[80px] mt-2"
+              placeholder="Add notes..."
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap py-2">
+              {data.notes}
+            </p>
+          )}
         </Section>
       )}
     </div>

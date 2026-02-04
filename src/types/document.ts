@@ -251,16 +251,16 @@ export interface CreateDocumentRequest {
 export interface UpdateDocumentRequest {
   name?: string;
   parsed_data?: ParsedInvoice;
+  structured_data?: StructuredInvoiceData;
 }
 
 export interface ReviewDocumentRequest {
-  action: "approve" | "reject";
+  status: "approved" | "rejected";
   notes?: string;
 }
 
-export interface AddTagRequest {
-  key: string;
-  value: string;
+export interface AddTagsRequest {
+  tags: Record<string, string>;
 }
 
 export interface DocumentListParams {

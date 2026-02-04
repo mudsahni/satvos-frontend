@@ -98,7 +98,7 @@ export function DocumentsTable({
       <Button
         variant="ghost"
         size="sm"
-        className="-ml-3 h-8 font-semibold"
+        className="-ml-3 h-8 font-medium"
         onClick={() => handleSort(field)}
       >
         {children}
@@ -206,7 +206,7 @@ export function DocumentsTable({
                     {doc.name}
                   </Link>
                 </TableCell>
-                <TableCell className="text-muted-foreground max-w-[150px] truncate">
+                <TableCell className="text-muted-foreground max-w-[200px] truncate">
                   {vendorName}
                 </TableCell>
                 <TableCell>
@@ -215,7 +215,7 @@ export function DocumentsTable({
                 <TableCell>
                   <StatusBadge status={doc.review_status} type="review" />
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-muted-foreground whitespace-nowrap">
                   {formatRelativeTime(doc.created_at)}
                 </TableCell>
                 <TableCell>

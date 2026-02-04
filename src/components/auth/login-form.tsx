@@ -22,6 +22,7 @@ import { login } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
 import { getErrorMessage } from "@/lib/api/client";
+import { decodeJwtPayload } from "@/types/auth";
 
 export function LoginForm() {
   const router = useRouter();
@@ -52,24 +53,31 @@ export function LoginForm() {
       const response = await login(data);
 
       // Store auth state with tokens first (enables authenticated API calls)
+      // Login response may or may not include user data
+      const partialUser = response.user ?? null;
       loginToStore(
         {
           access_token: response.access_token,
           refresh_token: response.refresh_token,
-          expires_in: response.expires_in,
-          token_type: response.token_type,
+          expires_at: response.expires_at,
         },
-        response.user,
+        partialUser as import("@/types/user").User,
         data.tenant_slug
       );
 
-      // Fetch full user profile (login response may not include all fields)
-      if (response.user?.id) {
+      // Fetch full user profile using user ID from login response or JWT
+      let userId = response.user?.id;
+      if (!userId) {
+        const payload = decodeJwtPayload(response.access_token);
+        userId = (payload?.user_id ?? payload?.sub) as string | undefined;
+      }
+
+      if (userId) {
         try {
-          const fullUser = await getUser(response.user.id);
+          const fullUser = await getUser(userId);
           useAuthStore.getState().setUser(fullUser);
         } catch {
-          // Non-critical — continue with partial user data from login response
+          // Non-critical — continue with partial user data
         }
       }
 
