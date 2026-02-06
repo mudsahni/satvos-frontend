@@ -24,6 +24,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV BACKEND_URL=http://localhost:8080
+# Note: Set BACKEND_URL at runtime on your hosting platform (e.g. Railway)
+# to point to your actual backend. NEXT_PUBLIC_API_URL is NOT needed —
+# the client uses /api/v1 (relative) and Next.js rewrites proxy it.
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
