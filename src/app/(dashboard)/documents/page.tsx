@@ -48,11 +48,14 @@ import { useDocuments, useDeleteDocument } from "@/lib/hooks/use-documents";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
+import { Pagination } from "@/components/ui/pagination";
 import {
   ParsingStatus,
   ValidationStatus,
   ReviewStatus,
 } from "@/lib/constants";
+
+const DEFAULT_PAGE_SIZE = 20;
 
 export default function DocumentsPage() {
   const [search, setSearch] = useState("");
@@ -61,6 +64,8 @@ export default function DocumentsPage() {
   const [validationFilter, setValidationFilter] = useState<string>("all");
   const [reviewFilter, setReviewFilter] = useState<string>("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data: collectionsData } = useCollections({ limit: 100 });
   const collections = collectionsData?.items || [];
@@ -76,10 +81,16 @@ export default function DocumentsPage() {
         : undefined,
     review_status:
       reviewFilter !== "all" ? (reviewFilter as ReviewStatus) : undefined,
-    limit: 50,
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
     sort_by: "created_at",
     sort_order: "desc",
   });
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
 
   const deleteDocument = useDeleteDocument();
 
@@ -98,6 +109,7 @@ export default function DocumentsPage() {
     setParsingFilter("all");
     setValidationFilter("all");
     setReviewFilter("all");
+    setPage(1);
   };
 
   const hasFilters =
@@ -124,12 +136,12 @@ export default function DocumentsPage() {
               <Input
                 placeholder="Search documents..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 className="pl-9"
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Select value={collectionFilter} onValueChange={setCollectionFilter}>
+              <Select value={collectionFilter} onValueChange={(v) => { setCollectionFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Collection" />
                 </SelectTrigger>
@@ -143,7 +155,7 @@ export default function DocumentsPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={parsingFilter} onValueChange={setParsingFilter}>
+              <Select value={parsingFilter} onValueChange={(v) => { setParsingFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Parsing" />
                 </SelectTrigger>
@@ -156,7 +168,7 @@ export default function DocumentsPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={validationFilter} onValueChange={setValidationFilter}>
+              <Select value={validationFilter} onValueChange={(v) => { setValidationFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Validation" />
                 </SelectTrigger>
@@ -169,7 +181,7 @@ export default function DocumentsPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={reviewFilter} onValueChange={setReviewFilter}>
+              <Select value={reviewFilter} onValueChange={(v) => { setReviewFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Review" />
                 </SelectTrigger>
@@ -212,6 +224,7 @@ export default function DocumentsPage() {
               )}
             </div>
           ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -298,6 +311,15 @@ export default function DocumentsPage() {
                 })}
               </TableBody>
             </Table>
+            <Pagination
+              page={page}
+              totalPages={data?.total_pages ?? 1}
+              total={data?.total ?? 0}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={handlePageSizeChange}
+            />
+            </>
           )}
         </CardContent>
       </Card>

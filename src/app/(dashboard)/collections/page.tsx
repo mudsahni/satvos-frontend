@@ -24,16 +24,27 @@ import { useCollections, useDeleteCollection } from "@/lib/hooks/use-collections
 import { useAuthStore } from "@/store/auth-store";
 import { canCreateCollections } from "@/lib/constants";
 import { Collection } from "@/types/collection";
+import { Pagination } from "@/components/ui/pagination";
+
+const DEFAULT_PAGE_SIZE = 20;
 
 export default function CollectionsPage() {
   const { user } = useAuthStore();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data, isLoading } = useCollections({
     search: search || undefined,
-    limit: 50,
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
   });
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
 
   const deleteCollection = useDeleteCollection();
 
@@ -85,7 +96,7 @@ export default function CollectionsPage() {
           <Input
             placeholder="Search collections..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="pl-9"
           />
         </div>
@@ -119,16 +130,26 @@ export default function CollectionsPage() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {collections.map((collection) => (
-            <CollectionCard
-              key={collection.id}
-              collection={collection}
-              onDelete={setDeleteId}
-              canDelete={canDelete(collection)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {collections.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                onDelete={setDeleteId}
+                canDelete={canDelete(collection)}
+              />
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            totalPages={data?.total_pages ?? 1}
+            total={data?.total ?? 0}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        </>
       )}
 
       {/* Delete confirmation */}

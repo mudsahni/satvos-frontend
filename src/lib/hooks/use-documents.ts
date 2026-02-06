@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   getDocuments,
   getDocument,
@@ -29,6 +29,7 @@ export function useDocuments(params?: DocumentListParams) {
   return useQuery({
     queryKey: ["documents", params],
     queryFn: () => getDocuments(params),
+    placeholderData: keepPreviousData,
     refetchInterval: (query) => {
       const items = query.state.data?.items;
       if (!items) return false;
