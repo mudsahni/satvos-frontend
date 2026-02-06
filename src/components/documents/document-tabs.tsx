@@ -1,11 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, ShieldCheck, History, Loader2, Code, Pencil, CheckCircle, AlertCircle, X } from "lucide-react";
+import { FileText, ShieldCheck, History, Loader2, Code, Pencil, CheckCircle, AlertCircle, RefreshCw, X, Tag, Plus } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +30,7 @@ import {
 import { StructuredDataViewer } from "@/components/documents/structured-data-viewer";
 import { ValidationTab } from "@/components/documents/validation-tab";
 import { HistoryTab } from "@/components/documents/history-tab";
-import { Document, StructuredInvoiceData } from "@/types/document";
+import { Document, DocumentTag, StructuredInvoiceData } from "@/types/document";
 import { ValidationResult } from "@/types/validation";
 import { cn } from "@/lib/utils";
 import { applyEditsToStructuredData } from "@/lib/utils/structured-data";
@@ -32,6 +43,12 @@ interface DocumentTabsProps {
   isRevalidating?: boolean;
   onSaveEdits?: (data: StructuredInvoiceData) => Promise<void>;
   isSaving?: boolean;
+  tags?: DocumentTag[];
+  onAddTag?: (key: string, value: string) => Promise<void>;
+  isAddingTag?: boolean;
+  onDeleteTag?: (tagId: string) => Promise<void>;
+  onReparse?: () => void;
+  isReparsing?: boolean;
 }
 
 export function DocumentTabs({
@@ -42,6 +59,12 @@ export function DocumentTabs({
   isRevalidating,
   onSaveEdits,
   isSaving,
+  tags,
+  onAddTag,
+  isAddingTag,
+  onDeleteTag,
+  onReparse,
+  isReparsing,
 }: DocumentTabsProps) {
   const [activeTab, setActiveTab] = useState("data");
   const [showRawData, setShowRawData] = useState(false);
@@ -49,6 +72,9 @@ export function DocumentTabs({
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [pendingTabSwitch, setPendingTabSwitch] = useState<string | null>(null);
+  const [showAddTagDialog, setShowAddTagDialog] = useState(false);
+  const [newTagKey, setNewTagKey] = useState("");
+  const [newTagValue, setNewTagValue] = useState("");
 
   // Use structured_data from the API response
   const structuredData = document.structured_data;
@@ -95,6 +121,14 @@ export function DocumentTabs({
       setActiveTab(pendingTabSwitch);
       setPendingTabSwitch(null);
     }
+  };
+
+  const handleAddTagSubmit = async () => {
+    if (!newTagKey.trim() || !newTagValue.trim() || !onAddTag) return;
+    await onAddTag(newTagKey.trim(), newTagValue.trim());
+    setNewTagKey("");
+    setNewTagValue("");
+    setShowAddTagDialog(false);
   };
 
   const handleTabChange = (tab: string) => {
@@ -158,6 +192,87 @@ export function DocumentTabs({
 
         <TabsContent value="data" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
+            {/* Inline tag pills */}
+            {(tags && tags.length > 0 || onAddTag) && (
+              <div className="flex flex-wrap items-center gap-2 px-4 pt-4 pb-3 border-b border-border/50">
+                <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                {tags && tags.length > 0 ? (
+                  tags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="inline-flex items-center gap-1 rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs"
+                    >
+                      <span className="font-medium">{tag.key}:</span>
+                      <span className="text-muted-foreground">{tag.value}</span>
+                      {tag.source === "user" && onDeleteTag && (
+                        <button
+                          onClick={() => onDeleteTag(tag.id)}
+                          className="ml-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground">No tags</span>
+                )}
+                {onAddTag && (
+                  <Dialog open={showAddTagDialog} onOpenChange={setShowAddTagDialog}>
+                    <DialogTrigger asChild>
+                      <button className="inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+                        <Plus className="h-3 w-3" />
+                        Add
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Tag</DialogTitle>
+                        <DialogDescription>
+                          Add a custom tag to this document for organization.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="tag-key">Key</Label>
+                          <Input
+                            id="tag-key"
+                            placeholder="e.g., vendor, project"
+                            value={newTagKey}
+                            onChange={(e) => setNewTagKey(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="tag-value">Value</Label>
+                          <Input
+                            id="tag-value"
+                            placeholder="e.g., Acme Corp, Q4 2024"
+                            value={newTagValue}
+                            onChange={(e) => setNewTagValue(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          onClick={handleAddTagSubmit}
+                          disabled={
+                            !newTagKey.trim() ||
+                            !newTagValue.trim() ||
+                            isAddingTag
+                          }
+                        >
+                          {isAddingTag && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
+                          Add Tag
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
+            )}
+
             <div className="p-4">
               {hasData ? (
                 <>
@@ -240,17 +355,41 @@ export function DocumentTabs({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                    <FileText className="h-8 w-8 text-muted-foreground" />
+                  <div className={cn(
+                    "flex h-16 w-16 items-center justify-center rounded-full",
+                    parsingStatus === "failed" ? "bg-error/10" : "bg-muted"
+                  )}>
+                    {parsingStatus === "failed" ? (
+                      <AlertCircle className="h-8 w-8 text-error" />
+                    ) : (
+                      <FileText className="h-8 w-8 text-muted-foreground" />
+                    )}
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold">No parsed data</h3>
+                  <h3 className="mt-4 text-lg font-semibold">
+                    {parsingStatus === "failed" ? "Parsing failed" : "No parsed data"}
+                  </h3>
                   <p className="mt-1 text-center text-sm text-muted-foreground max-w-sm">
                     {parsingStatus === "failed"
-                      ? "Parsing failed. Try re-parsing the document."
+                      ? "Something went wrong while parsing this document."
                       : parsingStatus === "completed"
                       ? "Parsing completed but no data was extracted."
                       : "Document has not been parsed yet."}
                   </p>
+                  {parsingStatus === "failed" && onReparse && (
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={onReparse}
+                      disabled={isReparsing}
+                    >
+                      {isReparsing ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                      )}
+                      {isReparsing ? "Re-Parsing..." : "Retry Parsing"}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

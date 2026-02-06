@@ -48,7 +48,7 @@ export default function CollectionDetailPage({
   const [sortField, setSortField] = useState<SortField | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
-  const { data: collection, isLoading: collectionLoading } = useCollection(id);
+  const { data: collection, isPending: collectionLoading } = useCollection(id);
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({
     collection_id: id,
     limit: 100,
