@@ -4,7 +4,7 @@ This file provides guidance for Claude Code when working on this project.
 
 ## Project Overview
 
-DocFlow (formerly Satvos UI) is a Next.js 16 frontend for a document processing platform. It handles invoice parsing, validation, and review workflows with a modern light-mode-first UI inspired by Notion, Stripe, and Linear.
+Satvos (formerly Satvos UI) is a Next.js 16 frontend for a document processing platform. It handles invoice parsing, validation, and review workflows with a modern light-mode-first UI inspired by Notion, Stripe, and Linear.
 
 **Target Users**: Accountants, finance ops teams, small business owners
 
@@ -77,6 +77,8 @@ export function useDocument(id: string) {
 }
 ```
 
+**TanStack Query v5 — `isPending` vs `isLoading`**: For queries with `enabled: false` (or falsy dependent values), the query starts with `status: 'pending'` and `fetchStatus: 'idle'`. `isLoading` = `isPending && isFetching` → **false** for disabled queries. Use `isPending` for loading/skeleton UI on dependent queries. Example: `useCollection(document?.collection_id ?? "")` — when `collection_id` is `""`, the query is disabled, `isLoading` is false, but `isPending` is true.
+
 ### Form Handling
 ```typescript
 const form = useForm<FormData>({
@@ -122,12 +124,16 @@ SidebarProvider
 ## Document Detail Page
 
 The document detail page (`/documents/[id]`) features:
-- Breadcrumb navigation: `Collections > Collection Name > Document Name`
-- Status badges row with Actions dropdown (Re-Parse, Re-Validate)
-- Tags section: 3-column grid layout with card-style tags, Add Tag button below
-- Split-pane view using `react-resizable-panels`
+- **Compact 2-row header**: Breadcrumb row + combined title/status/actions row
+- Breadcrumb: `Documents > [Collection Name] > Document Name` — always visible, with skeleton while collection loads, fallback "Collection" link on error
+- Status badges inline after title (hidden on small screens via `hidden md:flex`)
+- Actions overflow menu (icon-only `MoreVertical` button) with Re-Parse, Re-Validate
+- Review buttons (Approve/Reject) on right side of title row, keyboard hint "A to approve, R to reject"
+- Split-pane view using `react-resizable-panels`, height: `calc(100vh-3.5rem)` matching TopNav `h-14`
 - Left panel: PDF viewer (with Google Docs viewer fallback for S3)
-- Right panel: Tabbed interface (Extracted Data, Validations, History)
+- Right panel: `DocumentTabs` — tabbed interface (Extracted Data, Validations, History)
+- **Tags**: Inline pill row at top of Extracted Data tab (not in page header), with compact "+" Add button
+- **Retry Parsing**: Button shown in Extracted Data tab when parsing failed, with loading state
 - Data tab has status indicators: spinner (parsing), check (data ready), error (failed)
 - Validation tab: compact expandable result cards with left-border color accent
 - Mobile: Stacked tabs instead of split view
@@ -197,6 +203,8 @@ The Extracted Data tab supports inline editing. Users click "Edit" to toggle all
   - Collection-level permission: `owner` or `editor` on the document's collection
   - The page fetches the collection via `useCollection(document.collection_id)` and reads `user.role` from `useAuthStore()`
   - `onSaveEdits` is conditionally passed to `DocumentTabs` — if not provided, the Edit button is hidden
+- **Retry Parsing**: When parsing fails, the Extracted Data tab shows an error state with a "Retry Parsing" button (via `onReparse` prop). Loading state shown via `isReparsing` prop.
+- **Tags in DocumentTabs**: Tags are rendered as inline pills at the top of the Extracted Data tab. Props: `tags`, `onAddTag`, `isAddingTag`, `onDeleteTag`. The Add Tag dialog is inside DocumentTabs.
 
 ## Tags API
 
@@ -217,7 +225,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - **Setup**: `src/test/setup.ts` (mocks for next/navigation, next-themes, ResizeObserver, etc.)
 - **Test Utils**: `src/test/test-utils.tsx` (renderWithProviders with QueryClient + TooltipProvider)
 - **Location**: Tests live in `__tests__/` directories next to their source files
-- **Count**: 430+ tests across 22 test files
+- **Count**: 466+ tests across 24 test files
 
 ### Test Coverage Areas
 - Utility functions (format, validation, cn)
@@ -227,6 +235,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - React hooks (use-toast)
 - Auth components (login-form: session expired banner, form rendering)
 - UI components (status-badge, history-tab, collection-card, collection-header, bulk-actions-bar, breadcrumbs, structured-data-viewer, document-tabs)
+- Page components (document detail page: breadcrumb states, collection loading/error/success)
 - API functions (documents: addDocumentTag, getDocumentTags)
 - Structured data utilities (applyEditsToStructuredData, getValueAtPath, setValueAtPath)
 
@@ -240,8 +249,8 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - Multi-stage build: `deps` → `builder` → `runner`
 - Uses Next.js standalone output (`output: "standalone"` in `next.config.ts`)
 - Runs as non-root user on port 3000
-- Build: `docker build -t docflow .`
-- Run: `docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://api:8080/api/v1 docflow`
+- Build: `docker build -t satvos .`
+- Run: `docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://api:8080/api/v1 satvos`
 
 ## Current State & Next Steps
 
@@ -256,7 +265,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Design system documentation
 - [x] CI/CD pipeline (GitHub Actions)
 - [x] Docker support (multi-stage build)
-- [x] Test framework setup (Vitest, 369+ tests)
+- [x] Test framework setup (Vitest, 466+ tests)
 - [x] Auth flow fix (JWT decode + user fetch)
 - [x] Review API fix (PUT with status field)
 - [x] Font: Plus Jakarta Sans (replaced Inter)
@@ -268,8 +277,11 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Editable extracted data with auto re-validation (Edit → modify fields → Save → auto validate)
 - [x] Token refresh: cookie renewed on refresh, session expired banner + return URL on forced logout
 - [x] Collection detail: client-side sorting, hidden date when unavailable, consistent table headers
-- [x] Document detail: breadcrumb nav, Actions dropdown, tag grid layout, data tab status indicators
+- [x] Document detail: breadcrumb nav, Actions dropdown, data tab status indicators
 - [x] Validation tab: compact expandable result cards with left-border accent, smaller summary cards
+- [x] Document detail layout: compact 2-row header (breadcrumb + title/status/actions), tags moved to data tab as inline pills, retry parsing button on failed state
+- [x] Breadcrumb: loading-aware with skeleton placeholder, error fallback, always visible
+- [x] Collection detail: `isPending` fix for collection name display (TanStack Query v5)
 
 ### In Progress / Next Steps
 1. **Design System Implementation** - Apply consistent spacing, sizing, colors across all components per `DESIGN_SYSTEM.md`
@@ -312,6 +324,8 @@ Location: `src/app/(dashboard)/upload/page.tsx`
 1. Create `__tests__/{name}.test.ts(x)` next to the source file
 2. Use `renderWithProviders` from `src/test/test-utils.tsx` for component tests
 3. Run `npm run test` to verify
+
+**Testing pages with React 19 `use(params)`**: Pages using `use(params)` suspend on first render. Tests must: (1) wrap in `<Suspense>`, (2) use a **stable promise reference** created once outside the render function (not inline `Promise.resolve()`), (3) use `await waitFor()` for assertions. See `src/app/(dashboard)/documents/[id]/__tests__/page.test.tsx` for the pattern.
 
 ### Design System Reference
 See `DESIGN_SYSTEM.md` for:

@@ -24,7 +24,7 @@ describe("LoginForm", () => {
   it("renders the login form with all fields", () => {
     renderWithProviders(<LoginForm />);
 
-    expect(screen.getByText("Sign in to DocFlow")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to Satvos")).toBeInTheDocument();
     expect(screen.getByLabelText("Organization")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();

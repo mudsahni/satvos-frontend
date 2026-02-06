@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDropzone, FileRejection } from "react-dropzone";
 import {
@@ -53,6 +53,27 @@ function getFileTypeLabel(file: File): string {
 }
 
 export default function UploadPage() {
+  return (
+    <Suspense fallback={<UploadPageSkeleton />}>
+      <UploadPageContent />
+    </Suspense>
+  );
+}
+
+function UploadPageSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div>
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96 mt-2" />
+      </div>
+      <Skeleton className="h-48 w-full" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
+}
+
+function UploadPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedCollectionId = searchParams.get("collection");
@@ -80,7 +101,19 @@ export default function UploadPage() {
   const createCollection = useCreateCollection();
   const { uploads, isUploading, uploadFiles, clearUploads } = useUpload();
 
-  const collections = collectionsData?.items || [];
+  const collections = useMemo(() => collectionsData?.items || [], [collectionsData]);
+
+  // Sync preselected collection after collections load
+  // Handles SSR hydration edge case where useSearchParams may be empty during SSR
+  useEffect(() => {
+    if (preselectedCollectionId && collections.length > 0) {
+      const exists = collections.some((c) => c.id === preselectedCollectionId);
+      if (exists) {
+        setSelectedCollectionId(preselectedCollectionId);
+        setCollectionMode("existing");
+      }
+    }
+  }, [preselectedCollectionId, collections]);
 
   // Selection helpers
   const selectedCount = useMemo(
