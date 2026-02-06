@@ -6,9 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   FileText,
-  Tag,
-  Plus,
-  X,
   Loader2,
   RefreshCw,
   CheckCircle,
@@ -20,18 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,7 +76,7 @@ export default function DocumentDetailPage({
   const { data: document, isLoading } = useDocument(id);
   const { data: tags } = useDocumentTags(id);
   const { data: fileUrl, isLoading: fileLoading } = useFileUrl(document?.file_id);
-  const { data: collection } = useCollection(document?.collection_id ?? "");
+  const { data: collection, isPending: collectionPending, isError: collectionError } = useCollection(document?.collection_id ?? "");
 
   const triggerParsing = useTriggerParsing();
   const triggerValidation = useTriggerValidation();
@@ -98,9 +85,6 @@ export default function DocumentDetailPage({
   const addTag = useAddDocumentTag();
   const deleteTag = useDeleteDocumentTag();
 
-  const [showAddTagDialog, setShowAddTagDialog] = useState(false);
-  const [newTagKey, setNewTagKey] = useState("");
-  const [newTagValue, setNewTagValue] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
   const [confirmAction, setConfirmAction] = useState<"approved" | "rejected" | null>(null);
 
@@ -131,7 +115,7 @@ export default function DocumentDetailPage({
 
   if (isLoading) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex flex-col">
+      <div className="h-[calc(100vh-3.5rem)] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-4">
             <Skeleton className="h-8 w-8" />
@@ -152,7 +136,7 @@ export default function DocumentDetailPage({
 
   if (!document) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="h-[calc(100vh-3.5rem)] flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
             <FileText className="h-8 w-8 text-muted-foreground" />
@@ -177,17 +161,11 @@ export default function DocumentDetailPage({
     collectionPermission === "owner" ||
     collectionPermission === "editor";
 
-  const handleAddTag = async () => {
-    if (!newTagKey.trim() || !newTagValue.trim()) return;
-
+  const handleAddTag = async (key: string, value: string) => {
     await addTag.mutateAsync({
       id: document.id,
-      data: { tags: { [newTagKey]: newTagValue } },
+      data: { tags: { [key]: value } },
     });
-
-    setNewTagKey("");
-    setNewTagValue("");
-    setShowAddTagDialog(false);
   };
 
   const handleDeleteTag = async (tagId: string) => {
@@ -227,42 +205,61 @@ export default function DocumentDetailPage({
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col -m-4 md:-m-6">
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col -m-4 md:-m-6">
       {/* Header */}
       <header className="border-b bg-background">
-        {/* Breadcrumb */}
-        {document.collection_id && collection && (
-          <div className="flex items-center gap-1.5 px-4 lg:px-6 pt-3 pb-1 text-xs text-muted-foreground">
-            <Link
-              href="/collections"
-              className="hover:text-primary transition-colors"
-            >
-              Collections
-            </Link>
-            <ChevronRight className="h-3 w-3 shrink-0" />
-            <Link
-              href={`/collections/${document.collection_id}`}
-              className="hover:text-primary transition-colors truncate max-w-[200px]"
-            >
-              {collection.name}
-            </Link>
-            <ChevronRight className="h-3 w-3 shrink-0" />
-            <span className="text-foreground truncate">{document.name}</span>
-          </div>
-        )}
+        {/* Breadcrumb — always visible */}
+        <div className="flex items-center gap-1.5 px-4 lg:px-6 pt-3 pb-1 text-xs text-muted-foreground">
+          <Link
+            href="/documents"
+            className="hover:text-primary transition-colors"
+          >
+            Documents
+          </Link>
+          {document.collection_id && (
+            <>
+              <ChevronRight className="h-3 w-3 shrink-0" />
+              {collection?.name ? (
+                <Link
+                  href={`/collections/${document.collection_id}`}
+                  className="hover:text-primary transition-colors truncate max-w-[200px]"
+                >
+                  {collection.name}
+                </Link>
+              ) : collectionPending && !collectionError ? (
+                <Skeleton className="h-3.5 w-24" />
+              ) : (
+                <Link
+                  href={`/collections/${document.collection_id}`}
+                  className="hover:text-primary transition-colors truncate max-w-[200px]"
+                >
+                  Collection
+                </Link>
+              )}
+            </>
+          )}
+          <ChevronRight className="h-3 w-3 shrink-0" />
+          <span className="text-foreground truncate">{document.name}</span>
+        </div>
 
-        {/* Row 1: Navigation + Title + Review Actions */}
+        {/* Title row */}
         <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3">
           <div className="flex items-center gap-3 min-w-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
-              className="shrink-0"
+              className="shrink-0 h-8 w-8"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-lg font-semibold truncate">{document.name}</h1>
+            {/* Status badges — inline after title, hidden on small screens */}
+            <div className="hidden md:flex items-center gap-1.5 ml-1">
+              <StatusBadge status={document.parsing_status} type="parsing" showType />
+              <StatusBadge status={document.validation_status} type="validation" showType />
+              <StatusBadge status={document.review_status} type="review" showType />
+            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -306,126 +303,36 @@ export default function DocumentDetailPage({
                 )}
               </>
             )}
-          </div>
-        </div>
 
-        {/* Row 2: Status badges + Actions dropdown */}
-        <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-2.5 border-t border-border/50">
-          <div className="flex items-center gap-2">
-            <StatusBadge status={document.parsing_status} type="parsing" showType />
-            <StatusBadge status={document.validation_status} type="validation" showType />
-            <StatusBadge status={document.review_status} type="review" showType />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                {(triggerParsing.isPending || triggerValidation.isPending) ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <MoreVertical className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                Actions
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={handleReparse}
-                disabled={triggerParsing.isPending}
-              >
-                <RefreshCw className={cn("mr-2 h-4 w-4", triggerParsing.isPending && "animate-spin")} />
-                {triggerParsing.isPending ? "Re-Parsing..." : "Re-Parse"}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleRevalidate}
-                disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
-              >
-                <RefreshCw className={cn("mr-2 h-4 w-4", triggerValidation.isPending && "animate-spin")} />
-                {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Row 3: Tags (grid) */}
-        <div className="px-4 lg:px-6 py-3 border-t border-border/50 bg-muted/30 space-y-3">
-          {tags && tags.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-              {tags.map((tag) => (
-                <div
-                  key={tag.id}
-                  className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2 text-sm"
-                >
-                  <span className="flex items-center gap-2 min-w-0">
-                    <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="font-medium truncate">{tag.key}</span>
-                    <span className="text-muted-foreground truncate">{tag.value}</span>
-                  </span>
-                  {tag.source === "user" && (
-                    <button
-                      onClick={() => handleDeleteTag(tag.id)}
-                      className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
+            {/* Actions overflow menu — icon only */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  {(triggerParsing.isPending || triggerValidation.isPending) ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MoreVertical className="h-4 w-4" />
                   )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <span className="text-sm text-muted-foreground">No tags</span>
-          )}
-
-          <Dialog open={showAddTagDialog} onOpenChange={setShowAddTagDialog}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground">
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
-                Add Tag
-              </Button>
-            </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Tag</DialogTitle>
-                  <DialogDescription>
-                    Add a custom tag to this document for organization.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tag-key">Key</Label>
-                    <Input
-                      id="tag-key"
-                      placeholder="e.g., vendor, project"
-                      value={newTagKey}
-                      onChange={(e) => setNewTagKey(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tag-value">Value</Label>
-                    <Input
-                      id="tag-value"
-                      placeholder="e.g., Acme Corp, Q4 2024"
-                      value={newTagValue}
-                      onChange={(e) => setNewTagValue(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    onClick={handleAddTag}
-                    disabled={
-                      !newTagKey.trim() ||
-                      !newTagValue.trim() ||
-                      addTag.isPending
-                    }
-                  >
-                    {addTag.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Add Tag
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-          </Dialog>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={handleReparse}
+                  disabled={triggerParsing.isPending}
+                >
+                  <RefreshCw className={cn("mr-2 h-4 w-4", triggerParsing.isPending && "animate-spin")} />
+                  {triggerParsing.isPending ? "Re-Parsing..." : "Re-Parse"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleRevalidate}
+                  disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
+                >
+                  <RefreshCw className={cn("mr-2 h-4 w-4", triggerValidation.isPending && "animate-spin")} />
+                  {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
@@ -441,6 +348,12 @@ export default function DocumentDetailPage({
             isRevalidating={triggerValidation.isPending}
             onSaveEdits={canEditData ? handleSaveEdits : undefined}
             isSaving={updateDoc.isPending}
+            tags={tags}
+            onAddTag={handleAddTag}
+            isAddingTag={addTag.isPending}
+            onDeleteTag={handleDeleteTag}
+            onReparse={handleReparse}
+            isReparsing={triggerParsing.isPending}
           />
         ) : (
           // Desktop: Split view with PDF and tabs
@@ -478,6 +391,12 @@ export default function DocumentDetailPage({
                 isRevalidating={triggerValidation.isPending}
                 onSaveEdits={canEditData ? handleSaveEdits : undefined}
                 isSaving={updateDoc.isPending}
+                tags={tags}
+                onAddTag={handleAddTag}
+                isAddingTag={addTag.isPending}
+                onDeleteTag={handleDeleteTag}
+                onReparse={handleReparse}
+                isReparsing={triggerParsing.isPending}
               />
             </Panel>
           </PanelGroup>

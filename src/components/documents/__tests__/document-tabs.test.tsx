@@ -445,4 +445,86 @@ describe("DocumentTabs", () => {
       expect(screen.getByRole("button", { name: /edit/i })).toBeInTheDocument();
     });
   });
+
+  describe("retry parsing", () => {
+    it("shows Retry Parsing button when parsing failed and onReparse is provided", () => {
+      const doc = createMockDocument({ parsing_status: "failed" });
+
+      renderWithProviders(
+        <DocumentTabs
+          document={doc}
+          {...defaultProps}
+          parsingStatus="failed"
+          onReparse={vi.fn()}
+        />
+      );
+
+      expect(screen.getByRole("button", { name: /retry parsing/i })).toBeInTheDocument();
+    });
+
+    it("does not show Retry Parsing button when parsing succeeded", () => {
+      const doc = createMockDocument({
+        structured_data: createMockStructuredData(),
+      });
+
+      renderWithProviders(
+        <DocumentTabs
+          document={doc}
+          {...defaultProps}
+          onReparse={vi.fn()}
+        />
+      );
+
+      expect(screen.queryByRole("button", { name: /retry parsing/i })).not.toBeInTheDocument();
+    });
+
+    it("does not show Retry Parsing button when onReparse is not provided", () => {
+      const doc = createMockDocument({ parsing_status: "failed" });
+
+      renderWithProviders(
+        <DocumentTabs
+          document={doc}
+          {...defaultProps}
+          parsingStatus="failed"
+        />
+      );
+
+      expect(screen.queryByRole("button", { name: /retry parsing/i })).not.toBeInTheDocument();
+    });
+
+    it("calls onReparse when Retry Parsing button is clicked", async () => {
+      const user = userEvent.setup();
+      const onReparse = vi.fn();
+      const doc = createMockDocument({ parsing_status: "failed" });
+
+      renderWithProviders(
+        <DocumentTabs
+          document={doc}
+          {...defaultProps}
+          parsingStatus="failed"
+          onReparse={onReparse}
+        />
+      );
+
+      await user.click(screen.getByRole("button", { name: /retry parsing/i }));
+      expect(onReparse).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows Re-Parsing state when isReparsing is true", () => {
+      const doc = createMockDocument({ parsing_status: "failed" });
+
+      renderWithProviders(
+        <DocumentTabs
+          document={doc}
+          {...defaultProps}
+          parsingStatus="failed"
+          onReparse={vi.fn()}
+          isReparsing={true}
+        />
+      );
+
+      expect(screen.getByRole("button", { name: /re-parsing/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /re-parsing/i })).toBeDisabled();
+    });
+  });
 });
