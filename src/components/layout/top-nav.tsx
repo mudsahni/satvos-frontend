@@ -61,7 +61,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <FileStack className="h-4 w-4" />
           </div>
-          <span className="hidden sm:inline-block">DocFlow</span>
+          <span className="hidden sm:inline-block">Satvos</span>
         </Link>
       </div>
 

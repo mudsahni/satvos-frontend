@@ -1,6 +1,6 @@
-# DocFlow Design System
+# Satvos Design System
 
-A comprehensive guide to maintaining visual consistency across the DocFlow application.
+A comprehensive guide to maintaining visual consistency across the Satvos application.
 
 ---
 

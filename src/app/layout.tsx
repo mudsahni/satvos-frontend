@@ -10,7 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "DocFlow - Document Processing",
+  title: "Satvos - Document Processing",
   description: "Intelligent document processing and validation platform",
 };
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopNav } from "@/components/layout/top-nav";
+import { AppFooter } from "@/components/layout/app-footer";
 import { useAuthStore } from "@/store/auth-store";
 import { GlobalSearch } from "@/components/search/global-search";
 
@@ -56,8 +57,9 @@ export default function DashboardLayout({
         <AppSidebar />
         <div className="flex flex-1 flex-col">
           <TopNav onSearchClick={() => setSearchOpen(true)} />
-          <SidebarInset className="flex-1">
-            <main className="h-full overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
+          <SidebarInset className="flex-1 flex flex-col">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
+            <AppFooter />
           </SidebarInset>
         </div>
       </div>

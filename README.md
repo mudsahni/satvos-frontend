@@ -1,4 +1,4 @@
-# DocFlow
+# Satvos
 
 A modern, light-mode-first document processing and validation frontend built with Next.js 16, React 19, and Tailwind CSS. Inspired by Notion, Stripe, and Linear.
 
@@ -149,8 +149,8 @@ npm run test:coverage   # With coverage report
 Build and run the production Docker image:
 
 ```bash
-docker build -t docflow .
-docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1 docflow
+docker build -t satvos .
+docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1 satvos
 ```
 
 Uses a multi-stage build (deps → builder → runner) with Next.js standalone output.
