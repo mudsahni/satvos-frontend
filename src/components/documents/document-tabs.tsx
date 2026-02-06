@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, ShieldCheck, History, Loader2, Code, Pencil, CheckCircle, X } from "lucide-react";
+import { FileText, ShieldCheck, History, Loader2, Code, Pencil, CheckCircle, AlertCircle, X } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -117,6 +117,15 @@ export function DocumentTabs({
             >
               <FileText className="mr-2 h-4 w-4" />
               Extracted Data
+              {parsingStatus === "processing" && (
+                <Loader2 className="ml-2 h-3.5 w-3.5 animate-spin text-primary" />
+              )}
+              {parsingStatus === "completed" && hasData && (
+                <CheckCircle className="ml-2 h-3.5 w-3.5 text-success" />
+              )}
+              {parsingStatus === "failed" && (
+                <AlertCircle className="ml-2 h-3.5 w-3.5 text-error" />
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="validation"

@@ -85,8 +85,12 @@ export function CollectionHeader({
                 <FileText className="h-3.5 w-3.5" />
                 {documentCount ?? getCollectionDocumentCount(collection)} documents
               </span>
-              <span className="text-border">·</span>
-              <span>Created {formatDate(collection.created_at)}</span>
+              {formatDate(collection.created_at) !== "-" && (
+                <>
+                  <span className="text-border">·</span>
+                  <span>Created {formatDate(collection.created_at)}</span>
+                </>
+              )}
             </div>
           </div>
         </div>

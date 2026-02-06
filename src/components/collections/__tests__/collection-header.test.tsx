@@ -65,4 +65,29 @@ describe("CollectionHeader", () => {
     );
     expect(container.firstChild).toBeNull();
   });
+
+  it("shows created date when created_at is valid", () => {
+    renderWithProviders(<CollectionHeader collection={baseCollection} />);
+    expect(screen.getByText(/Created Jan 1, 2024/)).toBeInTheDocument();
+  });
+
+  it("hides created date when created_at is null", () => {
+    const collectionNoDate: Collection = {
+      ...baseCollection,
+      created_at: null as unknown as string,
+    };
+    renderWithProviders(<CollectionHeader collection={collectionNoDate} />);
+    expect(screen.queryByText(/Created/)).not.toBeInTheDocument();
+    // Dot separator should also be hidden
+    expect(screen.queryByText("·")).not.toBeInTheDocument();
+  });
+
+  it("hides created date when created_at is undefined", () => {
+    const collectionNoDate: Collection = {
+      ...baseCollection,
+      created_at: undefined as unknown as string,
+    };
+    renderWithProviders(<CollectionHeader collection={collectionNoDate} />);
+    expect(screen.queryByText(/Created/)).not.toBeInTheDocument();
+  });
 });

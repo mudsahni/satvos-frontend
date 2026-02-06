@@ -9,11 +9,17 @@ import {
   Loader2,
   ShieldCheck,
   Filter,
+  ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   ValidationResult,
   getValidationSummary,
@@ -53,68 +59,91 @@ function getRuleName(result: ValidationResult): string {
 }
 
 function ValidationResultCard({ result }: { result: ValidationResult }) {
+  const [isOpen, setIsOpen] = useState(false);
   const severity = getValidationSeverity(result);
   const ruleType = getRuleType(result);
   const ruleName = getRuleName(result);
 
+  const hasDetails = result.message || (!result.passed && (result.expected_value || result.actual_value));
+
   return (
-    <div
-      className={cn(
-        "p-4 border rounded-lg transition-all",
-        result.passed
-          ? "border-transparent bg-success-bg"
-          : severity === "error"
-          ? "border-transparent bg-error-bg"
-          : "border-transparent bg-warning-bg"
-      )}
-    >
-      <div className="flex items-start gap-3">
-        {result.passed ? (
-          <CheckCircle className="h-5 w-5 text-success mt-0.5 shrink-0" />
-        ) : severity === "error" ? (
-          <XCircle className="h-5 w-5 text-error mt-0.5 shrink-0" />
-        ) : (
-          <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div
+        className={cn(
+          "rounded-lg border bg-card transition-all",
+          result.passed
+            ? "border-border/50"
+            : severity === "error"
+            ? "border-l-[3px] border-l-error border-y-border/50 border-r-border/50"
+            : "border-l-[3px] border-l-warning border-y-border/50 border-r-border/50"
         )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium">{ruleName}</span>
-            <Badge variant="outline" className="text-xs capitalize">
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            className={cn(
+              "flex items-center gap-3 w-full px-3 py-2.5 text-left transition-colors",
+              hasDetails && "cursor-pointer hover:bg-muted/50",
+              result.passed && "opacity-75"
+            )}
+          >
+            {result.passed ? (
+              <CheckCircle className="h-4 w-4 text-success shrink-0" />
+            ) : severity === "error" ? (
+              <XCircle className="h-4 w-4 text-error shrink-0" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
+            )}
+            <span className={cn(
+              "text-sm font-medium truncate",
+              result.passed && "text-muted-foreground font-normal"
+            )}>
+              {ruleName}
+            </span>
+            <Badge variant="outline" className="text-[11px] capitalize shrink-0 px-1.5 py-0">
               {ruleType.replace("_", "-")}
             </Badge>
             {result.reconciliation_critical && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-[11px] shrink-0 px-1.5 py-0">
                 Recon Critical
               </Badge>
             )}
+            <code className="ml-auto text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0 hidden sm:block">
+              {result.field_path}
+            </code>
+            {hasDetails && (
+              <ChevronRight className={cn(
+                "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform",
+                isOpen && "rotate-90"
+              )} />
+            )}
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 pt-0 ml-7 space-y-2 border-t border-border/30 mt-0 pt-2">
+            <code className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded sm:hidden">
+              {result.field_path}
+            </code>
+            <p className="text-sm text-muted-foreground">{result.message}</p>
+            {!result.passed && (result.expected_value || result.actual_value) && (
+              <div className="text-sm space-y-1 font-mono">
+                {result.expected_value && (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs text-muted-foreground w-14 shrink-0">Expected</span>
+                    <span className="text-xs text-success break-all">{result.expected_value}</span>
+                  </div>
+                )}
+                {result.actual_value && (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs text-muted-foreground w-14 shrink-0">Actual</span>
+                    <span className="text-xs text-error break-all">{result.actual_value}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Field: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{result.field_path}</code>
-          </p>
-          <p className="text-sm mt-2">{result.message}</p>
-          {!result.passed && (result.expected_value || result.actual_value) && (
-            <div className="mt-3 text-sm space-y-1 p-2 bg-background/50 rounded">
-              {result.expected_value && (
-                <p className="flex items-start gap-2">
-                  <span className="text-muted-foreground w-16 shrink-0">Expected:</span>
-                  <code className="bg-muted px-1.5 py-0.5 rounded text-xs break-all">
-                    {result.expected_value}
-                  </code>
-                </p>
-              )}
-              {result.actual_value && (
-                <p className="flex items-start gap-2">
-                  <span className="text-muted-foreground w-16 shrink-0">Actual:</span>
-                  <code className="bg-muted px-1.5 py-0.5 rounded text-xs break-all">
-                    {result.actual_value}
-                  </code>
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+        </CollapsibleContent>
       </div>
-    </div>
+    </Collapsible>
   );
 }
 
@@ -185,7 +214,7 @@ export function ValidationTab({
   return (
     <div className="space-y-6">
       {/* Summary stats */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Card
           className={cn(
             "cursor-pointer transition-all",
@@ -193,9 +222,9 @@ export function ValidationTab({
           )}
           onClick={() => setFilter("all")}
         >
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold">{summary.total}</p>
-            <p className="text-sm text-muted-foreground">Total Rules</p>
+          <CardContent className="px-3 py-2.5 text-center">
+            <p className="text-2xl font-bold">{summary.total}</p>
+            <p className="text-xs text-muted-foreground">Total Rules</p>
           </CardContent>
         </Card>
         <Card
@@ -205,9 +234,9 @@ export function ValidationTab({
           )}
           onClick={() => setFilter("passed")}
         >
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-success">{summary.passed}</p>
-            <p className="text-sm text-success">Passed</p>
+          <CardContent className="px-3 py-2.5 text-center">
+            <p className="text-2xl font-bold text-success">{summary.passed}</p>
+            <p className="text-xs text-success">Passed</p>
           </CardContent>
         </Card>
         <Card
@@ -217,9 +246,9 @@ export function ValidationTab({
           )}
           onClick={() => setFilter("warnings")}
         >
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-warning">{summary.warnings}</p>
-            <p className="text-sm text-warning">Warnings</p>
+          <CardContent className="px-3 py-2.5 text-center">
+            <p className="text-2xl font-bold text-warning">{summary.warnings}</p>
+            <p className="text-xs text-warning">Warnings</p>
           </CardContent>
         </Card>
         <Card
@@ -229,9 +258,9 @@ export function ValidationTab({
           )}
           onClick={() => setFilter("errors")}
         >
-          <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-error">{summary.errors}</p>
-            <p className="text-sm text-error">Errors</p>
+          <CardContent className="px-3 py-2.5 text-center">
+            <p className="text-2xl font-bold text-error">{summary.errors}</p>
+            <p className="text-xs text-error">Errors</p>
           </CardContent>
         </Card>
       </div>
@@ -292,7 +321,7 @@ export function ValidationTab({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {sortedResults.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               No results match the selected filter.
