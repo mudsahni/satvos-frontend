@@ -161,7 +161,9 @@ export function DocumentsTable({
             <TableHead>
               <SortableHeader field="name">Name</SortableHeader>
             </TableHead>
-            <TableHead>Vendor</TableHead>
+            <TableHead>
+              <span className="-ml-3 text-sm font-medium">Vendor</span>
+            </TableHead>
             <TableHead>
               <SortableHeader field="validation_status">
                 Validation

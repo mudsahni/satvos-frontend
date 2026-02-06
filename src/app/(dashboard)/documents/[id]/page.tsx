@@ -13,6 +13,8 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
+  ChevronRight,
+  MoreVertical,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Panel,
   Group as PanelGroup,
@@ -222,6 +230,27 @@ export default function DocumentDetailPage({
     <div className="h-[calc(100vh-4rem)] flex flex-col -m-4 md:-m-6">
       {/* Header */}
       <header className="border-b bg-background">
+        {/* Breadcrumb */}
+        {document.collection_id && collection && (
+          <div className="flex items-center gap-1.5 px-4 lg:px-6 pt-3 pb-1 text-xs text-muted-foreground">
+            <Link
+              href="/collections"
+              className="hover:text-primary transition-colors"
+            >
+              Collections
+            </Link>
+            <ChevronRight className="h-3 w-3 shrink-0" />
+            <Link
+              href={`/collections/${document.collection_id}`}
+              className="hover:text-primary transition-colors truncate max-w-[200px]"
+            >
+              {collection.name}
+            </Link>
+            <ChevronRight className="h-3 w-3 shrink-0" />
+            <span className="text-foreground truncate">{document.name}</span>
+          </div>
+        )}
+
         {/* Row 1: Navigation + Title + Review Actions */}
         <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -233,17 +262,7 @@ export default function DocumentDetailPage({
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold truncate">{document.name}</h1>
-              {document.collection_id && (
-                <Link
-                  href={`/collections/${document.collection_id}`}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  View Collection
-                </Link>
-              )}
-            </div>
+            <h1 className="text-lg font-semibold truncate">{document.name}</h1>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -290,69 +309,79 @@ export default function DocumentDetailPage({
           </div>
         </div>
 
-        {/* Row 2: Status badges + Re-parse / Re-validate */}
-        <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-2 border-t border-border/50">
+        {/* Row 2: Status badges + Actions dropdown */}
+        <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-2.5 border-t border-border/50">
           <div className="flex items-center gap-2">
             <StatusBadge status={document.parsing_status} type="parsing" showType />
             <StatusBadge status={document.validation_status} type="validation" showType />
             <StatusBadge status={document.review_status} type="review" showType />
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReparse}
-              disabled={triggerParsing.isPending}
-            >
-              <RefreshCw className={cn("mt-0.5 h-3 w-3", triggerParsing.isPending && "animate-spin")} />
-              {triggerParsing.isPending ? "Re-arsing..." : "Re-Parse"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRevalidate}
-              disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
-            >
-              <RefreshCw className={cn("mt-0.5 h-3 w-3", triggerValidation.isPending && "animate-spin")} />
-              {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                {(triggerParsing.isPending || triggerValidation.isPending) ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <MoreVertical className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={handleReparse}
+                disabled={triggerParsing.isPending}
+              >
+                <RefreshCw className={cn("mr-2 h-4 w-4", triggerParsing.isPending && "animate-spin")} />
+                {triggerParsing.isPending ? "Re-Parsing..." : "Re-Parse"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleRevalidate}
+                disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
+              >
+                <RefreshCw className={cn("mr-2 h-4 w-4", triggerValidation.isPending && "animate-spin")} />
+                {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {/* Row 3: Tags (wrapping) */}
-        <div className="px-4 lg:px-6 py-2 border-t border-border/50 bg-muted/30">
-          <div className="flex flex-wrap items-center gap-2">
-            {tags && tags.length > 0 ? (
-              tags.map((tag) => (
-                <Badge
+        {/* Row 3: Tags (grid) */}
+        <div className="px-4 lg:px-6 py-3 border-t border-border/50 bg-muted/30 space-y-3">
+          {tags && tags.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              {tags.map((tag) => (
+                <div
                   key={tag.id}
-                  variant="secondary"
-                  className="flex items-center gap-1.5"
+                  className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2 text-sm"
                 >
-                  <Tag className="h-3 w-3" />
-                  <span className="font-medium">{tag.key}:</span>
-                  <span className="font-normal">{tag.value}</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="font-medium truncate">{tag.key}</span>
+                    <span className="text-muted-foreground truncate">{tag.value}</span>
+                  </span>
                   {tag.source === "user" && (
                     <button
                       onClick={() => handleDeleteTag(tag.id)}
-                      className="ml-0.5 hover:text-destructive transition-colors"
+                      className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-sm text-muted-foreground">No tags</span>
-            )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">No tags</span>
+          )}
 
-            <Dialog open={showAddTagDialog} onOpenChange={setShowAddTagDialog}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-xs">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add Tag
-                </Button>
-              </DialogTrigger>
+          <Dialog open={showAddTagDialog} onOpenChange={setShowAddTagDialog}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground">
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Add Tag
+              </Button>
+            </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Tag</DialogTitle>
@@ -396,8 +425,7 @@ export default function DocumentDetailPage({
                   </Button>
                 </DialogFooter>
               </DialogContent>
-            </Dialog>
-          </div>
+          </Dialog>
         </div>
       </header>
 

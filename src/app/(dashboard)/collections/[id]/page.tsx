@@ -42,6 +42,12 @@ export default function CollectionDetailPage({
   const [reviewStatus, setReviewStatus] = useState<ReviewStatusFilter>("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // Sort state
+  type SortField = "name" | "created_at" | "validation_status" | "review_status";
+  type SortOrder = "asc" | "desc";
+  const [sortField, setSortField] = useState<SortField | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+
   const { data: collection, isLoading: collectionLoading } = useCollection(id);
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({
     collection_id: id,
@@ -97,6 +103,11 @@ export default function CollectionDetailPage({
     }
   };
 
+  const handleSort = (field: SortField, order: SortOrder) => {
+    setSortField(field);
+    setSortOrder(order);
+  };
+
   // Filter documents based on filters
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
@@ -123,6 +134,30 @@ export default function CollectionDetailPage({
       return true;
     });
   }, [documents, search, validationStatus, reviewStatus]);
+
+  // Sort filtered documents
+  const sortedDocuments = useMemo(() => {
+    if (!sortField) return filteredDocuments;
+
+    return [...filteredDocuments].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "name":
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case "validation_status":
+          cmp = (a.validation_status || "").localeCompare(b.validation_status || "");
+          break;
+        case "review_status":
+          cmp = (a.review_status || "").localeCompare(b.review_status || "");
+          break;
+        case "created_at":
+          cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+      }
+      return sortOrder === "asc" ? cmp : -cmp;
+    });
+  }, [filteredDocuments, sortField, sortOrder]);
 
   if (collectionLoading) {
     return (
@@ -217,9 +252,12 @@ export default function CollectionDetailPage({
             </div>
           ) : (
             <DocumentsTable
-              documents={filteredDocuments}
+              documents={sortedDocuments}
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
+              onSort={handleSort}
+              sortField={sortField}
+              sortOrder={sortOrder}
             />
           )}
         </CardContent>
