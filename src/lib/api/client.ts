@@ -3,6 +3,24 @@ import { API_URL } from "@/lib/constants";
 import { getAuthState, useAuthStore } from "@/store/auth-store";
 import { ApiResponse } from "@/types/api";
 
+// Renew the middleware auth cookie (called on login and token refresh)
+function renewAuthCookie() {
+  if (typeof document !== "undefined") {
+    document.cookie = "satvos-auth-state=authenticated; path=/; max-age=86400";
+  }
+}
+
+// Clear the middleware auth cookie and redirect to login with context
+function handleSessionExpired() {
+  if (typeof document !== "undefined") {
+    document.cookie = "satvos-auth-state=; path=/; max-age=0";
+  }
+  if (typeof window !== "undefined") {
+    const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/login?session_expired=true&returnUrl=${returnUrl}`;
+  }
+}
+
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -85,9 +103,7 @@ apiClient.interceptors.response.use(
     if (!refreshToken) {
       isRefreshing = false;
       logout();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      handleSessionExpired();
       return Promise.reject(error);
     }
 
@@ -103,6 +119,9 @@ apiClient.interceptors.response.use(
         refresh_token,
       });
 
+      // Renew the middleware cookie so it stays in sync with tokens
+      renewAuthCookie();
+
       processQueue(null, access_token);
 
       if (originalRequest.headers) {
@@ -113,9 +132,7 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError as Error, null);
       logout();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      handleSessionExpired();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
@@ -152,4 +169,5 @@ export function isApiError(error: unknown, code: string): boolean {
   return false;
 }
 
+export { renewAuthCookie };
 export default apiClient;

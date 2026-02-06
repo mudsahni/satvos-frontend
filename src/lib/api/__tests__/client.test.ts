@@ -1,5 +1,5 @@
 import { AxiosError, AxiosHeaders } from "axios";
-import { getErrorMessage, isApiError } from "@/lib/api/client";
+import { getErrorMessage, isApiError, renewAuthCookie } from "@/lib/api/client";
 import type { ApiResponse } from "@/types/api";
 
 // Helper to create an AxiosError with a typed response
@@ -158,5 +158,23 @@ describe("isApiError", () => {
   it("returns false when there is no response (network error)", () => {
     const error = createAxiosError(undefined, "Network Error");
     expect(isApiError(error, "ANY_CODE")).toBe(false);
+  });
+});
+
+describe("renewAuthCookie", () => {
+  beforeEach(() => {
+    // Reset document.cookie
+    document.cookie = "satvos-auth-state=; path=/; max-age=0";
+  });
+
+  it("sets the satvos-auth-state cookie to authenticated", () => {
+    renewAuthCookie();
+    expect(document.cookie).toContain("satvos-auth-state=authenticated");
+  });
+
+  it("can be called multiple times without error", () => {
+    renewAuthCookie();
+    renewAuthCookie();
+    expect(document.cookie).toContain("satvos-auth-state=authenticated");
   });
 });

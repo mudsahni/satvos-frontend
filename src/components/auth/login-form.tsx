@@ -21,13 +21,14 @@ import { loginSchema, type LoginFormData } from "@/lib/utils/validation";
 import { login } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
-import { getErrorMessage } from "@/lib/api/client";
+import { getErrorMessage, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl") || "/";
+  const sessionExpired = searchParams.get("session_expired") === "true";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const loginToStore = useAuthStore((state) => state.login);
@@ -82,7 +83,7 @@ export function LoginForm() {
       }
 
       // Set cookie for middleware
-      document.cookie = "satvos-auth-state=authenticated; path=/; max-age=86400";
+      renewAuthCookie();
 
       // Redirect to return URL or dashboard
       router.push(returnUrl);
@@ -104,6 +105,13 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {sessionExpired && (
+            <Alert variant="warning">
+              <AlertDescription>
+                Your session has expired. Please sign in again to continue.
+              </AlertDescription>
+            </Alert>
+          )}
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
