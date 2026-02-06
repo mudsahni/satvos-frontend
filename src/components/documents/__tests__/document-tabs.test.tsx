@@ -248,6 +248,61 @@ describe("DocumentTabs", () => {
     });
   });
 
+  describe("data tab status indicator", () => {
+    it("shows check icon on data tab when parsing completed and data exists", () => {
+      const doc = createMockDocument({
+        structured_data: createMockStructuredData(),
+        parsing_status: "completed",
+      });
+
+      renderWithProviders(
+        <DocumentTabs document={doc} {...defaultProps} parsingStatus="completed" />
+      );
+
+      // The data tab should contain a CheckCircle (success) SVG
+      const dataTab = screen.getByRole("tab", { name: /extracted data/i });
+      const successIcon = dataTab.querySelector(".text-success");
+      expect(successIcon).toBeInTheDocument();
+    });
+
+    it("shows spinner icon on data tab when parsing is in progress", () => {
+      const doc = createMockDocument({ parsing_status: "processing" });
+
+      renderWithProviders(
+        <DocumentTabs document={doc} {...defaultProps} parsingStatus="processing" />
+      );
+
+      const dataTab = screen.getByRole("tab", { name: /extracted data/i });
+      const spinner = dataTab.querySelector(".animate-spin");
+      expect(spinner).toBeInTheDocument();
+    });
+
+    it("shows error icon on data tab when parsing failed", () => {
+      const doc = createMockDocument({ parsing_status: "failed" });
+
+      renderWithProviders(
+        <DocumentTabs document={doc} {...defaultProps} parsingStatus="failed" />
+      );
+
+      const dataTab = screen.getByRole("tab", { name: /extracted data/i });
+      const errorIcon = dataTab.querySelector(".text-error");
+      expect(errorIcon).toBeInTheDocument();
+    });
+
+    it("shows no indicator on data tab when parsing is pending with no data", () => {
+      const doc = createMockDocument({ parsing_status: "pending" });
+
+      renderWithProviders(
+        <DocumentTabs document={doc} {...defaultProps} parsingStatus="pending" />
+      );
+
+      const dataTab = screen.getByRole("tab", { name: /extracted data/i });
+      expect(dataTab.querySelector(".text-success")).not.toBeInTheDocument();
+      expect(dataTab.querySelector(".animate-spin")).not.toBeInTheDocument();
+      expect(dataTab.querySelector(".text-error")).not.toBeInTheDocument();
+    });
+  });
+
   describe("saving", () => {
     it("calls onSaveEdits with updated data when Save is clicked", async () => {
       const user = userEvent.setup();

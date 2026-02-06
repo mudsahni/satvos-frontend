@@ -122,11 +122,15 @@ SidebarProvider
 ## Document Detail Page
 
 The document detail page (`/documents/[id]`) features:
+- Breadcrumb navigation: `Collections > Collection Name > Document Name`
+- Status badges row with Actions dropdown (Re-Parse, Re-Validate)
+- Tags section: 3-column grid layout with card-style tags, Add Tag button below
 - Split-pane view using `react-resizable-panels`
 - Left panel: PDF viewer (with Google Docs viewer fallback for S3)
 - Right panel: Tabbed interface (Extracted Data, Validations, History)
+- Data tab has status indicators: spinner (parsing), check (data ready), error (failed)
+- Validation tab: compact expandable result cards with left-border color accent
 - Mobile: Stacked tabs instead of split view
-- Footer: Tags and review actions
 - Keyboard shortcuts: A=approve, R=reject
 
 ## Types
@@ -153,6 +157,23 @@ const payload = decodeJwtPayload(accessToken);
 const userId = (payload?.user_id ?? payload?.sub) as string;
 const user = await getUser(userId);
 ```
+
+### Token Refresh & Session Management
+
+Two auth layers work together:
+
+- **Middleware cookie** (`satvos-auth-state`): A 24-hour cookie checked by Next.js middleware on page navigations. Renewed on login and every successful token refresh via `renewAuthCookie()`.
+- **API client interceptor** (`src/lib/api/client.ts`): On 401 responses, automatically refreshes the access token using the refresh token, queues concurrent requests, and retries. On refresh failure, calls `handleSessionExpired()`.
+
+**Session expiry flow:**
+1. API call returns 401 → interceptor tries `POST /auth/refresh`
+2. If refresh succeeds → tokens updated, cookie renewed, original request retried
+3. If refresh fails (or no refresh token) → `logout()` clears store, cookie cleared, redirect to `/login?session_expired=true&returnUrl=<current_path>`
+4. Login page shows "Your session has expired" warning banner and restores the user's location after re-login
+
+**Key functions in `src/lib/api/client.ts`:**
+- `renewAuthCookie()` — sets the middleware cookie (exported, also used by login form)
+- `handleSessionExpired()` — clears cookie, redirects to login with context
 
 ## Review API
 
@@ -196,14 +217,15 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - **Setup**: `src/test/setup.ts` (mocks for next/navigation, next-themes, ResizeObserver, etc.)
 - **Test Utils**: `src/test/test-utils.tsx` (renderWithProviders with QueryClient + TooltipProvider)
 - **Location**: Tests live in `__tests__/` directories next to their source files
-- **Count**: 420+ tests across 21 test files
+- **Count**: 430+ tests across 22 test files
 
 ### Test Coverage Areas
 - Utility functions (format, validation, cn)
 - Constants and type validations
 - Zustand stores (auth-store, ui-store)
-- API client (interceptors, error handling)
+- API client (interceptors, error handling, renewAuthCookie)
 - React hooks (use-toast)
+- Auth components (login-form: session expired banner, form rendering)
 - UI components (status-badge, history-tab, collection-card, collection-header, bulk-actions-bar, breadcrumbs, structured-data-viewer, document-tabs)
 - API functions (documents: addDocumentTag, getDocumentTags)
 - Structured data utilities (applyEditsToStructuredData, getValueAtPath, setValueAtPath)
@@ -244,6 +266,10 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Bulk actions bar on collection detail page (approve/reject/delete selected)
 - [x] Tags API fix: `{ tags: Record<string, string> }` format, separate `useDocumentTags` fetch
 - [x] Editable extracted data with auto re-validation (Edit → modify fields → Save → auto validate)
+- [x] Token refresh: cookie renewed on refresh, session expired banner + return URL on forced logout
+- [x] Collection detail: client-side sorting, hidden date when unavailable, consistent table headers
+- [x] Document detail: breadcrumb nav, Actions dropdown, tag grid layout, data tab status indicators
+- [x] Validation tab: compact expandable result cards with left-border accent, smaller summary cards
 
 ### In Progress / Next Steps
 1. **Design System Implementation** - Apply consistent spacing, sizing, colors across all components per `DESIGN_SYSTEM.md`
