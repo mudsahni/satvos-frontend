@@ -17,6 +17,14 @@ const protectedRoutes = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Proxy /api/v1/* requests to the backend at runtime
+  if (pathname.startsWith("/api/v1")) {
+    const backendUrl =
+      process.env.BACKEND_URL || "http://localhost:8080";
+    const url = new URL(pathname + request.nextUrl.search, backendUrl);
+    return NextResponse.rewrite(url);
+  }
+
   // Check if the path starts with any protected route
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
@@ -50,11 +58,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
