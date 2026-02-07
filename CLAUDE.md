@@ -274,7 +274,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - **Setup**: `src/test/setup.ts` (mocks for next/navigation, next-themes, ResizeObserver, etc.)
 - **Test Utils**: `src/test/test-utils.tsx` (renderWithProviders with QueryClient + TooltipProvider)
 - **Location**: Tests live in `__tests__/` directories next to their source files
-- **Count**: 497 tests across 24+ test files
+- **Count**: 529+ tests across 30 test files
 
 ### Test Coverage Areas
 - Utility functions (format, validation, cn)
@@ -289,6 +289,9 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - Page components (document detail page: breadcrumb states, collection loading/error/success)
 - API functions (documents: addDocumentTag, getDocumentTags)
 - Structured data utilities (applyEditsToStructuredData, getValueAtPath, setValueAtPath)
+- Global search (document/collection/page search, keyboard nav, data fetching)
+- Needs Attention utilities (needsAttention, matchesFilter)
+- Stats API (getStats)
 
 ## CI/CD & Docker
 
@@ -353,6 +356,11 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Icon spacing cleanup: removed redundant `mr-2 h-4 w-4` from all Button/DropdownMenuItem icons
 - [x] Vendor column fallback: tries structured_data.seller.name → parsed_data.seller.name.value → tags seller_name
 - [x] Dashboard greeting banner with time-based greeting and document stack illustration
+- [x] Client-side search: Documents page (dual-query: paginated + fetch-all), Collections page (limit 1000), Needs Attention page
+- [x] Global search (Cmd+K) enhanced: searches real documents and collections, grouped results by type
+- [x] Form field styling: Input/Select use `bg-background shadow-sm` for contrast on tinted canvas
+- [x] History tab: UserName component resolves user IDs to full names via `useUser()` hook
+- [x] Dark mode card contrast bump (`--card` lightness 9% → 11%), content canvas tint (`bg-muted/50`)
 
 ### In Progress / Next Steps
 1. **Extracted Data Viewer** - Fix to work with actual API response format (user will provide sample response)
@@ -367,6 +375,16 @@ Location: `src/app/(dashboard)/upload/page.tsx`
 - Auto-create documents option
 - Parse mode selection (single/dual)
 - Uses `useUpload` hook from `src/lib/hooks/use-upload.ts`
+
+### Known API Limitations & Client-Side Search
+
+The API does **not** support `search`, `parsing_status`, `validation_status`, or `review_status` query params on list endpoints (confirmed via swagger.json). Only `offset`, `limit`, and `collection_id` (documents only) are supported server-side.
+
+**Pattern**: When search or filters are active, fetch all items client-side and filter with `useMemo`:
+- **Documents page**: Dual-query — uses normal `useDocuments()` when idle, switches to a fetch-all `useQuery` (paginating through all API pages with `Promise.all`) when searching. Status filters also applied client-side.
+- **Collections page**: Fetches with `limit: 1000` when search is active, filters by name/description.
+- **Needs Attention page**: Always fetches all documents, filters with `matchesFilter()` from `src/lib/utils/needs-attention.ts`.
+- **Global search (Cmd+K)**: Fetches all documents + collections when dialog opens (cached 2 min), filters client-side, groups results by type.
 
 ### Known Issues
 - PDF viewer may need CORS configuration for S3 (Google Docs viewer fallback available)

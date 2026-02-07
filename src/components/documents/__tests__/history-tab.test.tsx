@@ -1,7 +1,13 @@
+import { vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "@/test/test-utils";
 import { HistoryTab } from "../history-tab";
 import { Document } from "@/types/document";
+
+// Mock UserName so it renders the raw ID without making API calls
+vi.mock("@/components/ui/user-name", () => ({
+  UserName: ({ id }: { id: string }) => <>{id}</>,
+}));
 
 // Helper to create a base Document with all required fields
 function createMockDocument(overrides: Partial<Document> = {}): Document {

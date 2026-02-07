@@ -250,7 +250,7 @@ function NeedsAttentionContent() {
           onValueChange={(value) => { setFilterStatus(value as AttentionFilter); setPage(1); }}
         >
           <SelectTrigger className="w-[180px]">
-            <Filter />
+            <Filter className="h-4 w-4 text-muted-foreground" />
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>

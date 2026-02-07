@@ -235,7 +235,9 @@ All spacing is based on a **4px** base unit.
 
 ### Design Philosophy
 
-The design system follows a **flat, borderless** approach. Cards, buttons, and inputs do not use shadows at rest. Shadows are reserved for elevated overlays (dropdowns, modals) and opt-in interactive hover states via the `.card-hover` utility.
+The design system follows a **flat, borderless** approach. Cards and buttons do not use shadows at rest. Shadows are reserved for elevated overlays (dropdowns, modals) and opt-in interactive hover states via the `.card-hover` utility.
+
+**Form fields (Input, Select)** use `bg-background shadow-sm` — a solid white fill with a subtle shadow. This ensures they stand out against the tinted content canvas (`bg-muted/50`) on pages where inputs are not inside a card. In dark mode, `bg-background` gives inputs a recessed "well" appearance inside lighter cards.
 
 **Content canvas**: The dashboard content area uses `bg-muted/50` to create a subtle tinted canvas behind white cards. In dark mode, cards use a lighter shade (`--card: 220 38% 11%`) against the darker page background (`--background: 222 47% 6%`), giving a ~5% lightness gap for natural depth without shadows.
 
@@ -243,7 +245,8 @@ The design system follows a **flat, borderless** approach. Cards, buttons, and i
 
 | Level | Token | CSS | Usage |
 |-------|-------|-----|-------|
-| 0 | none | `shadow-none` | Default for cards, buttons, inputs |
+| 0 | none | `shadow-none` | Default for cards, buttons |
+| 0.5 | sm | `shadow-sm` | Form fields (Input, Select) |
 | 1 | soft-sm | `0 1px 2px 0 rgb(0 0 0 / 0.05)` | Subtle lift (opt-in) |
 | 2 | soft | `0 1px 3px 0 rgb(0 0 0 / 0.1)` | *Not used at rest* |
 | 3 | soft-md | `0 4px 6px -1px rgb(0 0 0 / 0.1)` | `.card-hover` on hover |
