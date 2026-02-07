@@ -21,8 +21,6 @@ import {
   useReviewDocument,
   useDeleteDocument,
 } from "@/lib/hooks/use-documents";
-import { useAuthStore } from "@/store/auth-store";
-import { canUpload } from "@/lib/constants";
 
 interface CollectionDetailPageProps {
   params: Promise<{ id: string }>;
@@ -32,7 +30,6 @@ export default function CollectionDetailPage({
   params,
 }: CollectionDetailPageProps) {
   const { id } = use(params);
-  const { user } = useAuthStore();
 
   // Filter state
   const [search, setSearch] = useState("");
@@ -195,7 +192,10 @@ export default function CollectionDetailPage({
     );
   }
 
-  const canUploadDocs = user && canUpload(user.role);
+  // Backend provides effective permission — editors and owners can upload/manage
+  const collectionPermission = collection?.user_permission;
+  const canManage =
+    collectionPermission === "owner" || collectionPermission === "editor";
 
   return (
     <div className="space-y-6">
@@ -203,7 +203,7 @@ export default function CollectionDetailPage({
       <CollectionHeader
         collection={collection}
         isLoading={collectionLoading}
-        canUpload={canUploadDocs || false}
+        canUpload={canManage}
         documentCount={documents.length}
       />
 
@@ -219,8 +219,8 @@ export default function CollectionDetailPage({
         total={documents.length}
       />
 
-      {/* Bulk Actions */}
-      {selectedIds.length > 0 && (
+      {/* Bulk Actions — only for editors/owners */}
+      {canManage && selectedIds.length > 0 && (
         <BulkActionsBar
           selectedIds={selectedIds}
           onDeselect={() => setSelectedIds([])}
@@ -250,7 +250,7 @@ export default function CollectionDetailPage({
                 This collection doesn&apos;t have any documents yet. Upload
                 your first document to get started.
               </p>
-              {canUploadDocs && (
+              {canManage && (
                 <Button asChild className="mt-4">
                   <Link href={`/upload?collection=${id}`}>
                     <Upload />
@@ -262,8 +262,8 @@ export default function CollectionDetailPage({
           ) : (
             <DocumentsTable
               documents={sortedDocuments}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
+              selectedIds={canManage ? selectedIds : []}
+              onSelectionChange={canManage ? setSelectedIds : undefined}
               onSort={handleSort}
               sortField={sortField}
               sortOrder={sortOrder}

@@ -30,10 +30,6 @@ vi.mock("@/lib/hooks/use-collections", () => ({
   useCollection: vi.fn(),
 }));
 
-vi.mock("@/store/auth-store", () => ({
-  useAuthStore: vi.fn(() => ({ user: { id: "u1", role: "admin" } })),
-}));
-
 vi.mock("@/lib/hooks/use-mobile", () => ({
   useIsMobile: vi.fn(() => true),
 }));

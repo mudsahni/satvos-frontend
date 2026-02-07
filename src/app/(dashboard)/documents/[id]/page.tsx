@@ -53,8 +53,6 @@ import {
 import { StructuredInvoiceData } from "@/types/document";
 import { useFileUrl } from "@/lib/hooks/use-files";
 import { useCollection } from "@/lib/hooks/use-collections";
-import { useAuthStore } from "@/store/auth-store";
-import { hasRole, ROLES } from "@/lib/constants";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { PDFViewer } from "@/components/documents/pdf-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
@@ -71,7 +69,6 @@ export default function DocumentDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const isMobile = useIsMobile();
-  const { user } = useAuthStore();
 
   const { data: document, isLoading } = useDocument(id);
   const { data: tags } = useDocumentTags(id);
@@ -153,13 +150,10 @@ export default function DocumentDetailPage({
     );
   }
 
-  // Permission check: allow edit if user is admin/manager OR has editor/owner on the collection
-  const userRole = user?.role;
+  // Permission check: backend provides the effective permission on the collection
   const collectionPermission = collection?.user_permission;
   const canEditData =
-    (userRole && hasRole(userRole, ROLES.MEMBER)) ||
-    collectionPermission === "owner" ||
-    collectionPermission === "editor";
+    collectionPermission === "owner" || collectionPermission === "editor";
 
   const handleAddTag = async (key: string, value: string) => {
     await addTag.mutateAsync({
