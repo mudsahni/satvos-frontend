@@ -27,41 +27,60 @@ function formatToday(): string {
   });
 }
 
-/** Decorative stacked documents illustration (pure CSS) */
+/** Decorative stacked documents — diagonally placed on the right, slightly clipped */
 function DocumentStack() {
   return (
-    <div className="relative w-36 h-28 shrink-0 hidden sm:block" aria-hidden="true">
-      {/* Back document — rotated left */}
-      <div className="absolute bottom-1 left-2 w-24 h-[4.5rem] rounded-lg bg-white/10 border border-white/15 -rotate-6 shadow-sm">
-        <div className="p-2.5 space-y-1.5">
-          <div className="h-1 w-10 rounded-full bg-white/15" />
-          <div className="h-1 w-14 rounded-full bg-white/10" />
-          <div className="h-1 w-8 rounded-full bg-white/10" />
+    <div
+      className="pointer-events-none absolute right-52 -bottom-20 hidden md:block"
+      aria-hidden="true"
+      style={{ transform: "rotate(-14deg)" }}
+    >
+      {/* Furthest back document — smaller */}
+      <div className="absolute bottom-0 -left-6 w-32 h-48 rounded-xl bg-white/[0.04] border border-white/[0.07]">
+        <div className="p-3 space-y-2">
+          <div className="h-1.5 w-12 rounded-full bg-white/[0.06]" />
+          <div className="h-1.5 w-18 rounded-full bg-white/[0.05]" />
+          <div className="h-1.5 w-10 rounded-full bg-white/[0.04]" />
         </div>
       </div>
-      {/* Middle document — slight rotation */}
-      <div className="absolute bottom-3 left-5 w-24 h-[4.5rem] rounded-lg bg-white/15 border border-white/20 rotate-2 shadow-sm">
-        <div className="p-2.5 space-y-1.5">
-          <div className="h-1 w-12 rounded-full bg-white/20" />
-          <div className="h-1 w-9 rounded-full bg-white/15" />
-          <div className="h-1 w-14 rounded-full bg-white/15" />
-          <div className="h-1 w-6 rounded-full bg-white/10" />
+
+      {/* Back document */}
+      <div className="absolute bottom-2 left-0 w-36 h-48 rounded-xl bg-white/[0.07] border border-white/10">
+        <div className="p-4 space-y-2.5">
+          <div className="h-1.5 w-16 rounded-full bg-white/10" />
+          <div className="h-1.5 w-24 rounded-full bg-white/[0.08]" />
+          <div className="h-1.5 w-12 rounded-full bg-white/[0.07]" />
+          <div className="mt-3 h-1.5 w-20 rounded-full bg-white/[0.06]" />
+          <div className="h-1.5 w-16 rounded-full bg-white/[0.06]" />
         </div>
       </div>
-      {/* Front document — upright, with checkmark */}
-      <div className="absolute bottom-5 left-9 w-24 h-[4.5rem] rounded-lg bg-white/20 border border-white/25 rotate-6 shadow-md">
-        <div className="p-2.5 space-y-1.5">
+
+      {/* Middle document */}
+      <div className="absolute bottom-5 left-10 w-36 h-48 rounded-xl bg-white/10 border border-white/15">
+        <div className="p-4 space-y-2.5">
+          <div className="h-1.5 w-20 rounded-full bg-white/15" />
+          <div className="h-1.5 w-14 rounded-full bg-white/10" />
+          <div className="h-1.5 w-24 rounded-full bg-white/10" />
+          <div className="mt-3 h-1.5 w-10 rounded-full bg-white/[0.08]" />
+          <div className="h-1.5 w-20 rounded-full bg-white/[0.08]" />
+        </div>
+      </div>
+
+      {/* Front document — with checkmark badge */}
+      <div className="absolute bottom-8 left-20 w-36 h-48 rounded-xl bg-white/[0.15] border border-white/20 shadow-lg">
+        <div className="p-4 space-y-2.5">
           <div className="flex items-center justify-between">
-            <div className="h-1.5 w-10 rounded-full bg-white/30" />
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400/80">
-              <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="h-2 w-16 rounded-full bg-white/25" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-400/80 shadow-md">
+              <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2.5 6.5L5 9L9.5 3.5" />
               </svg>
             </div>
           </div>
-          <div className="h-1 w-14 rounded-full bg-white/20" />
-          <div className="h-1 w-11 rounded-full bg-white/15" />
-          <div className="h-1 w-8 rounded-full bg-white/15" />
+          <div className="h-1.5 w-24 rounded-full bg-white/15" />
+          <div className="h-1.5 w-18 rounded-full bg-white/12" />
+          <div className="h-1.5 w-14 rounded-full bg-white/10" />
+          <div className="mt-3 h-1.5 w-20 rounded-full bg-white/10" />
         </div>
       </div>
     </div>
@@ -94,28 +113,26 @@ export function GreetingBanner({ pendingReview = 0, needsValidation = 0, parsing
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-[hsl(var(--accent-purple))] p-6 text-white shadow-lg dark:from-primary/80 dark:via-primary/70 dark:to-[hsl(var(--accent-purple)/0.6)]">
-      <div className="flex items-center justify-between gap-6">
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm font-medium text-white/70">{today}</p>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2.5">
-            <Icon className="h-6 w-6 text-amber-300 shrink-0" />
-            {greeting.text}{firstName ? `, ${firstName}` : ""}
-          </h1>
-          <p className="text-sm text-white/70">{subtitle}</p>
-          <div className="pt-2">
-            <Button
-              size="sm"
-              asChild
-              className="bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm"
-            >
-              <Link href="/upload">
-                <Upload />
-                Upload Documents
-              </Link>
-            </Button>
-          </div>
+      <DocumentStack />
+      <div className="relative z-10 space-y-1">
+        <p className="text-sm font-medium text-white/70">{today}</p>
+        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2.5">
+          <Icon className="h-6 w-6 text-amber-300 shrink-0" />
+          {greeting.text}{firstName ? `, ${firstName}` : ""}
+        </h1>
+        <p className="text-sm text-white/70">{subtitle}</p>
+        <div className="pt-2">
+          <Button
+            size="sm"
+            asChild
+            className="bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm"
+          >
+            <Link href="/upload">
+              <Upload />
+              Upload Documents
+            </Link>
+          </Button>
         </div>
-        <DocumentStack />
       </div>
     </div>
   );
