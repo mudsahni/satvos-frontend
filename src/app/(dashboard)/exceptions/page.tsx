@@ -116,7 +116,7 @@ export default function ExceptionsPage() {
           onClick={() => { setFilterStatus(filterStatus === "invalid" ? "all" : "invalid"); setPage(1); }}
         >
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-error/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-error/10">
               <XCircle className="h-5 w-5 text-error" />
             </div>
             <div>
@@ -138,7 +138,7 @@ export default function ExceptionsPage() {
           onClick={() => { setFilterStatus(filterStatus === "warning" ? "all" : "warning"); setPage(1); }}
         >
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10">
               <AlertTriangle className="h-5 w-5 text-warning" />
             </div>
             <div>
@@ -163,7 +163,7 @@ export default function ExceptionsPage() {
           }}
         >
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
               <Clock className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -260,7 +260,7 @@ export default function ExceptionsPage() {
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div
                       className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
                         doc.validation_status === "invalid" && "bg-error/10",
                         doc.validation_status === "warning" && "bg-warning/10",
                         doc.validation_status !== "invalid" &&

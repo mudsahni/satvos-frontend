@@ -34,14 +34,14 @@ export function CollectionCard({
   canDelete = false,
 }: CollectionCardProps) {
   return (
-    <Card className="group relative overflow-hidden transition-all duration-200 hover:shadow-soft-lg hover:-translate-y-0.5">
+    <Card className="group relative overflow-hidden transition-all duration-200 hover:border-primary/30 hover:-translate-y-0.5">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <Link
             href={`/collections/${collection.id}`}
             className="flex items-center gap-3 min-w-0 flex-1"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <FolderOpen className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">

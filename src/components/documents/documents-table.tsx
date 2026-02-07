@@ -140,7 +140,7 @@ export function DocumentsTable({
   }
 
   return (
-    <div className="rounded-md border">
+    <div>
       <Table>
         <TableHeader>
           <TableRow>

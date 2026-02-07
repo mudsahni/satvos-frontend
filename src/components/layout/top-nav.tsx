@@ -49,7 +49,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
     : "??";
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+    <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-background px-4 shadow-[0_1px_0_0_hsl(var(--border))]">
       {/* Left section: Sidebar trigger + Logo */}
       <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
@@ -66,16 +66,16 @@ export function TopNav({ onSearchClick }: TopNavProps) {
       </div>
 
       {/* Center section: Search */}
-      <div className="flex-1 max-w-md mx-4">
+      <div className="flex-1 max-w-lg mx-4">
         <Button
-          variant="outline"
-          className="w-full justify-start text-muted-foreground h-9 px-3 bg-muted/50 border-transparent hover:bg-muted hover:border-border"
+          variant="ghost"
+          className="w-full justify-start text-muted-foreground h-10 px-4 bg-muted/60 rounded-lg border-0 hover:bg-muted"
           onClick={onSearchClick}
         >
           <Search className="h-4 w-4 mr-2" />
           <span className="hidden sm:inline-block">Search documents...</span>
           <span className="sm:hidden">Search...</span>
-          <kbd className="ml-auto pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+          <kbd className="ml-auto pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md bg-background border px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
             <span className="text-xs">Cmd</span>K
           </kbd>
         </Button>
@@ -85,7 +85,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
       <div className="flex items-center gap-2">
         {/* Workspace badge */}
         {tenantSlug && (
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-sm text-muted-foreground">
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm text-muted-foreground">
             <Building2 className="h-3.5 w-3.5" />
             <span className="max-w-[120px] truncate">{tenantSlug}</span>
           </div>

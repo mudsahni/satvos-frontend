@@ -37,7 +37,7 @@ A comprehensive guide to maintaining visual consistency across the Satvos applic
 | Card | `hsl(0 0% 100%)` | `hsl(224 71% 4%)` | Card backgrounds |
 | Muted | `hsl(220 14% 96%)` | `hsl(215 28% 17%)` | Subtle backgrounds |
 | Muted Foreground | `hsl(220 9% 46%)` | `hsl(217 11% 65%)` | Secondary text |
-| Border | `hsl(220 13% 91%)` | `hsl(215 28% 17%)` | Borders, dividers |
+| Border | `hsl(220 13% 93%)` | `hsl(220 20% 16%)` | Borders, dividers |
 
 ### Status Colors
 
@@ -202,7 +202,7 @@ All spacing is based on a **4px** base unit.
 
 | Element | Max Width | Class |
 |---------|-----------|-------|
-| Search bar | 448px | `max-w-md` |
+| Search bar | 512px | `max-w-lg` |
 | Form | 480px | `max-w-lg` |
 | Dialog (sm) | 384px | `max-w-sm` |
 | Dialog (default) | 512px | `max-w-lg` |
@@ -213,14 +213,18 @@ All spacing is based on a **4px** base unit.
 
 ## Shadows & Elevation
 
-### Light Mode Shadows
+### Design Philosophy
+
+The design system follows a **flat, borderless** approach. Cards, buttons, and inputs do not use shadows at rest. Shadows are reserved for elevated overlays (dropdowns, modals) and opt-in interactive hover states via the `.card-hover` utility.
+
+### Shadow Scale (Available for Opt-in Use)
 
 | Level | Token | CSS | Usage |
 |-------|-------|-----|-------|
-| 0 | none | `shadow-none` | Flat elements |
-| 1 | soft-sm | `0 1px 2px 0 rgb(0 0 0 / 0.05)` | Subtle lift |
-| 2 | soft | `0 1px 3px 0 rgb(0 0 0 / 0.1)` | Cards at rest |
-| 3 | soft-md | `0 4px 6px -1px rgb(0 0 0 / 0.1)` | Hover states |
+| 0 | none | `shadow-none` | Default for cards, buttons, inputs |
+| 1 | soft-sm | `0 1px 2px 0 rgb(0 0 0 / 0.05)` | Subtle lift (opt-in) |
+| 2 | soft | `0 1px 3px 0 rgb(0 0 0 / 0.1)` | *Not used at rest* |
+| 3 | soft-md | `0 4px 6px -1px rgb(0 0 0 / 0.1)` | `.card-hover` on hover |
 | 4 | soft-lg | `0 10px 15px -3px rgb(0 0 0 / 0.1)` | Dropdowns, popovers |
 | 5 | soft-xl | `0 20px 25px -5px rgb(0 0 0 / 0.1)` | Modals |
 
@@ -236,8 +240,12 @@ All spacing is based on a **4px** base unit.
 ### Usage Guidelines
 
 ```tsx
-// Card hover effect
-<Card className="hover:shadow-soft-lg transition-shadow">...</Card>
+// Interactive card hover (using .card-hover utility)
+<Card className="card-hover cursor-pointer">...</Card>
+// Applies: hover:-translate-y-0.5 hover:shadow-soft-md transition-all
+
+// Interactive card hover (using border highlight)
+<Card className="hover:border-primary/30 hover:-translate-y-0.5 transition-all cursor-pointer">...</Card>
 
 // Dropdown
 <DropdownMenuContent className="shadow-soft-lg">...</DropdownMenuContent>
@@ -250,29 +258,36 @@ All spacing is based on a **4px** base unit.
 
 ## Border Radius
 
+### Base Radius
+
+`--radius: 0.625rem` (10px) — set in `globals.css`. Components derive their radius from this base value.
+
 ### Radius Scale
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `rounded-sm` | 4px | Badges, small elements |
-| `rounded` | 6px | Inputs, buttons |
-| `rounded-md` | 8px | Cards, containers |
-| `rounded-lg` | 12px | Large cards, dialogs |
-| `rounded-xl` | 16px | Hero sections |
-| `rounded-full` | 9999px | Avatars, pills |
+| `rounded-sm` | 4px | Small inline elements |
+| `rounded` | 6px | Buttons |
+| `rounded-md` | 8px | Buttons, containers |
+| `rounded-lg` | 10px | Inputs, skeletons, sidebar items |
+| `rounded-xl` | 16px | Cards, icon containers, dropzones |
+| `rounded-full` | 9999px | Avatars, badges (pill shape), workspace tags |
 
 ### Component Standards
 
 | Component | Border Radius |
 |-----------|---------------|
 | Button | `rounded-md` |
-| Input | `rounded-md` |
-| Card | `rounded-lg` |
-| Badge | `rounded-md` |
+| Input | `rounded-lg` |
+| Card | `rounded-xl` |
+| Badge | `rounded-full` (pill) |
 | Avatar | `rounded-full` |
 | Dialog | `rounded-lg` |
 | Dropdown | `rounded-md` |
 | Tooltip | `rounded-md` |
+| Skeleton | `rounded-lg` |
+| Icon container | `rounded-xl` |
+| Sidebar item | `rounded-lg` |
 
 ---
 
@@ -309,8 +324,10 @@ All spacing is based on a **4px** base unit.
 
 ### Cards
 
+Cards are **flat by default** — no shadow, border-only. Use `rounded-xl` for soft feel.
+
 ```tsx
-// Standard card
+// Standard card (flat, border-only)
 <Card className="p-6">
   <CardHeader className="p-0 pb-4">
     <CardTitle>Title</CardTitle>
@@ -321,8 +338,13 @@ All spacing is based on a **4px** base unit.
   </CardContent>
 </Card>
 
-// Interactive card
-<Card className="p-6 hover:shadow-soft-lg hover:-translate-y-0.5 transition-all cursor-pointer">
+// Interactive card (border highlight on hover)
+<Card className="p-6 hover:border-primary/30 hover:-translate-y-0.5 transition-all cursor-pointer">
+  ...
+</Card>
+
+// Interactive card (shadow on hover via utility)
+<Card className="p-6 card-hover cursor-pointer">
   ...
 </Card>
 ```
@@ -342,17 +364,19 @@ All spacing is based on a **4px** base unit.
 
 ### Tables
 
+Table headers use **uppercase tracking** for a clean, structured look. Row hover is subtle (`muted/30`). Cells have generous padding (`py-3 px-3`).
+
 ```tsx
 <Table>
   <TableHeader>
     <TableRow className="hover:bg-transparent">
-      <TableHead className="w-[100px]">ID</TableHead>
+      <TableHead className="w-[100px]">ID</TableHead>  {/* auto: text-xs uppercase tracking-wider */}
       <TableHead>Name</TableHead>
       <TableHead className="text-right">Amount</TableHead>
     </TableRow>
   </TableHeader>
   <TableBody>
-    <TableRow className="hover:bg-muted/50">
+    <TableRow>  {/* auto: hover:bg-muted/30 */}
       <TableCell className="font-medium">001</TableCell>
       <TableCell>Item name</TableCell>
       <TableCell className="text-right">$100.00</TableCell>
@@ -373,7 +397,7 @@ All spacing is based on a **4px** base unit.
 ├────────┬────────────────────────────────────────────────┤
 │        │                                                │
 │ Side   │  Main Content                                  │
-│ bar    │  (p-4 md:p-6)                                  │
+│ bar    │  (p-4 md:p-6 lg:p-8)                           │
 │        │                                                │
 │ (w-64/ │  ┌────────────────────────────────────────┐   │
 │  w-16) │  │ Page Header                            │   │
@@ -421,6 +445,40 @@ All spacing is based on a **4px** base unit.
   <div>Left column</div>
   <div>Right column</div>
 </div>
+```
+
+### Sidebar
+
+The sidebar uses an **indigo pill** active state:
+
+| State | Style |
+|-------|-------|
+| Active | `bg-primary text-primary-foreground rounded-lg` (full indigo pill, white text/icon) |
+| Inactive | `text-muted-foreground hover:bg-muted/50 rounded-lg` |
+| Group labels | Sentence case ("Menu", "Settings") — `text-xs font-medium text-muted-foreground` |
+
+```tsx
+// Active navigation item
+<SidebarMenuButton className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg">
+  <Icon className="text-primary-foreground" /> Label
+</SidebarMenuButton>
+
+// Inactive navigation item
+<SidebarMenuButton className="text-muted-foreground hover:bg-muted/50 rounded-lg">
+  <Icon /> Label
+</SidebarMenuButton>
+```
+
+### Top Navigation
+
+The top nav uses a subtle bottom border (single-pixel shadow line instead of `border-b`):
+
+```tsx
+// Header separator
+className="shadow-[0_1px_0_0_hsl(var(--border))]"
+
+// Search bar: prominent, muted background, no border
+className="bg-muted/60 rounded-lg h-10 border-0 hover:bg-muted"
 ```
 
 ### Responsive Breakpoints
@@ -576,13 +634,16 @@ When creating new components or pages:
 
 ```tsx
 // Page container
-"p-4 md:p-6 space-y-6"
+"p-4 md:p-6 lg:p-8 space-y-6"
 
-// Card
-"rounded-lg border bg-card p-6 shadow-soft"
+// Card (flat, border-only)
+"rounded-xl border bg-card p-6"
 
-// Interactive card
-"rounded-lg border bg-card p-6 hover:shadow-soft-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+// Interactive card (border highlight)
+"rounded-xl border bg-card p-6 hover:border-primary/30 hover:-translate-y-0.5 transition-all cursor-pointer"
+
+// Interactive card (shadow hover via utility)
+"rounded-xl border bg-card p-6 card-hover cursor-pointer"
 
 // Section header
 "text-lg font-semibold"
@@ -602,6 +663,9 @@ When creating new components or pages:
 // Form section
 "space-y-4"
 
-// Status badge (success)
-"inline-flex items-center rounded-md border border-success-border bg-success-bg px-2.5 py-0.5 text-xs font-semibold text-success"
+// Status badge (pill shape, success)
+"inline-flex items-center rounded-full border border-success-border bg-success-bg px-2.5 py-0.5 text-xs font-semibold text-success"
+
+// Icon container (feature/stat cards)
+"p-2.5 rounded-xl bg-muted/40"
 ```

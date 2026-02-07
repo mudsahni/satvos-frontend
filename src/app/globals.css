@@ -70,11 +70,11 @@
     --error-border: 0 40% 87%;
 
     /* Borders */
-    --border: 220 13% 91%;             /* Light borders #e2e8f0 */
+    --border: 220 13% 93%;             /* Lighter borders */
     --border-hover: 239 84% 67%;       /* Primary on hover */
 
     /* Input */
-    --input: 220 13% 91%;
+    --input: 220 13% 93%;
 
     /* Ring */
     --ring: 239 84% 67%;
@@ -87,7 +87,7 @@
     --chart-5: 192 85% 45%;            /* Accent cyan */
 
     /* Sidebar */
-    --sidebar-background: 0 0% 99%;    /* Almost white */
+    --sidebar-background: 0 0% 98.5%;  /* Very subtle off-white */
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -97,7 +97,7 @@
     --sidebar-ring: 239 84% 67%;
 
     /* Radius */
-    --radius: 0.5rem;
+    --radius: 0.625rem;
   }
 
   .dark {
@@ -163,7 +163,7 @@
     --error-border: 0 35% 22%;
 
     /* Borders */
-    --border: 220 20% 18%;              /* Subtle borders */
+    --border: 220 20% 16%;              /* Subtle borders */
     --border-hover: 239 84% 67%;        /* Primary on hover */
 
     /* Input */
@@ -286,6 +286,14 @@
     background: linear-gradient(90deg, hsl(var(--muted)) 0%, hsl(var(--muted-foreground) / 0.08) 50%, hsl(var(--muted)) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Interactive card hover effect */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+  .card-hover:hover {
+    @apply -translate-y-0.5 shadow-soft-md;
   }
 
   /* Hide scrollbar but keep functionality */

@@ -103,11 +103,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarContent className="pt-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3">
-            Main
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
+            Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {filteredNavItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -119,25 +119,23 @@ export function AppSidebar() {
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "relative transition-all duration-200",
-                        isActive && [
-                          "bg-primary/10 text-primary",
-                          "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
-                          "before:h-6 before:w-1 before:rounded-r-full before:bg-primary",
-                        ]
+                        "transition-all duration-200 rounded-lg",
+                        isActive
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "text-muted-foreground hover:bg-muted/50"
                       )}
                     >
                       <Link href={item.href}>
                         <item.icon
                           className={cn(
                             "transition-colors",
-                            isActive ? "text-primary" : "text-muted-foreground"
+                            isActive ? "text-primary-foreground" : "text-muted-foreground"
                           )}
                         />
                         <span
                           className={cn(
                             "font-medium",
-                            isActive ? "text-foreground" : "text-muted-foreground"
+                            isActive ? "text-primary-foreground" : "text-muted-foreground"
                           )}
                         >
                           {item.label}
@@ -152,11 +150,11 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup className="mt-auto">
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3">
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
             Settings
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {filteredSettingsItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -166,25 +164,23 @@ export function AppSidebar() {
                       isActive={isActive}
                       tooltip={item.label}
                       className={cn(
-                        "relative transition-all duration-200",
-                        isActive && [
-                          "bg-primary/10 text-primary",
-                          "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
-                          "before:h-6 before:w-1 before:rounded-r-full before:bg-primary",
-                        ]
+                        "transition-all duration-200 rounded-lg",
+                        isActive
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "text-muted-foreground hover:bg-muted/50"
                       )}
                     >
                       <Link href={item.href}>
                         <item.icon
                           className={cn(
                             "transition-colors",
-                            isActive ? "text-primary" : "text-muted-foreground"
+                            isActive ? "text-primary-foreground" : "text-muted-foreground"
                           )}
                         />
                         <span
                           className={cn(
                             "font-medium",
-                            isActive ? "text-foreground" : "text-muted-foreground"
+                            isActive ? "text-primary-foreground" : "text-muted-foreground"
                           )}
                         >
                           {item.label}

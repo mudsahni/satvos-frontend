@@ -110,7 +110,7 @@ export default function CollectionsPage() {
           ))}
         </div>
       ) : collections.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 px-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 px-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <FolderOpen className="h-8 w-8 text-muted-foreground" />
           </div>

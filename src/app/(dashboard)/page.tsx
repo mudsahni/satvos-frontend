@@ -37,7 +37,7 @@ function StatCard({ title, value, icon, href, loading }: StatCardProps) {
   const content = (
     <Card className={cn(
       "relative overflow-hidden transition-all duration-200",
-      href && "hover:shadow-soft-md hover:-translate-y-0.5 cursor-pointer"
+      href && "hover:border-primary/30 hover:-translate-y-0.5 cursor-pointer"
     )}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
@@ -49,7 +49,7 @@ function StatCard({ title, value, icon, href, loading }: StatCardProps) {
               <p className="text-2xl font-bold">{value}</p>
             )}
           </div>
-          <div className="p-2 rounded-lg bg-muted/50">{icon}</div>
+          <div className="p-2.5 rounded-xl bg-muted/40">{icon}</div>
         </div>
       </CardContent>
     </Card>
@@ -148,9 +148,6 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Your Collections</h2>
-            <p className="text-sm text-muted-foreground">
-              Quick access to your document collections
-            </p>
           </div>
           <div className="flex items-center gap-2">
             {user && canCreateCollections(user.role) && (
@@ -179,7 +176,7 @@ export default function DashboardPage() {
         ) : collections.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-10">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/60">
                 <FolderOpen className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="mt-4 font-semibold">No collections yet</h3>
@@ -210,9 +207,6 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Needs Attention</h2>
-            <p className="text-sm text-muted-foreground">
-              Documents requiring validation review or approval
-            </p>
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/exceptions" className="flex items-center">
@@ -253,7 +247,7 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
                       doc.validation_status === "invalid" && "bg-error/10",
                       doc.validation_status === "warning" && "bg-warning/10",
                       doc.validation_status !== "invalid" && doc.validation_status !== "warning" && "bg-primary/10"
@@ -289,10 +283,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-primary/10 bg-primary/[0.02]">
         <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
               <Upload className="h-6 w-6 text-primary" />
             </div>
             <div>
