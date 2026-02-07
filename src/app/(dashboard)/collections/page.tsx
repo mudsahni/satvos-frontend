@@ -43,18 +43,17 @@ export default function CollectionsPage() {
     offset: hasSearch ? 0 : (page - 1) * pageSize,
   });
 
-  const allItems = data?.items || [];
-
   // Client-side search filtering
   const filtered = useMemo(() => {
-    if (!search) return allItems;
+    const items = data?.items || [];
+    if (!search) return items;
     const q = search.toLowerCase();
-    return allItems.filter(
+    return items.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.description?.toLowerCase().includes(q)
     );
-  }, [allItems, search]);
+  }, [data, search]);
 
   // Client-side pagination when searching
   const total = hasSearch ? filtered.length : (data?.total ?? 0);

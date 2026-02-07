@@ -52,11 +52,6 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { ErrorState } from "@/components/ui/error-state";
-import {
-  ParsingStatus,
-  ValidationStatus,
-  ReviewStatus,
-} from "@/lib/constants";
 
 const FETCH_ALL_PAGE_SIZE = 100;
 
@@ -126,10 +121,8 @@ export default function DocumentsPage() {
   const refetch = hasSearch ? allDocsQuery.refetch : paginatedQuery.refetch;
 
   // Client-side search + status filtering
-  const allItems = hasSearch ? (allDocsQuery.data || []) : (paginatedQuery.data?.items || []);
-
   const filtered = useMemo(() => {
-    let result = allItems;
+    let result = hasSearch ? (allDocsQuery.data || []) : (paginatedQuery.data?.items || []);
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((doc) => doc.name.toLowerCase().includes(q));
@@ -146,7 +139,7 @@ export default function DocumentsPage() {
     // Sort by created_at desc to match server default
     result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return result;
-  }, [allItems, search, parsingFilter, validationFilter, reviewFilter]);
+  }, [hasSearch, allDocsQuery.data, paginatedQuery.data, search, parsingFilter, validationFilter, reviewFilter]);
 
   // Pagination: client-side when searching, server-side otherwise
   const total = hasSearch ? filtered.length : (paginatedQuery.data?.total ?? 0);
