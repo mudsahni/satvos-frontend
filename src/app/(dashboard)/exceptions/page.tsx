@@ -29,6 +29,7 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/ui/pagination";
+import { ErrorState } from "@/components/ui/error-state";
 
 type FilterStatus = "all" | "invalid" | "warning" | "pending_review";
 
@@ -40,8 +41,8 @@ export default function ExceptionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const { data, isLoading } = useDocuments({
-    limit: 100,
+  const { data, isLoading, isError, refetch } = useDocuments({
+    limit: 500,
     sort_by: "created_at",
     sort_order: "desc",
   });
@@ -194,7 +195,7 @@ export default function ExceptionsPage() {
           onValueChange={(value) => { setFilterStatus(value as FilterStatus); setPage(1); }}
         >
           <SelectTrigger className="w-[180px]">
-            <Filter className="mr-2 h-4 w-4" />
+            <Filter />
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -215,6 +216,12 @@ export default function ExceptionsPage() {
             ))}
           </CardContent>
         </Card>
+      ) : isError ? (
+        <ErrorState
+          title="Failed to load exceptions"
+          message="We couldn't load exception data. Please try again."
+          onRetry={() => refetch()}
+        />
       ) : exceptionsDocuments.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16">

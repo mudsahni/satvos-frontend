@@ -47,6 +47,16 @@ A comprehensive guide to maintaining visual consistency across the Satvos applic
 | Warning | `hsl(38 92% 50%)` | `warning-bg` | `warning-border` | Warnings, pending review |
 | Error | `hsl(0 84% 60%)` | `error-bg` | `error-border` | Errors, rejected, failed |
 
+### Extended Background & Border Tokens
+
+These additional tokens are available as Tailwind classes via `tailwind.config.ts`:
+
+| Token | Class | Usage |
+|-------|-------|-------|
+| `background-elevated` | `bg-background-elevated` | Elevated surfaces (cards on muted pages) |
+| `background-subtle` | `bg-background-subtle` | Subtle background differentiation |
+| `border-hover` | `border-hover` | Border color on hover states |
+
 ### Usage Guidelines
 
 ```tsx
@@ -104,6 +114,10 @@ A comprehensive guide to maintaining visual consistency across the Satvos applic
 
 // Captions
 <span className="text-xs text-muted-foreground">Last updated 2 hours ago</span>
+
+// Tiny text (badges, keyboard shortcuts)
+<span className="text-tiny">Ctrl+K</span>
+// text-tiny: 0.625rem (10px), font-weight 500, line-height 1.2
 ```
 
 ---
@@ -130,6 +144,12 @@ All spacing is based on a **4px** base unit.
 | `10` | 2.5rem | 40px | Large section spacing |
 | `12` | 3rem | 48px | Page sections |
 | `16` | 4rem | 64px | Major sections |
+
+### Custom Spacing Tokens
+
+| Token | Value | Pixels | Class | Usage |
+|-------|-------|--------|-------|-------|
+| `13` | 3.25rem | 52px | `h-13` | Table row height |
 
 ### Component Spacing Standards
 
@@ -237,6 +257,10 @@ The design system follows a **flat, borderless** approach. Cards, buttons, and i
 | Status Error | glow-error | Red | Error badges |
 | Primary | glow-sm | Primary | Interactive elements |
 
+### Implementation Note
+
+Shadow utilities (`shadow-soft-sm`, `shadow-soft`, `shadow-soft-md`, etc.) are defined exclusively in `tailwind.config.ts`. Duplicate CSS utility classes have been removed from `globals.css`. The deprecated `.hover-lift` utility was removed; use `.card-hover` instead.
+
 ### Usage Guidelines
 
 ```tsx
@@ -266,7 +290,7 @@ The design system follows a **flat, borderless** approach. Cards, buttons, and i
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `rounded-sm` | 4px | Small inline elements |
+| `rounded-sm` | 6px | Small inline elements |
 | `rounded` | 6px | Buttons |
 | `rounded-md` | 8px | Buttons, containers |
 | `rounded-lg` | 10px | Inputs, skeletons, sidebar items |
@@ -280,7 +304,7 @@ The design system follows a **flat, borderless** approach. Cards, buttons, and i
 | Button | `rounded-md` |
 | Input | `rounded-lg` |
 | Card | `rounded-xl` |
-| Badge | `rounded-full` (pill) |
+| Badge | `rounded-md` (soft rectangle) |
 | Avatar | `rounded-full` |
 | Dialog | `rounded-lg` |
 | Dropdown | `rounded-md` |
@@ -351,16 +375,18 @@ Cards are **flat by default** — no shadow, border-only. Use `rounded-xl` for s
 
 ### Badges
 
-| Variant | Usage |
-|---------|-------|
-| default | Primary info |
-| secondary | Neutral info |
-| outline | Subtle categorization |
-| success | Positive status |
-| warning | Attention needed |
-| error | Negative status |
-| processing | In-progress state |
-| pending | Awaiting action |
+Badge shape uses `rounded-md` (soft rectangle) instead of `rounded-full` (pill). Padding is `px-2 py-0.5`. Status variants include colored borders for visual reinforcement.
+
+| Variant | Background | Text | Border | Usage |
+|---------|------------|------|--------|-------|
+| default | `bg-primary` | `text-primary-foreground` | none | Primary info |
+| secondary | `bg-secondary` | `text-secondary-foreground` | none | Neutral info |
+| outline | transparent | `text-foreground` | `border-border` | Subtle categorization |
+| success | `bg-success-bg` | `text-success` | `border-success-border` | Positive status |
+| warning | `bg-warning-bg` | `text-warning` | `border-warning-border` | Attention needed |
+| error | `bg-error-bg` | `text-error` | `border-error-border` | Negative status |
+| processing | `bg-primary/10` | `text-primary` | `border-primary/20` | In-progress state |
+| pending | `bg-muted` | `text-muted-foreground` | `border-border` | Awaiting action |
 
 ### Tables
 
@@ -384,6 +410,69 @@ Table headers use **uppercase tracking** for a clean, structured look. Row hover
   </TableBody>
 </Table>
 ```
+
+#### Non-Sortable Column Headers
+
+`TableHead` applies `text-xs uppercase tracking-wider text-muted-foreground` by default. Sortable headers use a `Button` inside which overrides these styles. For non-sortable columns that should match sortable column styling, override on the `TableHead`:
+
+```tsx
+// Non-sortable column that matches sortable header text style
+<TableHead className="text-sm normal-case tracking-normal">
+  Vendor
+</TableHead>
+```
+
+Since `TableHead` uses `cn()` with `tailwind-merge`, the className prop correctly overrides the defaults.
+
+### Error States
+
+The `ErrorState` and `InlineErrorState` components (`src/components/ui/error-state.tsx`) provide consistent error UI across all pages.
+
+| Variant | Usage |
+|---------|-------|
+| `ErrorState` | Full-page error with icon, title, message, and retry button. Used on list pages (collections, documents, exceptions, users). |
+| `InlineErrorState` | Compact inline error for use within cards or sections. Smaller icon and text. |
+
+```tsx
+// Full-page error state
+<ErrorState
+  title="Failed to load collections"
+  message={error.message}
+  onRetry={refetch}
+/>
+
+// Inline error state (inside a card or panel)
+<InlineErrorState
+  message="Could not load data"
+  onRetry={refetch}
+/>
+```
+
+### Bulk Actions Bar
+
+The bulk actions bar (`src/components/documents/bulk-actions-bar.tsx`) uses **semantic color differentiation** for action severity:
+
+| Action | Style | Reasoning |
+|--------|-------|-----------|
+| Approve | `variant="outline"` + `border-success-border bg-success-bg text-success` | Positive action, soft green |
+| Reject | `variant="outline"` + `border-warning-border bg-warning-bg text-warning` | Review action, amber/warning |
+| Delete | `variant="outline"` + `border-destructive/30 text-destructive` | Dangerous, red outline only |
+
+**Design principle**: Each action should be visually distinct. Never use the same style for actions of different severity (e.g., Reject and Delete should NOT both be solid red).
+
+Confirmation dialog action buttons use solid fills: `bg-success` for approve, `bg-destructive` for reject/delete.
+
+### Dashboard Greeting Banner
+
+The dashboard uses a `GreetingBanner` component (`src/components/dashboard/greeting-banner.tsx`) instead of a plain text header:
+
+- **Gradient background**: `from-primary via-primary/90 to-accent-purple`, softer in dark mode
+- **Time-based greeting**: "Good morning/afternoon/evening, [First Name]" with Lucide icon (Sun/CloudSun/Moon)
+- **Current date**: Formatted as "Saturday, February 7, 2026"
+- **Contextual subtitle**: Shows pending item counts or "All documents are up to date"
+- **Upload CTA**: Glass-style button (`bg-white/15 hover:bg-white/25 backdrop-blur-sm`)
+- **Document stack illustration**: Pure CSS decorative element (3 overlapping paper cards with checkmark), hidden on mobile
+- **Border radius**: `rounded-2xl` for the banner container
 
 ---
 
@@ -453,14 +542,19 @@ The sidebar uses an **indigo pill** active state:
 
 | State | Style |
 |-------|-------|
-| Active | `bg-primary text-primary-foreground rounded-lg` (full indigo pill, white text/icon) |
+| Active | `data-[active=true]:bg-primary data-[active=true]:text-primary-foreground rounded-lg` (indigo pill, white text/icon) |
 | Inactive | `text-muted-foreground hover:bg-muted/50 rounded-lg` |
 | Group labels | Sentence case ("Menu", "Settings") — `text-xs font-medium text-muted-foreground` |
 
+**Important**: Active styles must use the `data-[active=true]:` prefix to override the sidebar primitive's built-in `data-[active=true]:bg-sidebar-accent` styles. Without the prefix, the primitive's data-attribute selector has higher CSS specificity and wins. Icon and label text should inherit color from the parent button (no explicit `text-*` classes on children).
+
 ```tsx
-// Active navigation item
-<SidebarMenuButton className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg">
-  <Icon className="text-primary-foreground" /> Label
+// Active navigation item — use data-[active=true]: prefix for specificity
+<SidebarMenuButton
+  isActive={true}
+  className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground hover:bg-primary/90 rounded-lg"
+>
+  <Icon /> Label
 </SidebarMenuButton>
 
 // Inactive navigation item
@@ -507,6 +601,26 @@ Use **Lucide React** for all icons.
 | Navigation | 20px | `h-5 w-5` |
 | Feature | 24px | `h-6 w-6` |
 | Empty state | 32-48px | `h-8 w-8` (inside `h-16 w-16` circle) |
+
+### Icons in Buttons & Menu Items
+
+The `Button` and `DropdownMenuItem` components handle icon sizing and spacing automatically via built-in styles:
+- `gap-2` — provides 8px spacing between icon and text
+- `[&_svg]:size-4` / `[&>svg]:size-4` — sets all child SVGs to 16px
+
+**CRITICAL: Do NOT add `mr-2 h-4 w-4` or similar sizing/spacing classes to icons inside these components.** This creates double spacing and redundant sizing that conflicts with built-in styles.
+
+```tsx
+// CORRECT — bare icon, let the component handle sizing
+<Button><Upload /> Upload</Button>
+<DropdownMenuItem><Settings /> Settings</DropdownMenuItem>
+<Button><Loader2 className="animate-spin" /> Loading...</Button>
+
+// WRONG — redundant classes cause double spacing
+<Button><Upload className="mr-2 h-4 w-4" /> Upload</Button>
+```
+
+**Exception**: `TabsTrigger` does NOT have built-in icon handling. Icons inside tab triggers still need explicit `className="mr-2 h-4 w-4"`.
 
 ### Common Icons
 
@@ -625,6 +739,9 @@ When creating new components or pages:
 - [ ] Ensure responsive design
 - [ ] Test in both light and dark modes
 - [ ] Verify accessibility (contrast, focus states)
+- [ ] Use bare icons in Button/DropdownMenuItem (no mr-2 h-4 w-4)
+- [ ] Use design system color tokens for status styling (never hardcode emerald/amber/red)
+- [ ] Differentiate action severity visually (approve ≠ reject ≠ delete)
 
 ---
 
@@ -663,8 +780,8 @@ When creating new components or pages:
 // Form section
 "space-y-4"
 
-// Status badge (pill shape, success)
-"inline-flex items-center rounded-full border border-success-border bg-success-bg px-2.5 py-0.5 text-xs font-semibold text-success"
+// Status badge (soft rectangle, success)
+"inline-flex items-center rounded-md border border-success-border bg-success-bg px-2 py-0.5 text-xs font-medium text-success"
 
 // Icon container (feature/stat cards)
 "p-2.5 rounded-xl bg-muted/40"

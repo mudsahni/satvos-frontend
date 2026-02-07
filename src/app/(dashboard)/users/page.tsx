@@ -61,6 +61,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Pagination } from "@/components/ui/pagination";
 import {
   useUsers,
   useCreateUser,
@@ -77,6 +78,7 @@ import {
 import { formatDate } from "@/lib/utils/format";
 import { Role, ROLES } from "@/lib/constants";
 import { User } from "@/types/user";
+import { ErrorState } from "@/components/ui/error-state";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -85,10 +87,13 @@ export default function UsersPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
-  const { data, isLoading } = useUsers({
+  const { data, isLoading, isError, refetch } = useUsers({
     search: search || undefined,
-    limit: 50,
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
   });
 
   const createUser = useCreateUser();
@@ -96,6 +101,11 @@ export default function UsersPage() {
   const deleteUser = useDeleteUser();
 
   const users = data?.items || [];
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
 
   // Redirect non-admins
   if (currentUser && currentUser.role !== ROLES.ADMIN) {
@@ -118,7 +128,7 @@ export default function UsersPage() {
           <p className="text-muted-foreground">Manage users in your organization</p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus />
           Add User
         </Button>
       </div>
@@ -130,7 +140,7 @@ export default function UsersPage() {
             <Input
               placeholder="Search users..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="pl-9"
             />
           </div>
@@ -142,6 +152,12 @@ export default function UsersPage() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
+          ) : isError ? (
+            <ErrorState
+              title="Failed to load users"
+              message="We couldn't load the user list. Please try again."
+              onRetry={() => refetch()}
+            />
           ) : users.length === 0 ? (
             <div className="text-center py-12">
               <Users className="mx-auto h-16 w-16 text-muted-foreground" />
@@ -153,14 +169,16 @@ export default function UsersPage() {
               </p>
             </div>
           ) : (
+            <>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead className="hidden md:table-cell">Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Created</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -176,14 +194,14 @@ export default function UsersPage() {
                         {user.role}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Badge
                         variant={user.is_active ? "success" : "secondary"}
                       >
                         {user.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="hidden lg:table-cell text-muted-foreground">
                       {formatDate(user.created_at)}
                     </TableCell>
                     <TableCell>
@@ -197,7 +215,7 @@ export default function UsersPage() {
                           <DropdownMenuItem
                             onClick={() => setEditingUser(user)}
                           >
-                            <Edit className="mr-2 h-4 w-4" />
+                            <Edit />
                             Edit
                           </DropdownMenuItem>
                           {user.id !== currentUser?.id && (
@@ -207,7 +225,7 @@ export default function UsersPage() {
                                 className="text-destructive"
                                 onClick={() => setDeleteId(user.id)}
                               >
-                                <Trash2 className="mr-2 h-4 w-4" />
+                                <Trash2 />
                                 Delete
                               </DropdownMenuItem>
                             </>
@@ -219,6 +237,17 @@ export default function UsersPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
+            <Pagination
+              page={page}
+              totalPages={data?.total_pages ?? 1}
+              total={data?.total ?? 0}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={handlePageSizeChange}
+              className="mt-4"
+            />
+            </>
           )}
         </CardContent>
       </Card>
@@ -264,7 +293,7 @@ export default function UsersPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteUser.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               Delete
             </AlertDialogAction>
@@ -387,7 +416,7 @@ function CreateUserDialog({
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               Create User
             </Button>
@@ -525,7 +554,7 @@ function EditUserDialog({
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               Save Changes
             </Button>

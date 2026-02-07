@@ -191,7 +191,7 @@ export function DocumentTabs({
         </div>
 
         <TabsContent value="data" className="flex-1 m-0 overflow-hidden">
-          <ScrollArea className="h-full">
+          <div className="h-full overflow-y-auto overflow-x-hidden">
             {/* Inline tag pills */}
             {(tags && tags.length > 0 || onAddTag) && (
               <div className="flex flex-wrap items-center gap-2 px-4 pt-4 pb-3 border-b border-border/50">
@@ -262,7 +262,7 @@ export function DocumentTabs({
                           }
                         >
                           {isAddingTag && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="animate-spin" />
                           )}
                           Add Tag
                         </Button>
@@ -276,7 +276,7 @@ export function DocumentTabs({
             <div className="p-4">
               {hasData ? (
                 <>
-                  <div className="flex justify-end gap-2 mb-4">
+                  <div className="flex justify-end gap-2 mb-5">
                     {isEditing ? (
                       <>
                         <Button
@@ -294,9 +294,9 @@ export function DocumentTabs({
                           disabled={isSaving || Object.keys(editedValues).length === 0}
                         >
                           {isSaving ? (
-                            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                            <Loader2 className="animate-spin" />
                           ) : (
-                            <CheckCircle className="mr-1.5 h-4 w-4" />
+                            <CheckCircle />
                           )}
                           {isSaving ? "Saving..." : "Save Changes"}
                         </Button>
@@ -383,9 +383,9 @@ export function DocumentTabs({
                       disabled={isReparsing}
                     >
                       {isReparsing ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="animate-spin" />
                       ) : (
-                        <RefreshCw className="mr-2 h-4 w-4" />
+                        <RefreshCw />
                       )}
                       {isReparsing ? "Re-Parsing..." : "Retry Parsing"}
                     </Button>
@@ -393,7 +393,7 @@ export function DocumentTabs({
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </TabsContent>
 
         <TabsContent value="validation" className="flex-1 m-0 overflow-hidden">

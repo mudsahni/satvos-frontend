@@ -21,10 +21,10 @@ export async function getCollections(
 }
 
 export async function getCollection(id: string): Promise<Collection> {
-  const response = await apiClient.get<ApiResponse<Collection>>(
-    `/collections/${id}`
-  );
-  return response.data.data;
+  const response = await apiClient.get<
+    ApiResponse<{ collection: Collection }>
+  >(`/collections/${id}`);
+  return response.data.data.collection;
 }
 
 export async function createCollection(

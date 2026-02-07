@@ -98,7 +98,7 @@ export function CollectionHeader({
           {canUpload && (
             <Button asChild>
               <Link href={`/upload?collection=${collection.id}`}>
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload />
                 Upload
               </Link>
             </Button>
@@ -106,7 +106,7 @@ export function CollectionHeader({
           {isOwner && (
             <Button variant="outline" asChild>
               <Link href={`/collections/${collection.id}/settings`}>
-                <Settings className="mr-2 h-4 w-4" />
+                <Settings />
                 Settings
               </Link>
             </Button>

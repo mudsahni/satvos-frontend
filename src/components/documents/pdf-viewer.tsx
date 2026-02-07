@@ -99,11 +99,11 @@ export function PDFViewer({ url, isLoading, fileName, className }: PDFViewerProp
               <div className="flex flex-col gap-2 items-center">
                 <div className="flex gap-2 justify-center">
                   <Button variant="outline" size="sm" onClick={handleRetry}>
-                    <RotateCw className="mr-2 h-4 w-4" />
+                    <RotateCw />
                     Retry
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
-                    <ExternalLink className="mr-2 h-4 w-4" />
+                    <ExternalLink />
                     Open in new tab
                   </Button>
                 </div>
@@ -180,7 +180,7 @@ export function PDFViewer({ url, isLoading, fileName, className }: PDFViewerProp
                     Use Google Docs Viewer
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleOpenInNewTab}>
-                    <ExternalLink className="mr-2 h-4 w-4" />
+                    <ExternalLink />
                     Open in new tab
                   </Button>
                 </div>

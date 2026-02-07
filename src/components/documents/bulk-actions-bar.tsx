@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle, XCircle, Trash2, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  CheckCircle,
+  XCircle,
+  Trash2,
+  X,
+  AlertTriangle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,44 +24,87 @@ import {
 
 type BulkAction = "approve" | "reject" | "delete";
 
+interface BulkActionResult {
+  succeeded: number;
+  failed: number;
+}
+
 interface BulkActionsBarProps {
-  selectedCount: number;
+  selectedIds: string[];
   onDeselect: () => void;
-  onApprove: () => void;
-  onReject: () => void;
-  onDelete: () => void;
+  onApprove: (ids: string[]) => Promise<BulkActionResult>;
+  onReject: (ids: string[]) => Promise<BulkActionResult>;
+  onDelete: (ids: string[]) => Promise<BulkActionResult>;
   isProcessing?: boolean;
+}
+
+interface ResultsBanner {
+  action: BulkAction;
+  succeeded: number;
+  failed: number;
 }
 
 const confirmConfig: Record<
   BulkAction,
-  { title: string; description: string; actionLabel: string; actionClass: string }
+  {
+    title: string;
+    description: string;
+    actionLabel: string;
+    actionClass: string;
+  }
 > = {
   approve: {
     title: "Approve Documents",
     description:
       "Are you sure you want to approve the selected documents? This will mark them as reviewed and verified.",
     actionLabel: "Approve All",
-    actionClass: "bg-emerald-600 hover:bg-emerald-700 text-white",
+    actionClass: "bg-success text-success-foreground hover:bg-success/90",
   },
   reject: {
     title: "Reject Documents",
     description:
       "Are you sure you want to reject the selected documents? You may want to review them individually to add notes.",
     actionLabel: "Reject All",
-    actionClass: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+    actionClass:
+      "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   },
   delete: {
     title: "Delete Documents",
     description:
       "Are you sure you want to delete the selected documents? This action cannot be undone.",
     actionLabel: "Delete All",
-    actionClass: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+    actionClass:
+      "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   },
 };
 
+const actionLabels: Record<BulkAction, string> = {
+  approve: "approved",
+  reject: "rejected",
+  delete: "deleted",
+};
+
+function getResultMessage(results: ResultsBanner): string {
+  const total = results.succeeded + results.failed;
+  const label = actionLabels[results.action];
+
+  if (results.failed === 0) {
+    return total === 1
+      ? `1 document ${label} successfully`
+      : `All ${total} documents ${label} successfully`;
+  }
+
+  if (results.succeeded === 0) {
+    return total === 1
+      ? `1 document failed to be ${label}`
+      : `All ${total} documents failed to be ${label}`;
+  }
+
+  return `${results.succeeded} of ${total} documents ${label} successfully, ${results.failed} failed`;
+}
+
 export function BulkActionsBar({
-  selectedCount,
+  selectedIds,
   onDeselect,
   onApprove,
   onReject,
@@ -62,64 +112,122 @@ export function BulkActionsBar({
   isProcessing = false,
 }: BulkActionsBarProps) {
   const [confirmAction, setConfirmAction] = useState<BulkAction | null>(null);
+  const [results, setResults] = useState<ResultsBanner | null>(null);
 
-  const handleConfirm = () => {
+  const dismissResults = useCallback(() => setResults(null), []);
+
+  // Auto-clear results after 5 seconds
+  useEffect(() => {
+    if (!results) return;
+
+    const timer = setTimeout(dismissResults, 5000);
+    return () => clearTimeout(timer);
+  }, [results, dismissResults]);
+
+  const handleConfirm = async () => {
     if (!confirmAction) return;
 
-    if (confirmAction === "approve") onApprove();
-    else if (confirmAction === "reject") onReject();
-    else if (confirmAction === "delete") onDelete();
-
+    const action = confirmAction;
     setConfirmAction(null);
+
+    let result: BulkActionResult;
+    if (action === "approve") {
+      result = await onApprove(selectedIds);
+    } else if (action === "reject") {
+      result = await onReject(selectedIds);
+    } else {
+      result = await onDelete(selectedIds);
+    }
+
+    setResults({
+      action,
+      succeeded: result.succeeded,
+      failed: result.failed,
+    });
   };
 
   const config = confirmAction ? confirmConfig[confirmAction] : null;
+  const selectedCount = selectedIds.length;
 
   return (
     <>
-      <div className="flex items-center gap-3 rounded-xl border bg-muted/30 px-4 py-2.5">
-        <span className="text-sm font-medium">
-          {selectedCount} selected
-        </span>
+      <div className="space-y-2">
+        {/* Results banner */}
+        {results && (
+          <div
+            role="status"
+            className={cn(
+              "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
+              results.failed > 0
+                ? "border-warning-border bg-warning-bg text-warning"
+                : "border-success-border bg-success-bg text-success"
+            )}
+          >
+            {results.failed > 0 ? (
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+            ) : (
+              <CheckCircle className="h-4 w-4 shrink-0" />
+            )}
+            <span className="flex-1">{getResultMessage(results)}</span>
+            <button
+              type="button"
+              onClick={dismissResults}
+              className="shrink-0 rounded-md p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+              aria-label="Dismiss results"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDeselect}
-          disabled={isProcessing}
-        >
-          <X className="mr-1.5 h-3.5 w-3.5" />
-          Deselect
-        </Button>
+        {/* Actions bar */}
+        <div className="flex items-center gap-3 rounded-xl border bg-muted/30 px-4 py-2.5">
+          <span className="text-sm font-medium">
+            {selectedCount} selected
+          </span>
 
-        <div className="ml-auto flex items-center gap-2">
           <Button
+            variant="ghost"
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-            onClick={() => setConfirmAction("approve")}
+            onClick={onDeselect}
             disabled={isProcessing}
           >
-            <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-            Approve
+            <X />
+            Deselect
           </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => setConfirmAction("reject")}
-            disabled={isProcessing}
-          >
-            <XCircle className="mr-1.5 h-3.5 w-3.5" />
-            Reject
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => setConfirmAction("delete")}
-            disabled={isProcessing}
-          >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Delete
-          </Button>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
+              onClick={() => setConfirmAction("approve")}
+              disabled={isProcessing}
+            >
+              <CheckCircle />
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
+              onClick={() => setConfirmAction("reject")}
+              disabled={isProcessing}
+            >
+              <XCircle />
+              Reject
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
+              onClick={() => setConfirmAction("delete")}
+              disabled={isProcessing}
+            >
+              <Trash2 />
+              Delete
+            </Button>
+          </div>
         </div>
       </div>
 

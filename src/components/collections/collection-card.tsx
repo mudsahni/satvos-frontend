@@ -72,7 +72,7 @@ export function CollectionCard({
               {collection.user_permission === "owner" && (
                 <DropdownMenuItem asChild>
                   <Link href={`/collections/${collection.id}/settings`}>
-                    <Settings className="mr-2 h-4 w-4" />
+                    <Settings />
                     Settings
                   </Link>
                 </DropdownMenuItem>
@@ -84,7 +84,7 @@ export function CollectionCard({
                     className="text-destructive"
                     onClick={() => onDelete?.(collection.id)}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 />
                     Delete
                   </DropdownMenuItem>
                 </>

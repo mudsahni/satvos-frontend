@@ -200,9 +200,9 @@ export function ValidationTab({
             disabled={isRevalidating}
           >
             {isRevalidating ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
             ) : (
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw />
             )}
             Run Validation
           </Button>
@@ -311,9 +311,9 @@ export function ValidationTab({
                 disabled={isRevalidating}
               >
                 {isRevalidating ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin" />
                 ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <RefreshCw />
                 )}
                 Re-validate
               </Button>

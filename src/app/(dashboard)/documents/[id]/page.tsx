@@ -205,7 +205,7 @@ export default function DocumentDetailPage({
   };
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] flex flex-col -m-4 md:-m-6">
+    <div className="h-[calc(100vh-3.5rem)] flex flex-col -m-4 md:-m-6 lg:-m-8">
       {/* Header */}
       <header className="border-b bg-background">
         {/* Breadcrumb — always visible */}
@@ -273,18 +273,20 @@ export default function DocumentDetailPage({
                     </span>
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={() => setConfirmAction("approved")}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
                     >
-                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                      <CheckCircle className={"mr-2 h-4 w-4"} />
                       Approve
                     </Button>
                     <Button
                       size="sm"
-                      variant="destructive"
+                      variant="outline"
                       onClick={() => setConfirmAction("rejected")}
+                      className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
                     >
-                      <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                      <XCircle className={"mr-2 h-4 w-4"} />
                       Reject
                     </Button>
                   </>
@@ -294,9 +296,9 @@ export default function DocumentDetailPage({
                     className="py-1"
                   >
                     {document.review_status === "approved" ? (
-                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                      <CheckCircle className={"mr-2 h-4 w-4"}/>
                     ) : (
-                      <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                      <XCircle className={"mr-2 h-4 w-4"} />
                     )}
                     {document.review_status === "approved" ? "Approved" : "Rejected"}
                   </Badge>
@@ -320,14 +322,14 @@ export default function DocumentDetailPage({
                   onClick={handleReparse}
                   disabled={triggerParsing.isPending}
                 >
-                  <RefreshCw className={cn("mr-2 h-4 w-4", triggerParsing.isPending && "animate-spin")} />
+                  <RefreshCw className={cn(triggerParsing.isPending && "animate-spin")} />
                   {triggerParsing.isPending ? "Re-Parsing..." : "Re-Parse"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleRevalidate}
                   disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
                 >
-                  <RefreshCw className={cn("mr-2 h-4 w-4", triggerValidation.isPending && "animate-spin")} />
+                  <RefreshCw className={cn(triggerValidation.isPending && "animate-spin")} />
                   {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -433,12 +435,12 @@ export default function DocumentDetailPage({
               onClick={handleReview}
               className={cn(
                 confirmAction === "approved"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  ? "bg-success text-success-foreground hover:bg-success/90"
                   : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
               )}
             >
               {reviewDocument.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               {confirmAction === "approved" ? "Approve" : "Reject"}
             </AlertDialogAction>

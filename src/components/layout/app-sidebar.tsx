@@ -6,6 +6,7 @@ import {
   Home,
   FolderOpen,
   FileText,
+  FileStack,
   Upload,
   Users,
   Settings,
@@ -18,10 +19,12 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/store/auth-store";
 import { Role } from "@/lib/constants";
@@ -101,13 +104,29 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarContent className="pt-2">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              size="lg"
+              tooltip="Satvos"
+              className="hover:bg-transparent active:bg-transparent"
+            >
+              <Link href="/">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <FileStack className="h-4 w-4" />
+                </div>
+                <span className="font-semibold text-foreground">Satvos</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
-            Menu
-          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-0.5">
               {filteredNavItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -121,23 +140,13 @@ export function AppSidebar() {
                       className={cn(
                         "transition-all duration-200 rounded-lg",
                         isActive
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "text-muted-foreground hover:bg-muted/50"
+                          ? "data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-primary/15 hover:text-primary"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       )}
                     >
                       <Link href={item.href}>
-                        <item.icon
-                          className={cn(
-                            "transition-colors",
-                            isActive ? "text-primary-foreground" : "text-muted-foreground"
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            "font-medium",
-                            isActive ? "text-primary-foreground" : "text-muted-foreground"
-                          )}
-                        >
+                        <item.icon className="transition-colors" />
+                        <span className="font-medium">
                           {item.label}
                         </span>
                       </Link>
@@ -150,11 +159,12 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup className="mt-auto">
+          <SidebarSeparator className="mb-2" />
           <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
             Settings
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-0.5">
               {filteredSettingsItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -166,23 +176,13 @@ export function AppSidebar() {
                       className={cn(
                         "transition-all duration-200 rounded-lg",
                         isActive
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "text-muted-foreground hover:bg-muted/50"
+                          ? "data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-primary/15 hover:text-primary"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       )}
                     >
                       <Link href={item.href}>
-                        <item.icon
-                          className={cn(
-                            "transition-colors",
-                            isActive ? "text-primary-foreground" : "text-muted-foreground"
-                          )}
-                        />
-                        <span
-                          className={cn(
-                            "font-medium",
-                            isActive ? "text-primary-foreground" : "text-muted-foreground"
-                          )}
-                        >
+                        <item.icon className="transition-colors" />
+                        <span className="font-medium">
                           {item.label}
                         </span>
                       </Link>

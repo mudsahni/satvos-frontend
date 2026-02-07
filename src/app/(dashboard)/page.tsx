@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   FolderOpen,
   FileText,
-  Upload,
   AlertTriangle,
   ArrowRight,
   Plus,
@@ -24,6 +23,7 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { CollectionCard, CollectionCardSkeleton } from "@/components/collections/collection-card";
 import { cn } from "@/lib/utils";
+import { GreetingBanner } from "@/components/dashboard/greeting-banner";
 
 interface StatCardProps {
   title: string;
@@ -66,7 +66,7 @@ export default function DashboardPage() {
   const { data: collectionsData, isLoading: collectionsLoading } =
     useCollections({ limit: 6 });
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({
-    limit: 10,
+    limit: 500,
     sort_by: "created_at",
     sort_order: "desc",
   });
@@ -84,7 +84,7 @@ export default function DashboardPage() {
       (d.parsing_status === "completed" && d.review_status === "pending")
   );
 
-  // Stats
+  // Stats — client-side counts from full document set
   const pendingValidation = documents.filter(
     (d) => d.validation_status === "warning" || d.validation_status === "invalid"
   ).length;
@@ -95,21 +95,11 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Overview of your document processing pipeline
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/upload">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload
-          </Link>
-        </Button>
-      </div>
+      {/* Greeting Banner */}
+      <GreetingBanner
+        pendingReview={pendingReview}
+        needsValidation={pendingValidation}
+      />
 
       {/* Quick Stats Row */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -186,7 +176,7 @@ export default function DashboardPage() {
               {user && canCreateCollections(user.role) && (
                 <Button asChild className="mt-4">
                   <Link href="/collections/new">
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus />
                     Create Collection
                   </Link>
                 </Button>
@@ -281,29 +271,6 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
-
-      {/* Quick Actions */}
-      <Card className="border-primary/10 bg-primary/[0.02]">
-        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-              <Upload className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Upload Documents</h3>
-              <p className="text-sm text-muted-foreground">
-                Add new documents to process and validate
-              </p>
-            </div>
-          </div>
-          <Button asChild>
-            <Link href="/upload">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Files
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

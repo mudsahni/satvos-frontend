@@ -269,7 +269,7 @@ function Section({
           )}
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="border-t px-4 pb-4">{children}</div>
+          <div className="border-t px-4 pt-3 pb-4">{children}</div>
         </CollapsibleContent>
       </div>
     </Collapsible>
@@ -303,7 +303,7 @@ export function StructuredDataViewer({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Invoice Details */}
       <Section title="Invoice Details" icon={FileText}>
         <div className="grid gap-x-6 sm:grid-cols-2">

@@ -49,6 +49,7 @@ import { useCollections } from "@/lib/hooks/use-collections";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { Pagination } from "@/components/ui/pagination";
+import { ErrorState } from "@/components/ui/error-state";
 import {
   ParsingStatus,
   ValidationStatus,
@@ -70,7 +71,7 @@ export default function DocumentsPage() {
   const { data: collectionsData } = useCollections({ limit: 100 });
   const collections = collectionsData?.items || [];
 
-  const { data, isLoading } = useDocuments({
+  const { data, isLoading, isError, refetch } = useDocuments({
     search: search || undefined,
     collection_id: collectionFilter !== "all" ? collectionFilter : undefined,
     parsing_status:
@@ -142,7 +143,7 @@ export default function DocumentsPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Select value={collectionFilter} onValueChange={(v) => { setCollectionFilter(v); setPage(1); }}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Collection" />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,7 +157,7 @@ export default function DocumentsPage() {
               </Select>
 
               <Select value={parsingFilter} onValueChange={(v) => { setParsingFilter(v); setPage(1); }}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Parsing" />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,7 +170,7 @@ export default function DocumentsPage() {
               </Select>
 
               <Select value={validationFilter} onValueChange={(v) => { setValidationFilter(v); setPage(1); }}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Validation" />
                 </SelectTrigger>
                 <SelectContent>
@@ -182,7 +183,7 @@ export default function DocumentsPage() {
               </Select>
 
               <Select value={reviewFilter} onValueChange={(v) => { setReviewFilter(v); setPage(1); }}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px]">
                   <SelectValue placeholder="Review" />
                 </SelectTrigger>
                 <SelectContent>
@@ -208,6 +209,12 @@ export default function DocumentsPage() {
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
+          ) : isError ? (
+            <ErrorState
+              title="Failed to load documents"
+              message="We couldn't load your documents. Please try again."
+              onRetry={() => refetch()}
+            />
           ) : documents.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -225,15 +232,16 @@ export default function DocumentsPage() {
             </div>
           ) : (
             <>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Collection</TableHead>
+                  <TableHead className="hidden md:table-cell">Collection</TableHead>
                   <TableHead>Parsing</TableHead>
                   <TableHead>Validation</TableHead>
                   <TableHead>Review</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead className="hidden lg:table-cell">Created</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -252,7 +260,7 @@ export default function DocumentsPage() {
                           {doc.name}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
                         {collection ? (
                           <Link
                             href={`/collections/${collection.id}`}
@@ -279,7 +287,7 @@ export default function DocumentsPage() {
                       <TableCell>
                         <StatusBadge status={doc.review_status} type="review" />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
                         {formatRelativeTime(doc.created_at)}
                       </TableCell>
                       <TableCell>
@@ -300,7 +308,7 @@ export default function DocumentsPage() {
                               className="text-destructive"
                               onClick={() => setDeleteId(doc.id)}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                              <Trash2 />
                               Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -311,6 +319,7 @@ export default function DocumentsPage() {
                 })}
               </TableBody>
             </Table>
+            </div>
             <Pagination
               page={page}
               totalPages={data?.total_pages ?? 1}

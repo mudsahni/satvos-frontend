@@ -7,7 +7,6 @@ import {
   Settings,
   LogOut,
   Building2,
-  FileStack,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthStore } from "@/store/auth-store";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 
 interface TopNavProps {
   onSearchClick?: () => void;
@@ -50,19 +48,9 @@ export function TopNav({ onSearchClick }: TopNavProps) {
 
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-background px-4 shadow-[0_1px_0_0_hsl(var(--border))]">
-      {/* Left section: Sidebar trigger + Logo */}
-      <div className="flex items-center gap-2">
+      {/* Left section: Sidebar trigger */}
+      <div className="flex items-center">
         <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="h-5" />
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-semibold text-foreground hover:text-foreground/80 transition-colors"
-        >
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <FileStack className="h-4 w-4" />
-          </div>
-          <span className="hidden sm:inline-block">Satvos</span>
-        </Link>
       </div>
 
       {/* Center section: Search */}
@@ -85,9 +73,9 @@ export function TopNav({ onSearchClick }: TopNavProps) {
       <div className="flex items-center gap-2">
         {/* Workspace badge */}
         {tenantSlug && (
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-sm text-muted-foreground">
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-sm text-muted-foreground">
             <Building2 className="h-3.5 w-3.5" />
-            <span className="max-w-[120px] truncate">{tenantSlug}</span>
+            <span className="max-w-[120px] truncate capitalize">{tenantSlug.replace(/-/g, " ")}</span>
           </div>
         )}
 
@@ -130,7 +118,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link href="/settings" className="flex items-center">
-                <Settings className="mr-2 h-4 w-4" />
+                <Settings />
                 Settings
               </Link>
             </DropdownMenuItem>
@@ -139,7 +127,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
               onClick={handleLogout}
               className="cursor-pointer text-destructive focus:text-destructive"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

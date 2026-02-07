@@ -41,7 +41,7 @@ npm run test:coverage # Run tests with coverage (vitest run --coverage)
 - `(dashboard)` route group: Protected pages requiring authentication
 
 ### State Management
-- **Auth**: Zustand store at `src/store/auth-store.ts` with sessionStorage persistence
+- **Auth**: Zustand store at `src/store/auth-store.ts` with sessionStorage persistence (or localStorage when "Remember me" is enabled)
 - **Server State**: TanStack Query hooks in `src/lib/hooks/`
 - **Theme**: next-themes with `light` as default
 
@@ -58,12 +58,51 @@ npm run test:coverage # Run tests with coverage (vitest run --coverage)
 - Tailwind extended in `tailwind.config.ts`
 - Status colors: success (green), warning (amber), error (red)
 
+### Design System Enforcement (CRITICAL)
+
+These rules are mandatory. Follow them exactly unless the user explicitly overrides them.
+
+#### Icons in Buttons
+- `Button` and `DropdownMenuItem` have built-in `gap-2` and `[&_svg]:size-4`
+- **NEVER** add `mr-2 h-4 w-4` or similar sizing/spacing to icons inside these components
+- Use bare icons: `<Button><Upload /> Upload</Button>`
+- Only keep behavioral classes like `animate-spin`: `<Loader2 className="animate-spin" />`
+- **Exception**: `TabsTrigger` has no built-in icon handling — use `className="mr-2 h-4 w-4"` there
+
+#### Badge Styling
+- Badges use `rounded-md` (NOT `rounded-full`), `px-2`, and colored borders per status
+- Status variants: `success` = green bg + border, `warning` = amber bg + border, `error` = red bg + border
+- Never hardcode colors like `bg-emerald-600` — always use design system tokens (`bg-success`, `text-warning`, etc.)
+
+#### Action Button Severity
+- Positive actions (approve): `variant="outline"` + success colors (`border-success-border bg-success-bg text-success`)
+- Warning actions (reject): `variant="outline"` + warning colors (`border-warning-border bg-warning-bg text-warning`)
+- Destructive actions (delete): `variant="outline"` + destructive colors (`border-destructive/30 text-destructive`)
+- **NEVER** style two actions of different severity identically (e.g., reject and delete should NOT both be solid red)
+
+#### Color Tokens
+- Always use CSS variable-based tokens from `globals.css` / `tailwind.config.ts`
+- Never hardcode hex colors or Tailwind palette colors (like `emerald-600`, `amber-500`, `red-500`)
+- Use: `text-success`, `bg-warning-bg`, `border-error-border`, `text-primary`, etc.
+
+#### Table Headers
+- `TableHead` has default `text-xs uppercase tracking-wider` styling
+- Sortable columns use `SortableHeader` (a ghost Button that overrides these defaults)
+- Non-sortable columns that should match: override with `className="text-sm normal-case tracking-normal"` on `TableHead`
+
+#### API Response Unwrapping
+- Single-resource endpoints (e.g., `GET /collections/{id}`) may return nested responses like `{ success, data: { collection: {...}, files: [...] } }`
+- Always verify the actual backend response structure before writing `response.data.data` extraction
+- The `getCollection` function unwraps via `response.data.data.collection` (not `response.data.data`)
+
 ## Key Patterns
 
 ### Components
 - UI primitives in `src/components/ui/` follow shadcn/ui patterns
 - Feature components in `src/components/{feature}/`
 - Use `cn()` utility for conditional class merging
+- **Removed**: `header.tsx`, `parsed-data-viewer.tsx`, and `validation-panel.tsx` were deleted as unused
+- **Active**: `inline-parsed-data.tsx` and `enhanced-field.tsx` are still in use (used by document-split-view)
 
 ### Data Fetching
 ```typescript
@@ -98,6 +137,7 @@ const form = useForm<FormData>({
 | `src/lib/api/client.ts` | Axios API client |
 | `src/types/auth.ts` | Auth types, TokenPair, `decodeJwtPayload()` |
 | `src/components/ui/` | Reusable UI components |
+| `src/components/ui/error-state.tsx` | Reusable error state components |
 | `src/components/layout/top-nav.tsx` | Top navigation with search, theme toggle |
 | `src/components/layout/app-sidebar.tsx` | Collapsible sidebar navigation |
 | `src/app/(dashboard)/layout.tsx` | Dashboard layout with sidebar + top nav |
@@ -106,6 +146,7 @@ const form = useForm<FormData>({
 | `Dockerfile` | Multi-stage production Docker build |
 | `.github/workflows/ci.yml` | CI pipeline (lint, typecheck, test, build) |
 | `.github/workflows/docker.yml` | Docker build & push to GHCR |
+| `src/components/dashboard/greeting-banner.tsx` | Dashboard greeting banner with time-based greeting |
 
 ## Layout Structure
 
@@ -181,6 +222,14 @@ Two auth layers work together:
 - `renewAuthCookie()` — sets the middleware cookie (exported, also used by login form)
 - `handleSessionExpired()` — clears cookie, redirects to login with context
 
+### Remember Me
+
+When "Remember me" is checked on the login form, auth data persists to `localStorage` instead of `sessionStorage`, surviving browser restarts.
+
+- Controlled by the `satvos-remember-me` flag in `localStorage`
+- The `login()` action in the auth store accepts an optional `rememberMe` parameter
+- When enabled, the Zustand persist middleware switches its storage backend to `localStorage`
+
 ## Review API
 
 Document review uses **PUT** (not POST) with `status` field:
@@ -225,16 +274,18 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - **Setup**: `src/test/setup.ts` (mocks for next/navigation, next-themes, ResizeObserver, etc.)
 - **Test Utils**: `src/test/test-utils.tsx` (renderWithProviders with QueryClient + TooltipProvider)
 - **Location**: Tests live in `__tests__/` directories next to their source files
-- **Count**: 466+ tests across 24 test files
+- **Count**: 497 tests across 24+ test files
 
 ### Test Coverage Areas
 - Utility functions (format, validation, cn)
 - Constants and type validations
-- Zustand stores (auth-store, ui-store)
+- Zustand stores (auth-store, ui-store, remember-me persistence)
 - API client (interceptors, error handling, renewAuthCookie)
 - React hooks (use-toast)
 - Auth components (login-form: session expired banner, form rendering)
-- UI components (status-badge, history-tab, collection-card, collection-header, bulk-actions-bar, breadcrumbs, structured-data-viewer, document-tabs)
+- UI components (status-badge, history-tab, collection-card, collection-header, bulk-actions-bar, breadcrumbs, structured-data-viewer, document-tabs, error-state)
+- Error state components (ErrorState, InlineErrorState)
+- Bulk actions bar (results banner, auto-clear, per-document feedback)
 - Page components (document detail page: breadcrumb states, collection loading/error/success)
 - API functions (documents: addDocumentTag, getDocumentTags)
 - Structured data utilities (applyEditsToStructuredData, getValueAtPath, setValueAtPath)
@@ -265,7 +316,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Design system documentation
 - [x] CI/CD pipeline (GitHub Actions)
 - [x] Docker support (multi-stage build)
-- [x] Test framework setup (Vitest, 466+ tests)
+- [x] Test framework setup (Vitest, 497 tests)
 - [x] Auth flow fix (JWT decode + user fetch)
 - [x] Review API fix (PUT with status field)
 - [x] Font: Plus Jakarta Sans (replaced Inter)
@@ -282,11 +333,26 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Document detail layout: compact 2-row header (breadcrumb + title/status/actions), tags moved to data tab as inline pills, retry parsing button on failed state
 - [x] Breadcrumb: loading-aware with skeleton placeholder, error fallback, always visible
 - [x] Collection detail: `isPending` fix for collection name display (TanStack Query v5)
+- [x] Error state handling on all list pages (collections, documents, exceptions, users)
+- [x] Users page pagination
+- [x] Mobile responsiveness fixes (responsive tables, filter stacking)
+- [x] Parallel uploads with retry
+- [x] Bulk operations per-document feedback
+- [x] Remember me on login
+- [x] Settings page form validation (React Hook Form + Zod)
+- [x] Design system gaps fixed (Tailwind config, CSS cleanup)
+- [x] Removed unused components (header, parsed-data-viewer, validation-panel)
+- [x] Dialog a11y fix (removed hardcoded empty DialogTitle)
+- [x] Collection name fix (API response unwrapping for nested `data.collection`)
+- [x] Badge redesign: `rounded-md` with colored borders (not `rounded-full` pills)
+- [x] Bulk actions bar: semantic color differentiation (approve=green, reject=amber, delete=red outline)
+- [x] Icon spacing cleanup: removed redundant `mr-2 h-4 w-4` from all Button/DropdownMenuItem icons
+- [x] Vendor column fallback: tries structured_data.seller.name → parsed_data.seller.name.value → tags seller_name
+- [x] Dashboard greeting banner with time-based greeting and document stack illustration
 
 ### In Progress / Next Steps
-1. **Design System Implementation** - Apply consistent spacing, sizing, colors across all components per `DESIGN_SYSTEM.md`
-2. **Extracted Data Viewer** - Fix to work with actual API response format (user will provide sample response)
-3. **Upload Page Polish** - Upload page exists at `/upload` with drag-drop, collection selection, progress tracking. May need design system alignment.
+1. **Extracted Data Viewer** - Fix to work with actual API response format (user will provide sample response)
+2. **Upload Page Polish** - Upload page exists at `/upload` with drag-drop, collection selection, progress tracking. May need design system alignment.
 
 ### Upload Page Features (Already Implemented)
 Location: `src/app/(dashboard)/upload/page.tsx`
@@ -300,7 +366,6 @@ Location: `src/app/(dashboard)/upload/page.tsx`
 
 ### Known Issues
 - PDF viewer may need CORS configuration for S3 (Google Docs viewer fallback available)
-- Collection cards use `documents_count ?? files_count ?? 0` for compatibility
 - Extracted Data tab has "Raw JSON" toggle for debugging API response format
 
 ## Common Tasks
@@ -315,6 +380,7 @@ Location: `src/app/(dashboard)/upload/page.tsx`
 2. Use Radix primitives if interactive
 3. Use `cva` for variants (see `badge.tsx`)
 4. Follow `DESIGN_SYSTEM.md` for spacing, colors, sizing
+5. **Icons**: Use bare `<Icon />` inside Button/DropdownMenuItem (no className for sizing/spacing)
 
 ### Modifying theme colors
 1. Update CSS variables in `src/app/globals.css` (`:root` for light, `.dark` for dark)

@@ -64,7 +64,7 @@ export function CollectionFilters({
           value={validationStatus}
           onValueChange={(value) => onValidationStatusChange(value as ValidationStatusFilter)}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Validation" />
           </SelectTrigger>
           <SelectContent>
@@ -81,7 +81,7 @@ export function CollectionFilters({
           value={reviewStatus}
           onValueChange={(value) => onReviewStatusChange(value as ReviewStatusFilter)}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Review" />
           </SelectTrigger>
           <SelectContent>
@@ -95,7 +95,7 @@ export function CollectionFilters({
         {/* Clear filters */}
         {hasFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <X className="mr-2 h-4 w-4" />
+            <X />
             Clear
           </Button>
         )}

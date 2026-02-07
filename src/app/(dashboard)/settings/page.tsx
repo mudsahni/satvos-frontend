@@ -22,7 +22,7 @@ import { useUpdateUser } from "@/lib/hooks/use-users";
 import { formatDate } from "@/lib/utils/format";
 
 const profileSchema = z.object({
-  full_name: z.string().min(1, "Full name is required"),
+  full_name: z.string().min(1, "Name is required").max(100, "Name is too long"),
   email: z.string().email("Invalid email address"),
 });
 
@@ -30,7 +30,7 @@ const passwordSchema = z
   .object({
     current_password: z.string().min(1, "Current password is required"),
     new_password: z.string().min(8, "Password must be at least 8 characters"),
-    confirm_password: z.string(),
+    confirm_password: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.new_password === data.confirm_password, {
     message: "Passwords don't match",
@@ -50,6 +50,7 @@ export default function SettingsPage() {
       full_name: user?.full_name || "",
       email: user?.email || "",
     },
+    mode: "onChange",
   });
 
   const passwordForm = useForm<PasswordFormData>({
@@ -59,6 +60,7 @@ export default function SettingsPage() {
       new_password: "",
       confirm_password: "",
     },
+    mode: "onChange",
   });
 
   const onProfileSubmit = async (data: ProfileFormData) => {
@@ -169,11 +171,14 @@ export default function SettingsPage() {
             <Button
               type="submit"
               disabled={
-                updateUser.isPending || !profileForm.formState.isDirty
+                profileForm.formState.isSubmitting ||
+                updateUser.isPending ||
+                !profileForm.formState.isDirty ||
+                !profileForm.formState.isValid
               }
             >
-              {updateUser.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {(profileForm.formState.isSubmitting || updateUser.isPending) && (
+                <Loader2 className="animate-spin" />
               )}
               Save Changes
             </Button>
@@ -242,11 +247,14 @@ export default function SettingsPage() {
             <Button
               type="submit"
               disabled={
-                updateUser.isPending || !passwordForm.formState.isDirty
+                passwordForm.formState.isSubmitting ||
+                updateUser.isPending ||
+                !passwordForm.formState.isDirty ||
+                !passwordForm.formState.isValid
               }
             >
-              {updateUser.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {(passwordForm.formState.isSubmitting || updateUser.isPending) && (
+                <Loader2 className="animate-spin" />
               )}
               Update Password
             </Button>
