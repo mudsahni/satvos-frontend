@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Document } from "@/types/document";
 import { formatDate, formatRelativeTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { UserName } from "@/components/ui/user-name";
 
 interface HistoryTabProps {
   document: Document;
@@ -243,7 +244,7 @@ export function HistoryTab({ document }: HistoryTabProps) {
                   {event.user && (
                     <span className="flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      {event.user}
+                      <UserName id={event.user} />
                     </span>
                   )}
                 </div>

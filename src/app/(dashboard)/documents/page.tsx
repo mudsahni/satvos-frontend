@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, FileText, MoreHorizontal, Trash2 } from "lucide-react";
 
@@ -44,17 +44,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
 import { useDocuments, useDeleteDocument } from "@/lib/hooks/use-documents";
 import { useCollections } from "@/lib/hooks/use-collections";
+import { getDocuments } from "@/lib/api/documents";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { ErrorState } from "@/components/ui/error-state";
-import {
-  ParsingStatus,
-  ValidationStatus,
-  ReviewStatus,
-} from "@/lib/constants";
+
+const FETCH_ALL_PAGE_SIZE = 100;
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -71,22 +70,85 @@ export default function DocumentsPage() {
   const { data: collectionsData } = useCollections({ limit: 100 });
   const collections = collectionsData?.items || [];
 
-  const { data, isLoading, isError, refetch } = useDocuments({
-    search: search || undefined,
-    collection_id: collectionFilter !== "all" ? collectionFilter : undefined,
-    parsing_status:
-      parsingFilter !== "all" ? (parsingFilter as ParsingStatus) : undefined,
-    validation_status:
-      validationFilter !== "all"
-        ? (validationFilter as ValidationStatus)
-        : undefined,
-    review_status:
-      reviewFilter !== "all" ? (reviewFilter as ReviewStatus) : undefined,
-    limit: pageSize,
-    offset: (page - 1) * pageSize,
-    sort_by: "created_at",
-    sort_order: "desc",
+  // API doesn't support search/status filters — only collection_id, offset, limit
+  const hasSearch = !!search;
+  const collectionId = collectionFilter !== "all" ? collectionFilter : undefined;
+
+  // Normal paginated query — used when NOT searching
+  const paginatedQuery = useDocuments(
+    !hasSearch
+      ? {
+          collection_id: collectionId,
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+          sort_by: "created_at",
+          sort_order: "desc",
+        }
+      : { collection_id: collectionId, limit: 1 }
+  );
+
+  // Fetch-all query — used when searching (paginates through all API pages)
+  const allDocsQuery = useQuery({
+    queryKey: ["documents", "search-all", collectionId],
+    queryFn: async () => {
+      const first = await getDocuments({
+        limit: FETCH_ALL_PAGE_SIZE,
+        offset: 0,
+        collection_id: collectionId,
+      });
+      const items = [...first.items];
+      const total = first.total;
+      const remaining = Math.ceil(total / FETCH_ALL_PAGE_SIZE) - 1;
+      if (remaining > 0) {
+        const pages = await Promise.all(
+          Array.from({ length: remaining }, (_, i) =>
+            getDocuments({
+              limit: FETCH_ALL_PAGE_SIZE,
+              offset: (i + 1) * FETCH_ALL_PAGE_SIZE,
+              collection_id: collectionId,
+            })
+          )
+        );
+        for (const p of pages) items.push(...p.items);
+      }
+      return items;
+    },
+    enabled: hasSearch,
   });
+
+  const isLoading = hasSearch ? allDocsQuery.isLoading : paginatedQuery.isLoading;
+  const isError = hasSearch ? allDocsQuery.isError : paginatedQuery.isError;
+  const refetch = hasSearch ? allDocsQuery.refetch : paginatedQuery.refetch;
+
+  // Client-side search + status filtering
+  const filtered = useMemo(() => {
+    let result = hasSearch ? (allDocsQuery.data || []) : (paginatedQuery.data?.items || []);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter((doc) => doc.name.toLowerCase().includes(q));
+    }
+    if (parsingFilter !== "all") {
+      result = result.filter((doc) => doc.parsing_status === parsingFilter);
+    }
+    if (validationFilter !== "all") {
+      result = result.filter((doc) => doc.validation_status === validationFilter);
+    }
+    if (reviewFilter !== "all") {
+      result = result.filter((doc) => doc.review_status === reviewFilter);
+    }
+    // Sort by created_at desc to match server default
+    result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return result;
+  }, [hasSearch, allDocsQuery.data, paginatedQuery.data, search, parsingFilter, validationFilter, reviewFilter]);
+
+  // Pagination: client-side when searching, server-side otherwise
+  const total = hasSearch ? filtered.length : (paginatedQuery.data?.total ?? 0);
+  const totalPages = hasSearch
+    ? Math.max(1, Math.ceil(total / pageSize))
+    : (paginatedQuery.data?.total_pages ?? 1);
+  const documents = hasSearch
+    ? filtered.slice((page - 1) * pageSize, page * pageSize)
+    : filtered;
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
@@ -94,8 +156,6 @@ export default function DocumentsPage() {
   };
 
   const deleteDocument = useDeleteDocument();
-
-  const documents = data?.items || [];
 
   const handleDelete = async () => {
     if (deleteId) {
@@ -322,8 +382,8 @@ export default function DocumentsPage() {
             </div>
             <Pagination
               page={page}
-              totalPages={data?.total_pages ?? 1}
-              total={data?.total ?? 0}
+              totalPages={totalPages}
+              total={total}
               pageSize={pageSize}
               onPageChange={setPage}
               onPageSizeChange={handlePageSizeChange}

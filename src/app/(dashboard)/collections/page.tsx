@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, Search, FolderOpen, Upload } from "lucide-react";
 
@@ -36,11 +36,31 @@ export default function CollectionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
+  // API doesn't support search — fetch all when searching, paginated otherwise
+  const hasSearch = !!search;
   const { data, isLoading, isError, refetch } = useCollections({
-    search: search || undefined,
-    limit: pageSize,
-    offset: (page - 1) * pageSize,
+    limit: hasSearch ? 1000 : pageSize,
+    offset: hasSearch ? 0 : (page - 1) * pageSize,
   });
+
+  // Client-side search filtering
+  const filtered = useMemo(() => {
+    const items = data?.items || [];
+    if (!search) return items;
+    const q = search.toLowerCase();
+    return items.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q)
+    );
+  }, [data, search]);
+
+  // Client-side pagination when searching
+  const total = hasSearch ? filtered.length : (data?.total ?? 0);
+  const totalPages = hasSearch ? Math.max(1, Math.ceil(total / pageSize)) : (data?.total_pages ?? 1);
+  const collections = hasSearch
+    ? filtered.slice((page - 1) * pageSize, page * pageSize)
+    : filtered;
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
@@ -48,8 +68,6 @@ export default function CollectionsPage() {
   };
 
   const deleteCollection = useDeleteCollection();
-
-  const collections = data?.items || [];
 
   const handleDelete = async () => {
     if (deleteId) {
@@ -59,7 +77,7 @@ export default function CollectionsPage() {
   };
 
   const canDelete = (collection: Collection) => {
-    return collection.user_permission === "owner" || user?.role === "admin";
+    return collection.user_permission === "owner";
   };
 
   return (
@@ -150,8 +168,8 @@ export default function CollectionsPage() {
           </div>
           <Pagination
             page={page}
-            totalPages={data?.total_pages ?? 1}
-            total={data?.total ?? 0}
+            totalPages={totalPages}
+            total={total}
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={handlePageSizeChange}

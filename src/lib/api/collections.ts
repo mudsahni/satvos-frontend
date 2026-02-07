@@ -9,6 +9,19 @@ import {
   UpdatePermissionRequest,
   CollectionListParams,
 } from "@/types/collection";
+import { PermissionLevel } from "@/lib/constants";
+
+// Backend sends `current_user_permission`; frontend type uses `user_permission`.
+// Map the field so all UI code sees `user_permission`.
+function mapCollectionPermission(
+  raw: Collection & { current_user_permission?: PermissionLevel }
+): Collection {
+  const { current_user_permission, ...rest } = raw;
+  return {
+    ...rest,
+    user_permission: rest.user_permission ?? current_user_permission,
+  };
+}
 
 export async function getCollections(
   params?: CollectionListParams
@@ -17,14 +30,22 @@ export async function getCollections(
     "/collections",
     { params }
   );
-  return transformPagination(response.data.data, response.data.meta);
+  const result = transformPagination(response.data.data, response.data.meta);
+  return {
+    ...result,
+    items: result.items.map(mapCollectionPermission),
+  };
 }
 
 export async function getCollection(id: string): Promise<Collection> {
   const response = await apiClient.get<
-    ApiResponse<{ collection: Collection }>
+    ApiResponse<{ collection: Collection; current_user_permission?: PermissionLevel }>
   >(`/collections/${id}`);
-  return response.data.data.collection;
+  const { collection, current_user_permission } = response.data.data;
+  return {
+    ...collection,
+    user_permission: collection.user_permission ?? current_user_permission,
+  };
 }
 
 export async function createCollection(
