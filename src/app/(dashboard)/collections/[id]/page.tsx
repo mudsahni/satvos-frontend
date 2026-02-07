@@ -21,7 +21,6 @@ import {
   useReviewDocument,
   useDeleteDocument,
 } from "@/lib/hooks/use-documents";
-import { toast } from "@/lib/hooks/use-toast";
 import { useAuthStore } from "@/store/auth-store";
 import { canUpload } from "@/lib/constants";
 
