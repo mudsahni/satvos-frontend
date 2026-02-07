@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { useDocuments } from "@/lib/hooks/use-documents";
+import { useStats } from "@/lib/hooks/use-stats";
 import { canCreateCollections } from "@/lib/constants";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
@@ -63,20 +64,19 @@ function StatCard({ title, value, icon, href, loading }: StatCardProps) {
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const { data: stats, isLoading: statsLoading } = useStats();
   const { data: collectionsData, isLoading: collectionsLoading } =
     useCollections({ limit: 6 });
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({
-    limit: 500,
+    limit: 10,
     sort_by: "created_at",
     sort_order: "desc",
   });
 
   const collections = collectionsData?.items || [];
   const documents = documentsData?.items || [];
-  const totalCollections = collectionsData?.total || 0;
-  const totalDocuments = documentsData?.total || 0;
 
-  // Documents needing attention (validation warnings/errors or pending review)
+  // Documents needing attention (from recent docs for the list display)
   const documentsNeedingAttention = documents.filter(
     (d) =>
       d.validation_status === "invalid" ||
@@ -84,14 +84,13 @@ export default function DashboardPage() {
       (d.parsing_status === "completed" && d.review_status === "pending")
   );
 
-  // Stats — client-side counts from full document set
-  const pendingValidation = documents.filter(
-    (d) => d.validation_status === "warning" || d.validation_status === "invalid"
-  ).length;
-
-  const pendingReview = documents.filter(
-    (d) => d.parsing_status === "completed" && d.review_status === "pending"
-  ).length;
+  // Stats from API — accurate counts across all documents
+  const totalCollections = stats?.total_collections ?? 0;
+  const totalDocuments = stats?.total_documents ?? 0;
+  const pendingValidation = (stats?.validation_warning ?? 0) + (stats?.validation_invalid ?? 0);
+  const pendingReview = stats?.review_pending ?? 0;
+  const parsingActive = (stats?.parsing_pending ?? 0) + (stats?.parsing_queued ?? 0) + (stats?.parsing_processing ?? 0);
+  const failedParsing = stats?.parsing_failed ?? 0;
 
   return (
     <div className="space-y-6">
@@ -99,6 +98,8 @@ export default function DashboardPage() {
       <GreetingBanner
         pendingReview={pendingReview}
         needsValidation={pendingValidation}
+        parsingActive={parsingActive}
+        failedParsing={failedParsing}
       />
 
       {/* Quick Stats Row */}
@@ -108,28 +109,28 @@ export default function DashboardPage() {
           value={totalCollections}
           icon={<FolderOpen className="h-5 w-5 text-primary" />}
           href="/collections"
-          loading={collectionsLoading}
+          loading={statsLoading}
         />
         <StatCard
           title="Documents"
           value={totalDocuments}
           icon={<FileText className="h-5 w-5 text-muted-foreground" />}
           href="/documents"
-          loading={documentsLoading}
+          loading={statsLoading}
         />
         <StatCard
           title="Need Validation"
           value={pendingValidation}
           icon={<AlertTriangle className="h-5 w-5 text-warning" />}
-          href="/exceptions"
-          loading={documentsLoading}
+          href="/exceptions?filter=invalid"
+          loading={statsLoading}
         />
         <StatCard
           title="Pending Review"
           value={pendingReview}
           icon={<Clock className="h-5 w-5 text-primary" />}
-          href="/exceptions"
-          loading={documentsLoading}
+          href="/exceptions?filter=pending_review"
+          loading={statsLoading}
         />
       </div>
 
@@ -200,7 +201,7 @@ export default function DashboardPage() {
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/exceptions" className="flex items-center">
-              View all exceptions
+              View all
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>

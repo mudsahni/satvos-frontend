@@ -55,7 +55,7 @@ const navItems: Array<{
     roles: ["admin", "manager", "member", "viewer"],
   },
   {
-    label: "Exceptions",
+    label: "Needs Attention",
     href: "/exceptions",
     icon: AlertTriangle,
     roles: ["admin", "manager", "member", "viewer"],

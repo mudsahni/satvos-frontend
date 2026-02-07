@@ -55,7 +55,7 @@ export default function DashboardLayout({
         <div className="flex flex-1 flex-col min-w-0">
           <TopNav onSearchClick={() => setSearchOpen(true)} />
           <SidebarInset className="flex-1 flex flex-col">
-            <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">{children}</main>
+            <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-muted/50 p-4 md:p-6 lg:p-8">{children}</main>
             <AppFooter />
           </SidebarInset>
         </div>

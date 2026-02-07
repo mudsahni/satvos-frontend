@@ -113,7 +113,7 @@
     --muted-foreground: 215 20% 65%;    /* #94a3b8 - Secondary text */
 
     /* Card */
-    --card: 220 40% 9%;                 /* Elevated background */
+    --card: 220 38% 11%;               /* Elevated background */
     --card-foreground: 210 40% 98%;
 
     /* Popover */

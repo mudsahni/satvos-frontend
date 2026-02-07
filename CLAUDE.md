@@ -312,7 +312,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Hybrid dashboard (stats + collections + needs attention)
 - [x] Document detail with tabs (Data, Validations, History)
 - [x] Global search (Cmd+K)
-- [x] Exceptions page
+- [x] Needs Attention page (renamed from Exceptions)
 - [x] Design system documentation
 - [x] CI/CD pipeline (GitHub Actions)
 - [x] Docker support (multi-stage build)
@@ -333,7 +333,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Document detail layout: compact 2-row header (breadcrumb + title/status/actions), tags moved to data tab as inline pills, retry parsing button on failed state
 - [x] Breadcrumb: loading-aware with skeleton placeholder, error fallback, always visible
 - [x] Collection detail: `isPending` fix for collection name display (TanStack Query v5)
-- [x] Error state handling on all list pages (collections, documents, exceptions, users)
+- [x] Error state handling on all list pages (collections, documents, needs-attention, users)
 - [x] Users page pagination
 - [x] Mobile responsiveness fixes (responsive tables, filter stacking)
 - [x] Parallel uploads with retry
@@ -342,6 +342,10 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Settings page form validation (React Hook Form + Zod)
 - [x] Design system gaps fixed (Tailwind config, CSS cleanup)
 - [x] Removed unused components (header, parsed-data-viewer, validation-panel)
+- [x] Stats API endpoint (`GET /stats`) for accurate dashboard counts
+- [x] Needs Attention page: server-paginated fetch of all docs, client-side filtering, URL param filter support (`?filter=`), Failed Parsing category
+- [x] Dashboard stat cards link to Needs Attention with pre-set filter
+- [x] Greeting banner enhanced with processing/failed parsing counts
 - [x] Dialog a11y fix (removed hardcoded empty DialogTitle)
 - [x] Collection name fix (API response unwrapping for nested `data.collection`)
 - [x] Badge redesign: `rounded-md` with colored borders (not `rounded-full` pills)

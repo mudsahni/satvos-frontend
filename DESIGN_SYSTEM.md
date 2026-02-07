@@ -34,7 +34,7 @@ A comprehensive guide to maintaining visual consistency across the Satvos applic
 |------|------------|-----------|-------|
 | Background | `hsl(0 0% 100%)` | `hsl(224 71% 4%)` | Page background |
 | Foreground | `hsl(222 47% 11%)` | `hsl(213 31% 91%)` | Primary text |
-| Card | `hsl(0 0% 100%)` | `hsl(224 71% 4%)` | Card backgrounds |
+| Card | `hsl(0 0% 100%)` | `hsl(220 38% 11%)` | Card backgrounds |
 | Muted | `hsl(220 14% 96%)` | `hsl(215 28% 17%)` | Subtle backgrounds |
 | Muted Foreground | `hsl(220 9% 46%)` | `hsl(217 11% 65%)` | Secondary text |
 | Border | `hsl(220 13% 93%)` | `hsl(220 20% 16%)` | Borders, dividers |
@@ -237,6 +237,8 @@ All spacing is based on a **4px** base unit.
 
 The design system follows a **flat, borderless** approach. Cards, buttons, and inputs do not use shadows at rest. Shadows are reserved for elevated overlays (dropdowns, modals) and opt-in interactive hover states via the `.card-hover` utility.
 
+**Content canvas**: The dashboard content area uses `bg-muted/50` to create a subtle tinted canvas behind white cards. In dark mode, cards use a lighter shade (`--card: 220 38% 11%`) against the darker page background (`--background: 222 47% 6%`), giving a ~5% lightness gap for natural depth without shadows.
+
 ### Shadow Scale (Available for Opt-in Use)
 
 | Level | Token | CSS | Usage |
@@ -430,7 +432,7 @@ The `ErrorState` and `InlineErrorState` components (`src/components/ui/error-sta
 
 | Variant | Usage |
 |---------|-------|
-| `ErrorState` | Full-page error with icon, title, message, and retry button. Used on list pages (collections, documents, exceptions, users). |
+| `ErrorState` | Full-page error with icon, title, message, and retry button. Used on list pages (collections, documents, needs-attention, users). |
 | `InlineErrorState` | Compact inline error for use within cards or sections. Smaller icon and text. |
 
 ```tsx

@@ -71,9 +71,11 @@ function DocumentStack() {
 interface GreetingBannerProps {
   pendingReview?: number;
   needsValidation?: number;
+  parsingActive?: number;
+  failedParsing?: number;
 }
 
-export function GreetingBanner({ pendingReview = 0, needsValidation = 0 }: GreetingBannerProps) {
+export function GreetingBanner({ pendingReview = 0, needsValidation = 0, parsingActive = 0, failedParsing = 0 }: GreetingBannerProps) {
   const { user } = useAuthStore();
   const greeting = useMemo(() => getGreeting(), []);
   const firstName = getFirstName(user);
@@ -82,11 +84,13 @@ export function GreetingBanner({ pendingReview = 0, needsValidation = 0 }: Greet
 
   const subtitle = useMemo(() => {
     const parts: string[] = [];
-    if (needsValidation > 0) parts.push(`${needsValidation} document${needsValidation === 1 ? "" : "s"} need${needsValidation === 1 ? "s" : ""} validation`);
-    if (pendingReview > 0) parts.push(`${pendingReview} document${pendingReview === 1 ? "" : "s"} pending review`);
-    if (parts.length > 0) return parts.join(", ");
+    if (needsValidation > 0) parts.push(`${needsValidation} need${needsValidation === 1 ? "s" : ""} validation`);
+    if (pendingReview > 0) parts.push(`${pendingReview} pending review`);
+    if (failedParsing > 0) parts.push(`${failedParsing} failed parsing`);
+    if (parsingActive > 0) parts.push(`${parsingActive} processing`);
+    if (parts.length > 0) return parts.join(" · ");
     return "All documents are up to date";
-  }, [pendingReview, needsValidation]);
+  }, [pendingReview, needsValidation, parsingActive, failedParsing]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-[hsl(var(--accent-purple))] p-6 text-white shadow-lg dark:from-primary/80 dark:via-primary/70 dark:to-[hsl(var(--accent-purple)/0.6)]">
