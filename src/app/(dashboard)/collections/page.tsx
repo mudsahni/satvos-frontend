@@ -78,7 +78,7 @@ export default function CollectionsPage() {
   };
 
   const canDelete = (collection: Collection) => {
-    return collection.user_permission === "owner" || user?.role === "admin";
+    return collection.user_permission === "owner";
   };
 
   return (

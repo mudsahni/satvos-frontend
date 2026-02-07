@@ -248,9 +248,8 @@ The Extracted Data tab supports inline editing. Users click "Edit" to toggle all
 - After save, validation is auto-triggered via `POST /documents/{id}/validate`
 - Unsaved changes guard prompts before tab switches or cancel
 - **Permission gating**: Edit button only shows when user has edit permission. Checked via:
-  - Tenant-level role: admin, manager, or member (`hasRole(userRole, ROLES.MEMBER)`)
-  - Collection-level permission: `owner` or `editor` on the document's collection
-  - The page fetches the collection via `useCollection(document.collection_id)` and reads `user.role` from `useAuthStore()`
+  - Collection-level permission: `owner` or `editor` on the document's collection (backend computes effective permission as `max(implicit_from_role, explicit_db_permission)` and returns it as `current_user_permission`)
+  - The page fetches the collection via `useCollection(document.collection_id)` and reads `user_permission`
   - `onSaveEdits` is conditionally passed to `DocumentTabs` — if not provided, the Edit button is hidden
 - **Retry Parsing**: When parsing fails, the Extracted Data tab shows an error state with a "Retry Parsing" button (via `onReparse` prop). Loading state shown via `isReparsing` prop.
 - **Tags in DocumentTabs**: Tags are rendered as inline pills at the top of the Extracted Data tab. Props: `tags`, `onAddTag`, `isAddingTag`, `onDeleteTag`. The Add Tag dialog is inside DocumentTabs.
@@ -292,6 +291,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - Global search (document/collection/page search, keyboard nav, data fetching)
 - Needs Attention utilities (needsAttention, matchesFilter)
 - Stats API (getStats)
+- Collections API (current_user_permission → user_permission mapping in getCollections/getCollection)
 
 ## CI/CD & Docker
 
@@ -361,6 +361,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Form field styling: Input/Select use `bg-background shadow-sm` for contrast on tinted canvas
 - [x] History tab: UserName component resolves user IDs to full names via `useUser()` hook
 - [x] Dark mode card contrast bump (`--card` lightness 9% → 11%), content canvas tint (`bg-muted/50`)
+- [x] `current_user_permission` integration: API layer maps backend field → `user_permission`, removed role-based permission workarounds, collection permission gates upload/bulk/edit actions
 
 ### In Progress / Next Steps
 1. **Extracted Data Viewer** - Fix to work with actual API response format (user will provide sample response)
