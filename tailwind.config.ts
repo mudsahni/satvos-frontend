@@ -13,8 +13,18 @@ export default {
       fontFamily: {
         sans: ["var(--font-jakarta)", "system-ui", "sans-serif"],
       },
+      spacing: {
+        "13": "3.25rem",
+      },
+      fontSize: {
+        tiny: ["0.625rem", { lineHeight: "1.2", fontWeight: "500" }],
+      },
       colors: {
-        background: "hsl(var(--background))",
+        background: {
+          DEFAULT: "hsl(var(--background))",
+          elevated: "hsl(var(--background-elevated))",
+          subtle: "hsl(var(--background-subtle))",
+        },
         foreground: "hsl(var(--foreground))",
         card: {
           DEFAULT: "hsl(var(--card))",
@@ -66,7 +76,10 @@ export default {
           bg: "hsl(var(--error-bg))",
           border: "hsl(var(--error-border))",
         },
-        border: "hsl(var(--border))",
+        border: {
+          DEFAULT: "hsl(var(--border))",
+          hover: "hsl(var(--border-hover))",
+        },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         chart: {

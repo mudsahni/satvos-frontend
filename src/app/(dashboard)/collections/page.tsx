@@ -25,6 +25,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { canCreateCollections } from "@/lib/constants";
 import { Collection } from "@/types/collection";
 import { Pagination } from "@/components/ui/pagination";
+import { ErrorState } from "@/components/ui/error-state";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -35,7 +36,7 @@ export default function CollectionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const { data, isLoading } = useCollections({
+  const { data, isLoading, isError, refetch } = useCollections({
     search: search || undefined,
     limit: pageSize,
     offset: (page - 1) * pageSize,
@@ -74,14 +75,14 @@ export default function CollectionsPage() {
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
             <Link href="/upload">
-              <Upload className="mr-2 h-4 w-4" />
+              <Upload />
               Upload
             </Link>
           </Button>
           {user && canCreateCollections(user.role) && (
             <Button asChild>
               <Link href="/collections/new">
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus />
                 New Collection
               </Link>
             </Button>
@@ -109,8 +110,14 @@ export default function CollectionsPage() {
             <CollectionCardSkeleton key={i} />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState
+          title="Failed to load collections"
+          message="We couldn't load your collections. Please try again."
+          onRetry={() => refetch()}
+        />
       ) : collections.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 px-4">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 px-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <FolderOpen className="h-8 w-8 text-muted-foreground" />
           </div>
@@ -123,7 +130,7 @@ export default function CollectionsPage() {
           {!search && user && canCreateCollections(user.role) && (
             <Button asChild className="mt-4">
               <Link href="/collections/new">
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus />
                 Create Collection
               </Link>
             </Button>

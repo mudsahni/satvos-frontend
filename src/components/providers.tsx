@@ -72,6 +72,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       attribute="class"
       defaultTheme="light"
       enableSystem
+      storageKey="satvos-theme"
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>

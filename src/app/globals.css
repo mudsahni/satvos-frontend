@@ -38,7 +38,6 @@
 
     /* Muted */
     --muted: 220 14% 96%;              /* #f4f5f7 */
-    --muted-foreground: 215 16% 47%;
 
     /* Accent */
     --accent: 220 14% 96%;
@@ -70,11 +69,11 @@
     --error-border: 0 40% 87%;
 
     /* Borders */
-    --border: 220 13% 91%;             /* Light borders #e2e8f0 */
+    --border: 220 13% 93%;             /* Lighter borders */
     --border-hover: 239 84% 67%;       /* Primary on hover */
 
     /* Input */
-    --input: 220 13% 91%;
+    --input: 220 13% 93%;
 
     /* Ring */
     --ring: 239 84% 67%;
@@ -87,7 +86,7 @@
     --chart-5: 192 85% 45%;            /* Accent cyan */
 
     /* Sidebar */
-    --sidebar-background: 0 0% 99%;    /* Almost white */
+    --sidebar-background: 0 0% 98.5%;  /* Very subtle off-white */
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -97,7 +96,7 @@
     --sidebar-ring: 239 84% 67%;
 
     /* Radius */
-    --radius: 0.5rem;
+    --radius: 0.625rem;
   }
 
   .dark {
@@ -114,7 +113,7 @@
     --muted-foreground: 215 20% 65%;    /* #94a3b8 - Secondary text */
 
     /* Card */
-    --card: 220 40% 9%;                 /* Elevated background */
+    --card: 220 38% 11%;               /* Elevated background */
     --card-foreground: 210 40% 98%;
 
     /* Popover */
@@ -163,7 +162,7 @@
     --error-border: 0 35% 22%;
 
     /* Borders */
-    --border: 220 20% 18%;              /* Subtle borders */
+    --border: 220 20% 16%;              /* Subtle borders */
     --border-hover: 239 84% 67%;        /* Primary on hover */
 
     /* Input */
@@ -209,35 +208,6 @@
 
   .bg-gradient-elevated {
     background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
-  }
-
-  /* Soft shadows for light mode */
-  .shadow-soft-sm {
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  }
-
-  .shadow-soft {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  }
-
-  .shadow-soft-md {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  }
-
-  .shadow-soft-lg {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  }
-
-  .shadow-soft-xl {
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  }
-
-  /* Elevation on hover */
-  .hover-lift {
-    @apply transition-all duration-200;
-  }
-  .hover-lift:hover {
-    @apply shadow-soft-lg -translate-y-0.5;
   }
 
   /* Dark mode glow shadows (only apply in dark mode) */
@@ -286,6 +256,14 @@
     background: linear-gradient(90deg, hsl(var(--muted)) 0%, hsl(var(--muted-foreground) / 0.08) 50%, hsl(var(--muted)) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Interactive card hover effect */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+  .card-hover:hover {
+    @apply -translate-y-0.5 shadow-soft-md;
   }
 
   /* Hide scrollbar but keep functionality */

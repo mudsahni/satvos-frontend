@@ -140,7 +140,7 @@ export function DocumentsTable({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -161,8 +161,8 @@ export function DocumentsTable({
             <TableHead>
               <SortableHeader field="name">Name</SortableHeader>
             </TableHead>
-            <TableHead>
-              <span className="-ml-3 text-sm font-medium">Vendor</span>
+            <TableHead className="hidden md:table-cell text-sm normal-case tracking-normal">
+              Vendor
             </TableHead>
             <TableHead>
               <SortableHeader field="validation_status">
@@ -172,7 +172,7 @@ export function DocumentsTable({
             <TableHead>
               <SortableHeader field="review_status">Review</SortableHeader>
             </TableHead>
-            <TableHead>
+            <TableHead className="hidden lg:table-cell">
               <SortableHeader field="created_at">Created</SortableHeader>
             </TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -181,7 +181,11 @@ export function DocumentsTable({
         <TableBody>
           {documents.map((doc) => {
             const isSelected = selectedIds.includes(doc.id);
-            const vendorName = doc.parsed_data?.seller?.name?.value || "-";
+            const vendorName =
+              doc.structured_data?.seller?.name ||
+              doc.parsed_data?.seller?.name?.value ||
+              doc.tags?.find((t) => t.key === "seller_name")?.value ||
+              "-";
 
             return (
               <TableRow
@@ -208,7 +212,7 @@ export function DocumentsTable({
                     {doc.name}
                   </Link>
                 </TableCell>
-                <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                <TableCell className="hidden md:table-cell text-muted-foreground max-w-[200px] truncate">
                   {vendorName}
                 </TableCell>
                 <TableCell>
@@ -217,7 +221,7 @@ export function DocumentsTable({
                 <TableCell>
                   <StatusBadge status={doc.review_status} type="review" />
                 </TableCell>
-                <TableCell className="text-muted-foreground whitespace-nowrap">
+                <TableCell className="hidden lg:table-cell text-muted-foreground whitespace-nowrap">
                   {formatRelativeTime(doc.created_at)}
                 </TableCell>
                 <TableCell>
@@ -226,7 +230,7 @@ export function DocumentsTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
@@ -234,7 +238,7 @@ export function DocumentsTable({
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem asChild>
                         <Link href={`/documents/${doc.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
+                          <Eye />
                           View Details
                         </Link>
                       </DropdownMenuItem>

@@ -57,7 +57,7 @@ export function CollectionHeader({
           </Button>
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <FolderOpen className="h-4.5 w-4.5" />
               </div>
               <h1 className="text-2xl font-semibold tracking-tight truncate">
@@ -98,7 +98,7 @@ export function CollectionHeader({
           {canUpload && (
             <Button asChild>
               <Link href={`/upload?collection=${collection.id}`}>
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload />
                 Upload
               </Link>
             </Button>
@@ -106,7 +106,7 @@ export function CollectionHeader({
           {isOwner && (
             <Button variant="outline" asChild>
               <Link href={`/collections/${collection.id}/settings`}>
-                <Settings className="mr-2 h-4 w-4" />
+                <Settings />
                 Settings
               </Link>
             </Button>

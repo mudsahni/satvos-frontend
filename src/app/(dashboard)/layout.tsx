@@ -20,7 +20,9 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (isHydrated && !isAuthenticated) {
-      router.push("/login");
+      // Clear stale middleware cookie so the server-side redirect kicks in too
+      document.cookie = "satvos-auth-state=; path=/; max-age=0";
+      router.replace("/login");
     }
   }, [isAuthenticated, isHydrated, router]);
 
@@ -37,8 +39,8 @@ export default function DashboardLayout({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Show loading state while hydrating
-  if (!isHydrated) {
+  // Show loading state while hydrating or redirecting to login
+  if (!isHydrated || !isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -46,19 +48,14 @@ export default function DashboardLayout({
     );
   }
 
-  // Don't render if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
     <SidebarProvider>
       <div className="relative flex min-h-screen w-full">
         <AppSidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-w-0">
           <TopNav onSearchClick={() => setSearchOpen(true)} />
           <SidebarInset className="flex-1 flex flex-col">
-            <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">{children}</main>
+            <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-muted/50 p-4 md:p-6 lg:p-8">{children}</main>
             <AppFooter />
           </SidebarInset>
         </div>

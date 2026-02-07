@@ -21,7 +21,6 @@ import {
   useReviewDocument,
   useDeleteDocument,
 } from "@/lib/hooks/use-documents";
-import { toast } from "@/lib/hooks/use-toast";
 import { useAuthStore } from "@/store/auth-store";
 import { canUpload } from "@/lib/constants";
 
@@ -60,47 +59,59 @@ export default function CollectionDetailPage({
 
   const documents = useMemo(() => documentsData?.items || [], [documentsData]);
 
-  const handleBulkApprove = async () => {
+  const handleBulkApprove = async (ids: string[]) => {
     setIsBulkProcessing(true);
+    let succeeded = 0;
+    let failed = 0;
     try {
-      await Promise.all(
-        selectedIds.map((docId) =>
+      const results = await Promise.allSettled(
+        ids.map((docId) =>
           reviewDocument.mutateAsync({ id: docId, data: { status: "approved" } })
         )
       );
-      setSelectedIds([]);
-      toast({ title: "Documents approved", description: `${selectedIds.length} documents approved.` });
+      succeeded = results.filter((r) => r.status === "fulfilled").length;
+      failed = results.filter((r) => r.status === "rejected").length;
+      if (succeeded > 0) setSelectedIds([]);
     } finally {
       setIsBulkProcessing(false);
     }
+    return { succeeded, failed };
   };
 
-  const handleBulkReject = async () => {
+  const handleBulkReject = async (ids: string[]) => {
     setIsBulkProcessing(true);
+    let succeeded = 0;
+    let failed = 0;
     try {
-      await Promise.all(
-        selectedIds.map((docId) =>
+      const results = await Promise.allSettled(
+        ids.map((docId) =>
           reviewDocument.mutateAsync({ id: docId, data: { status: "rejected" } })
         )
       );
-      setSelectedIds([]);
-      toast({ title: "Documents rejected", description: `${selectedIds.length} documents rejected.` });
+      succeeded = results.filter((r) => r.status === "fulfilled").length;
+      failed = results.filter((r) => r.status === "rejected").length;
+      if (succeeded > 0) setSelectedIds([]);
     } finally {
       setIsBulkProcessing(false);
     }
+    return { succeeded, failed };
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = async (ids: string[]) => {
     setIsBulkProcessing(true);
+    let succeeded = 0;
+    let failed = 0;
     try {
-      await Promise.all(
-        selectedIds.map((docId) => deleteDocument.mutateAsync(docId))
+      const results = await Promise.allSettled(
+        ids.map((docId) => deleteDocument.mutateAsync(docId))
       );
-      setSelectedIds([]);
-      toast({ title: "Documents deleted", description: `${selectedIds.length} documents deleted.` });
+      succeeded = results.filter((r) => r.status === "fulfilled").length;
+      failed = results.filter((r) => r.status === "rejected").length;
+      if (succeeded > 0) setSelectedIds([]);
     } finally {
       setIsBulkProcessing(false);
     }
+    return { succeeded, failed };
   };
 
   const handleSort = (field: SortField, order: SortOrder) => {
@@ -127,11 +138,9 @@ export default function CollectionDetailPage({
       }
 
       // Review status filter
-      if (reviewStatus !== "all" && doc.review_status !== reviewStatus) {
-        return false;
-      }
+      return !(reviewStatus !== "all" && doc.review_status !== reviewStatus);
 
-      return true;
+
     });
   }, [documents, search, validationStatus, reviewStatus]);
 
@@ -213,7 +222,7 @@ export default function CollectionDetailPage({
       {/* Bulk Actions */}
       {selectedIds.length > 0 && (
         <BulkActionsBar
-          selectedCount={selectedIds.length}
+          selectedIds={selectedIds}
           onDeselect={() => setSelectedIds([])}
           onApprove={handleBulkApprove}
           onReject={handleBulkReject}
@@ -244,7 +253,7 @@ export default function CollectionDetailPage({
               {canUploadDocs && (
                 <Button asChild className="mt-4">
                   <Link href={`/upload?collection=${id}`}>
-                    <Upload className="mr-2 h-4 w-4" />
+                    <Upload />
                     Upload Documents
                   </Link>
                 </Button>

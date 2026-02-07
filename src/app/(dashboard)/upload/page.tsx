@@ -290,7 +290,7 @@ function UploadPageContent() {
           </div>
 
           {collectionMode === "new" ? (
-            <div className="space-y-4 border rounded-lg p-4">
+            <div className="space-y-4 border rounded-xl p-4">
               <div className="space-y-2">
                 <Label htmlFor="collection-name">
                   Name <span className="text-error">*</span>
@@ -358,10 +358,10 @@ function UploadPageContent() {
           {!isUploading && (
             <div
               {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors ${
                 isDragActive
                   ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/25 hover:border-primary/50"
+                  : "border-muted-foreground/20 hover:border-primary/40"
               }`}
             >
               <input {...getInputProps()} />
@@ -414,7 +414,7 @@ function UploadPageContent() {
               </div>
 
               {/* File entries */}
-              <div className="border rounded-lg divide-y">
+              <div className="border rounded-xl divide-y">
                 {files.map((f) => (
                   <div key={f.id} className="p-3 space-y-2">
                     <div className="flex items-center gap-3">
@@ -467,7 +467,7 @@ function UploadPageContent() {
               <Label className="text-sm font-medium">
                 Upload Progress
               </Label>
-              <div className="border rounded-lg divide-y">
+              <div className="border rounded-xl divide-y">
                 {uploads.map(([fileId, upload]) => (
                   <div key={fileId} className="p-3 space-y-2">
                     <div className="flex items-center justify-between">
@@ -556,7 +556,7 @@ function UploadPageContent() {
               disabled={isUploading || !isFormValid}
             >
               {isUploading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               {isUploading
                 ? "Uploading..."

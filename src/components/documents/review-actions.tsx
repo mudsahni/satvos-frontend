@@ -111,17 +111,19 @@ export function ReviewActions({ document }: ReviewActionsProps) {
           </div>
           <div className="flex gap-2">
             <Button
+              variant="outline"
               onClick={() => setConfirmAction("approved")}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
             >
-              <CheckCircle className="mr-2 h-4 w-4" />
+              <CheckCircle />
               Approve
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={() => setConfirmAction("rejected")}
+              className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
             >
-              <XCircle className="mr-2 h-4 w-4" />
+              <XCircle />
               Reject
             </Button>
           </div>
@@ -151,12 +153,12 @@ export function ReviewActions({ document }: ReviewActionsProps) {
               onClick={handleReview}
               className={
                 confirmAction === "approved"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  ? "bg-success text-success-foreground hover:bg-success/90"
                   : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
               }
             >
               {reviewDocument.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               {confirmAction === "approved" ? "Approve" : "Reject"}
             </AlertDialogAction>

@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,6 +32,7 @@ export function LoginForm() {
   const sessionExpired = searchParams.get("session_expired") === "true";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const loginToStore = useAuthStore((state) => state.login);
 
   const {
@@ -63,7 +65,8 @@ export function LoginForm() {
           expires_at: response.expires_at,
         },
         partialUser as import("@/types/user").User,
-        data.tenant_slug
+        data.tenant_slug,
+        rememberMe
       );
 
       // Fetch full user profile using user ID from login response or JWT
@@ -162,8 +165,25 @@ export function LoginForm() {
             )}
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember-me"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked === true)}
+              disabled={isLoading}
+            />
+            <div className="grid gap-0.5 leading-none">
+              <Label htmlFor="remember-me" className="text-sm font-medium cursor-pointer">
+                Remember me
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Stay signed in for 30 days
+              </p>
+            </div>
+          </div>
+
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Loader2 className="animate-spin" />}
             Sign in
           </Button>
         </form>

@@ -70,6 +70,7 @@ export function useCreateDocument() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       queryClient.invalidateQueries({ queryKey: ["collections"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
       toast({
         title: "Document created",
         description: "Your document has been created and is being processed.",
@@ -116,6 +117,7 @@ export function useDeleteDocument() {
     mutationFn: (id: string) => deleteDocument(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
       toast({
         title: "Document deleted",
         description: "Your document has been deleted successfully.",
@@ -175,6 +177,7 @@ export function useTriggerValidation() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["document", id] });
       queryClient.invalidateQueries({ queryKey: ["validation-results", id] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
       toast({
         title: "Validation started",
         description: "Your document is being validated.",
@@ -199,6 +202,7 @@ export function useReviewDocument() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
       toast({
         title:
           variables.data.status === "approved"

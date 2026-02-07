@@ -215,7 +215,7 @@ export default function CollectionSettingsPage({
 
             <Button type="submit" disabled={isSubmitting || !isDirty}>
               {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               Save Changes
             </Button>
@@ -239,7 +239,7 @@ export default function CollectionSettingsPage({
             >
               <DialogTrigger asChild>
                 <Button>
-                  <UserPlus className="mr-2 h-4 w-4" />
+                  <UserPlus />
                   Add User
                 </Button>
               </DialogTrigger>
@@ -306,7 +306,7 @@ export default function CollectionSettingsPage({
                     disabled={!selectedUserId || addPermission.isPending}
                   >
                     {addPermission.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="animate-spin" />
                     )}
                     Add Permission
                   </Button>
@@ -415,7 +415,7 @@ export default function CollectionSettingsPage({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteCollection.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               Delete
             </AlertDialogAction>
@@ -443,7 +443,7 @@ export default function CollectionSettingsPage({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deletePermission.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               )}
               Remove
             </AlertDialogAction>

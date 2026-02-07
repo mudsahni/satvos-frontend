@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   FolderOpen,
   FileText,
-  Upload,
   AlertTriangle,
   ArrowRight,
   Plus,
@@ -19,11 +18,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { useDocuments } from "@/lib/hooks/use-documents";
+import { useStats } from "@/lib/hooks/use-stats";
 import { canCreateCollections } from "@/lib/constants";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { CollectionCard, CollectionCardSkeleton } from "@/components/collections/collection-card";
 import { cn } from "@/lib/utils";
+import { GreetingBanner } from "@/components/dashboard/greeting-banner";
 
 interface StatCardProps {
   title: string;
@@ -37,7 +38,7 @@ function StatCard({ title, value, icon, href, loading }: StatCardProps) {
   const content = (
     <Card className={cn(
       "relative overflow-hidden transition-all duration-200",
-      href && "hover:shadow-soft-md hover:-translate-y-0.5 cursor-pointer"
+      href && "hover:border-primary/30 hover:-translate-y-0.5 cursor-pointer"
     )}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
@@ -49,7 +50,7 @@ function StatCard({ title, value, icon, href, loading }: StatCardProps) {
               <p className="text-2xl font-bold">{value}</p>
             )}
           </div>
-          <div className="p-2 rounded-lg bg-muted/50">{icon}</div>
+          <div className="p-2.5 rounded-xl bg-muted/40">{icon}</div>
         </div>
       </CardContent>
     </Card>
@@ -63,6 +64,7 @@ function StatCard({ title, value, icon, href, loading }: StatCardProps) {
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const { data: stats, isLoading: statsLoading } = useStats();
   const { data: collectionsData, isLoading: collectionsLoading } =
     useCollections({ limit: 6 });
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({
@@ -73,10 +75,8 @@ export default function DashboardPage() {
 
   const collections = collectionsData?.items || [];
   const documents = documentsData?.items || [];
-  const totalCollections = collectionsData?.total || 0;
-  const totalDocuments = documentsData?.total || 0;
 
-  // Documents needing attention (validation warnings/errors or pending review)
+  // Documents needing attention (from recent docs for the list display)
   const documentsNeedingAttention = documents.filter(
     (d) =>
       d.validation_status === "invalid" ||
@@ -84,32 +84,23 @@ export default function DashboardPage() {
       (d.parsing_status === "completed" && d.review_status === "pending")
   );
 
-  // Stats
-  const pendingValidation = documents.filter(
-    (d) => d.validation_status === "warning" || d.validation_status === "invalid"
-  ).length;
-
-  const pendingReview = documents.filter(
-    (d) => d.parsing_status === "completed" && d.review_status === "pending"
-  ).length;
+  // Stats from API — accurate counts across all documents
+  const totalCollections = stats?.total_collections ?? 0;
+  const totalDocuments = stats?.total_documents ?? 0;
+  const pendingValidation = (stats?.validation_warning ?? 0) + (stats?.validation_invalid ?? 0);
+  const pendingReview = stats?.review_pending ?? 0;
+  const parsingActive = (stats?.parsing_pending ?? 0) + (stats?.parsing_queued ?? 0) + (stats?.parsing_processing ?? 0);
+  const failedParsing = stats?.parsing_failed ?? 0;
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Overview of your document processing pipeline
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/upload">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload
-          </Link>
-        </Button>
-      </div>
+      {/* Greeting Banner */}
+      <GreetingBanner
+        pendingReview={pendingReview}
+        needsValidation={pendingValidation}
+        parsingActive={parsingActive}
+        failedParsing={failedParsing}
+      />
 
       {/* Quick Stats Row */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -118,28 +109,28 @@ export default function DashboardPage() {
           value={totalCollections}
           icon={<FolderOpen className="h-5 w-5 text-primary" />}
           href="/collections"
-          loading={collectionsLoading}
+          loading={statsLoading}
         />
         <StatCard
           title="Documents"
           value={totalDocuments}
           icon={<FileText className="h-5 w-5 text-muted-foreground" />}
           href="/documents"
-          loading={documentsLoading}
+          loading={statsLoading}
         />
         <StatCard
           title="Need Validation"
           value={pendingValidation}
           icon={<AlertTriangle className="h-5 w-5 text-warning" />}
-          href="/exceptions"
-          loading={documentsLoading}
+          href="/exceptions?filter=invalid"
+          loading={statsLoading}
         />
         <StatCard
           title="Pending Review"
           value={pendingReview}
           icon={<Clock className="h-5 w-5 text-primary" />}
-          href="/exceptions"
-          loading={documentsLoading}
+          href="/exceptions?filter=pending_review"
+          loading={statsLoading}
         />
       </div>
 
@@ -148,9 +139,6 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Your Collections</h2>
-            <p className="text-sm text-muted-foreground">
-              Quick access to your document collections
-            </p>
           </div>
           <div className="flex items-center gap-2">
             {user && canCreateCollections(user.role) && (
@@ -179,7 +167,7 @@ export default function DashboardPage() {
         ) : collections.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-10">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/60">
                 <FolderOpen className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="mt-4 font-semibold">No collections yet</h3>
@@ -189,7 +177,7 @@ export default function DashboardPage() {
               {user && canCreateCollections(user.role) && (
                 <Button asChild className="mt-4">
                   <Link href="/collections/new">
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus />
                     Create Collection
                   </Link>
                 </Button>
@@ -210,13 +198,10 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Needs Attention</h2>
-            <p className="text-sm text-muted-foreground">
-              Documents requiring validation review or approval
-            </p>
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/exceptions" className="flex items-center">
-              View all exceptions
+              View all
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
@@ -253,7 +238,7 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
                       doc.validation_status === "invalid" && "bg-error/10",
                       doc.validation_status === "warning" && "bg-warning/10",
                       doc.validation_status !== "invalid" && doc.validation_status !== "warning" && "bg-primary/10"
@@ -287,29 +272,6 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
-
-      {/* Quick Actions */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-              <Upload className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Upload Documents</h3>
-              <p className="text-sm text-muted-foreground">
-                Add new documents to process and validate
-              </p>
-            </div>
-          </div>
-          <Button asChild>
-            <Link href="/upload">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Files
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

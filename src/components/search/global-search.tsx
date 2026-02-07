@@ -60,9 +60,9 @@ const quickNavItems: SearchResult[] = [
     href: "/documents",
   },
   {
-    id: "exceptions",
+    id: "needs-attention",
     type: "page",
-    title: "Exceptions",
+    title: "Needs Attention",
     description: "Documents needing attention",
     icon: AlertTriangle,
     href: "/exceptions",
