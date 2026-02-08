@@ -70,6 +70,9 @@ export interface InvoiceData {
   currency?: string;
   place_of_supply?: string;
   reverse_charge?: boolean;
+  irn?: string;
+  acknowledgement_number?: string;
+  acknowledgement_date?: string;
 }
 
 export interface PartyData {

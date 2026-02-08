@@ -106,6 +106,7 @@ function DataField({
   isEditing,
   editedValues,
   onFieldChange,
+  showEmpty = false,
 }: {
   label: string;
   value: string | number | boolean | undefined | null;
@@ -116,9 +117,10 @@ function DataField({
   isEditing?: boolean;
   editedValues?: Record<string, string>;
   onFieldChange?: (fieldPath: string, value: string) => void;
+  showEmpty?: boolean;
 }) {
-  // In read mode, hide empty fields
-  if (!isEditing && (value === undefined || value === null || value === "")) {
+  // In read mode, hide empty fields (unless showEmpty is true)
+  if (!isEditing && !showEmpty && (value === undefined || value === null || value === "")) {
     return null;
   }
 
@@ -136,6 +138,8 @@ function DataField({
     displayValue = formatCurrency(value);
   } else if (format === "boolean") {
     displayValue = value ? "Yes" : "No";
+  } else if (showEmpty && (value === undefined || value === null || value === "")) {
+    displayValue = "-";
   } else {
     displayValue = String(value ?? "");
   }
@@ -364,6 +368,34 @@ export function StructuredDataViewer({
             fieldPath="invoice.reverse_charge"
             format="boolean"
             validationResults={validationResults}
+            {...editProps}
+          />
+          <DataField
+            label="IRN"
+            value={data.invoice.irn}
+            confidence={getConfidence("invoice", "irn")}
+            fieldPath="invoice.irn"
+            validationResults={validationResults}
+            showEmpty
+            {...editProps}
+          />
+          <DataField
+            label="Acknowledgement Number"
+            value={data.invoice.acknowledgement_number}
+            confidence={getConfidence("invoice", "acknowledgement_number")}
+            fieldPath="invoice.acknowledgement_number"
+            validationResults={validationResults}
+            showEmpty
+            {...editProps}
+          />
+          <DataField
+            label="Acknowledgement Date"
+            value={data.invoice.acknowledgement_date}
+            confidence={getConfidence("invoice", "acknowledgement_date")}
+            fieldPath="invoice.acknowledgement_date"
+            format="date"
+            validationResults={validationResults}
+            showEmpty
             {...editProps}
           />
         </div>
