@@ -134,18 +134,18 @@ export function PDFViewer({ url, isLoading, fileName, className }: PDFViewerProp
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
             onClick={handleOpenInNewTab}
             title="Open in new tab"
+            aria-label="Open in new tab"
           >
             <ExternalLink className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
             onClick={handleRetry}
             title="Reload"
+            aria-label="Reload document"
           >
             <RotateCw className="h-4 w-4" />
           </Button>

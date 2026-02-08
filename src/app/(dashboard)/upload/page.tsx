@@ -439,6 +439,7 @@ function UploadPageContent() {
                         size="icon"
                         className="h-7 w-7 shrink-0"
                         onClick={() => removeFile(f.id)}
+                        aria-label="Remove file"
                       >
                         <X className="h-3.5 w-3.5" />
                       </Button>

@@ -243,7 +243,8 @@ export default function DocumentDetailPage({
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
-              className="shrink-0 h-8 w-8"
+              className="shrink-0"
+              aria-label="Go back"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -270,6 +271,7 @@ export default function DocumentDetailPage({
                       variant="outline"
                       onClick={() => setConfirmAction("approved")}
                       className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
+                      aria-label="Approve document"
                     >
                       <CheckCircle className={"md:mr-2 h-4 w-4"} />
                       <span className="hidden md:inline">Approve</span>
@@ -279,6 +281,7 @@ export default function DocumentDetailPage({
                       variant="outline"
                       onClick={() => setConfirmAction("rejected")}
                       className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
+                      aria-label="Reject document"
                     >
                       <XCircle className={"md:mr-2 h-4 w-4"} />
                       <span className="hidden md:inline">Reject</span>
@@ -303,7 +306,7 @@ export default function DocumentDetailPage({
             {/* Actions overflow menu — icon only */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" aria-label="Document actions">
                   {(triggerParsing.isPending || triggerValidation.isPending) ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (

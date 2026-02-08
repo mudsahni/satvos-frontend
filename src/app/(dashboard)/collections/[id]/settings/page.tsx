@@ -174,7 +174,7 @@ export default function CollectionSettingsPage({
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+        <Button variant="ghost" size="icon" onClick={() => router.back()} aria-label="Go back">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -358,6 +358,7 @@ export default function CollectionSettingsPage({
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeletePermissionId(permission.id)}
+                        aria-label="Delete permission"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
