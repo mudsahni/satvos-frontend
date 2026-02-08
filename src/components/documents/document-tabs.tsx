@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileText, ShieldCheck, History, Loader2, Code, Pencil, CheckCircle, AlertCircle, RefreshCw, X, Tag, Plus } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -91,6 +91,16 @@ export function DocumentTabs({
   const hasData = structuredData && Object.keys(structuredData).length > 0;
   const hasUnsavedChanges = isEditing && Object.keys(editedValues).length > 0;
   const canEdit = hasData && parsingStatus === "completed";
+
+  // Warn before closing tab/navigating away with unsaved edits
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedChanges]);
 
   const handleFieldChange = (fieldPath: string, value: string) => {
     setEditedValues(prev => ({ ...prev, [fieldPath]: value }));
@@ -208,6 +218,7 @@ export function DocumentTabs({
                         <button
                           onClick={() => onDeleteTag(tag.id)}
                           className="ml-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                          aria-label={`Delete tag ${tag.key}`}
                         >
                           <X className="h-3 w-3" />
                         </button>

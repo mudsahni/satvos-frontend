@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Plus, Search, FolderOpen, Upload } from "lucide-react";
+import { Plus, Search, FolderOpen, Upload, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -195,8 +195,10 @@ export default function CollectionsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={deleteCollection.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
+              {deleteCollection.isPending && <Loader2 className="animate-spin" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

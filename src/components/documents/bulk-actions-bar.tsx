@@ -181,8 +181,8 @@ export function BulkActionsBar({
         )}
 
         {/* Actions bar */}
-        <div className="flex items-center gap-3 rounded-xl border bg-muted/30 px-4 py-2.5">
-          <span className="text-sm font-medium">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 rounded-xl border bg-muted/30 px-3 sm:px-4 py-2.5">
+          <span className="text-sm font-medium whitespace-nowrap">
             {selectedCount} selected
           </span>
 
@@ -193,10 +193,10 @@ export function BulkActionsBar({
             disabled={isProcessing}
           >
             <X />
-            Deselect
+            <span className="hidden sm:inline">Deselect</span>
           </Button>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button
               size="sm"
               variant="outline"

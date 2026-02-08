@@ -230,7 +230,8 @@ export function DocumentsTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        className="md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        aria-label="Document actions"
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
