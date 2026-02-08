@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   getUsers,
   getUser,
@@ -14,8 +14,7 @@ import {
   CreateUserRequest,
   UpdateUserRequest,
 } from "@/types/user";
-import { toast } from "@/lib/hooks/use-toast";
-import { getErrorMessage } from "@/lib/api/client";
+import { useMutationWithToast } from "./use-mutation-with-toast";
 
 export function useUsers(params?: UserListParams) {
   return useQuery({
@@ -41,69 +40,38 @@ export function useSearchUsers(query: string) {
 }
 
 export function useCreateUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (data: CreateUserRequest) => createUser(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast({
-        title: "User created",
-        description: "The user has been created successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [["users"]],
+    successMessage: {
+      title: "User created",
+      description: "The user has been created successfully.",
     },
   });
 }
 
 export function useUpdateUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserRequest }) =>
       updateUser(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ["user", variables.id] });
-      toast({
-        title: "User updated",
-        description: "The user has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      ["users"],
+      (vars) => ["user", vars.id],
+    ],
+    successMessage: {
+      title: "User updated",
+      description: "The user has been updated successfully.",
     },
   });
 }
 
 export function useDeleteUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (id: string) => deleteUser(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast({
-        title: "User deleted",
-        description: "The user has been deleted successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [["users"]],
+    successMessage: {
+      title: "User deleted",
+      description: "The user has been deleted successfully.",
     },
   });
 }

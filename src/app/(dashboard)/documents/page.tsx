@@ -48,12 +48,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useDocuments, useDeleteDocument } from "@/lib/hooks/use-documents";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { getDocuments } from "@/lib/api/documents";
+import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { ErrorState } from "@/components/ui/error-state";
-
-const FETCH_ALL_PAGE_SIZE = 100;
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -90,29 +89,11 @@ export default function DocumentsPage() {
   // Fetch-all query — used when searching (paginates through all API pages)
   const allDocsQuery = useQuery({
     queryKey: ["documents", "search-all", collectionId],
-    queryFn: async () => {
-      const first = await getDocuments({
-        limit: FETCH_ALL_PAGE_SIZE,
-        offset: 0,
-        collection_id: collectionId,
-      });
-      const items = [...first.items];
-      const total = first.total;
-      const remaining = Math.ceil(total / FETCH_ALL_PAGE_SIZE) - 1;
-      if (remaining > 0) {
-        const pages = await Promise.all(
-          Array.from({ length: remaining }, (_, i) =>
-            getDocuments({
-              limit: FETCH_ALL_PAGE_SIZE,
-              offset: (i + 1) * FETCH_ALL_PAGE_SIZE,
-              collection_id: collectionId,
-            })
-          )
-        );
-        for (const p of pages) items.push(...p.items);
-      }
-      return items;
-    },
+    queryFn: () =>
+      fetchAllPaginated(
+        ({ limit, offset }) =>
+          getDocuments({ limit, offset, collection_id: collectionId })
+      ),
     enabled: hasSearch,
   });
 

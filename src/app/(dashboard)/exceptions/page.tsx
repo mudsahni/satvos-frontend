@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDocuments } from "@/lib/api/documents";
+import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { useStats } from "@/lib/hooks/use-stats";
 import { formatRelativeTime } from "@/lib/utils/format";
@@ -38,7 +39,6 @@ import { AttentionFilter, matchesFilter } from "@/lib/utils/needs-attention";
 
 const VALID_FILTERS: AttentionFilter[] = ["all", "invalid", "warning", "pending_review", "failed"];
 const DEFAULT_PAGE_SIZE = 20;
-const PAGE_SIZE = 100;
 
 function NeedsAttentionContent() {
   const searchParams = useSearchParams();
@@ -64,26 +64,8 @@ function NeedsAttentionContent() {
     refetch,
   } = useQuery({
     queryKey: ["documents", "needs-attention"],
-    queryFn: async () => {
-      const first = await getDocuments({ limit: PAGE_SIZE, offset: 0 });
-      const items = [...first.items];
-      const total = first.total;
-
-      // Fetch remaining pages in parallel
-      const remainingPages = Math.ceil(total / PAGE_SIZE) - 1;
-      if (remainingPages > 0) {
-        const pages = await Promise.all(
-          Array.from({ length: remainingPages }, (_, i) =>
-            getDocuments({ limit: PAGE_SIZE, offset: (i + 1) * PAGE_SIZE })
-          )
-        );
-        for (const p of pages) {
-          items.push(...p.items);
-        }
-      }
-
-      return items;
-    },
+    queryFn: () =>
+      fetchAllPaginated(({ limit, offset }) => getDocuments({ limit, offset })),
   });
 
   // Collections for displaying collection names

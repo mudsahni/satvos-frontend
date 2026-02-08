@@ -74,3 +74,23 @@ export const reviewDocumentSchema = z.object({
 });
 
 export type ReviewDocumentFormData = z.infer<typeof reviewDocumentSchema>;
+
+/**
+ * Validates that a redirect URL is safe (relative path only).
+ * Prevents open redirect attacks via crafted returnUrl parameters.
+ * Returns "/" if the URL is unsafe.
+ */
+export function getSafeRedirectUrl(url: string | null): string {
+  if (!url) return "/";
+
+  // Must start with exactly one slash (reject protocol-relative "//evil.com")
+  if (!url.startsWith("/") || url.startsWith("//")) return "/";
+
+  // Reject any URL with a protocol (javascript:, data:, etc.)
+  if (/^[a-z]+:/i.test(url)) return "/";
+
+  // Reject backslash (some browsers treat \ as /)
+  if (url.includes("\\")) return "/";
+
+  return url;
+}

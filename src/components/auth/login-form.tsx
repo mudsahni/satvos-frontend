@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { loginSchema, type LoginFormData } from "@/lib/utils/validation";
+import { loginSchema, type LoginFormData, getSafeRedirectUrl } from "@/lib/utils/validation";
 import { login } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
@@ -28,7 +28,7 @@ import { decodeJwtPayload } from "@/types/auth";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("returnUrl") || "/";
+  const returnUrl = getSafeRedirectUrl(searchParams.get("returnUrl"));
   const sessionExpired = searchParams.get("session_expired") === "true";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

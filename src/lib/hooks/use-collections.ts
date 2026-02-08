@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getCollections,
   getCollection,
@@ -20,15 +20,14 @@ import {
   AddPermissionRequest,
   UpdatePermissionRequest,
 } from "@/types/collection";
-import { toast } from "@/lib/hooks/use-toast";
-import { getErrorMessage } from "@/lib/api/client";
+import { useMutationWithToast } from "./use-mutation-with-toast";
 
 export function useCollections(params?: CollectionListParams) {
   return useQuery({
     queryKey: ["collections", params],
     queryFn: () => getCollections(params),
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000, // 5 minutes - collections rarely change
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -37,96 +36,57 @@ export function useCollection(id: string) {
     queryKey: ["collection", id],
     queryFn: () => getCollection(id),
     enabled: !!id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useCreateCollection() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (data: CreateCollectionRequest) => createCollection(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["collections"] });
-      toast({
-        title: "Collection created",
-        description: "Your collection has been created successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [["collections"]],
+    successMessage: {
+      title: "Collection created",
+      description: "Your collection has been created successfully.",
     },
   });
 }
 
 export function useUpdateCollection() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({ id, data }: { id: string; data: UpdateCollectionRequest }) =>
       updateCollection(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["collections"] });
-      queryClient.invalidateQueries({ queryKey: ["collection", variables.id] });
-      toast({
-        title: "Collection updated",
-        description: "Your collection has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      ["collections"],
+      (vars) => ["collection", vars.id],
+    ],
+    successMessage: {
+      title: "Collection updated",
+      description: "Your collection has been updated successfully.",
     },
   });
 }
 
 export function useDeleteCollection() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (id: string) => deleteCollection(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["collections"] });
-      toast({
-        title: "Collection deleted",
-        description: "Your collection has been deleted successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [["collections"]],
+    successMessage: {
+      title: "Collection deleted",
+      description: "Your collection has been deleted successfully.",
     },
   });
 }
 
 // CSV Export
 export function useExportCollectionCsv() {
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({ id, name }: { id: string; name?: string }) =>
       exportCollectionCsv(id, name),
-    onSuccess: () => {
-      toast({
-        title: "CSV exported",
-        description: "Your CSV file has been downloaded.",
-      });
+    successMessage: {
+      title: "CSV exported",
+      description: "Your CSV file has been downloaded.",
     },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Export failed",
-        description: getErrorMessage(error),
-      });
-    },
+    errorTitle: "Export failed",
   });
 }
 
@@ -140,9 +100,7 @@ export function useCollectionPermissions(collectionId: string) {
 }
 
 export function useAddCollectionPermission() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({
       collectionId,
       data,
@@ -150,29 +108,18 @@ export function useAddCollectionPermission() {
       collectionId: string;
       data: AddPermissionRequest;
     }) => addCollectionPermission(collectionId, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["collection-permissions", variables.collectionId],
-      });
-      toast({
-        title: "Permission added",
-        description: "User permission has been added successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      (vars) => ["collection-permissions", vars.collectionId],
+    ],
+    successMessage: {
+      title: "Permission added",
+      description: "User permission has been added successfully.",
     },
   });
 }
 
 export function useUpdateCollectionPermission() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({
       collectionId,
       permissionId,
@@ -182,29 +129,18 @@ export function useUpdateCollectionPermission() {
       permissionId: string;
       data: UpdatePermissionRequest;
     }) => updateCollectionPermission(collectionId, permissionId, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["collection-permissions", variables.collectionId],
-      });
-      toast({
-        title: "Permission updated",
-        description: "User permission has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      (vars) => ["collection-permissions", vars.collectionId],
+    ],
+    successMessage: {
+      title: "Permission updated",
+      description: "User permission has been updated successfully.",
     },
   });
 }
 
 export function useDeleteCollectionPermission() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({
       collectionId,
       permissionId,
@@ -212,21 +148,12 @@ export function useDeleteCollectionPermission() {
       collectionId: string;
       permissionId: string;
     }) => deleteCollectionPermission(collectionId, permissionId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["collection-permissions", variables.collectionId],
-      });
-      toast({
-        title: "Permission removed",
-        description: "User permission has been removed successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      (vars) => ["collection-permissions", vars.collectionId],
+    ],
+    successMessage: {
+      title: "Permission removed",
+      description: "User permission has been removed successfully.",
     },
   });
 }
