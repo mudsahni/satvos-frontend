@@ -237,8 +237,8 @@ export default function DocumentDetailPage({
         </div>
 
         {/* Title row */}
-        <div className="flex items-center justify-between gap-4 px-4 lg:px-6 py-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between gap-2 md:gap-4 px-4 lg:px-6 py-3">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <Button
               variant="ghost"
               size="icon"
@@ -247,7 +247,7 @@ export default function DocumentDetailPage({
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold truncate">{document.name}</h1>
+            <h1 className="text-base md:text-lg font-semibold truncate">{document.name}</h1>
             {/* Status badges — inline after title, hidden on small screens */}
             <div className="hidden md:flex items-center gap-1.5 ml-1">
               <StatusBadge status={document.parsing_status} type="parsing" showType />
@@ -271,8 +271,8 @@ export default function DocumentDetailPage({
                       onClick={() => setConfirmAction("approved")}
                       className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
                     >
-                      <CheckCircle className={"mr-2 h-4 w-4"} />
-                      Approve
+                      <CheckCircle className={"md:mr-2 h-4 w-4"} />
+                      <span className="hidden md:inline">Approve</span>
                     </Button>
                     <Button
                       size="sm"
@@ -280,8 +280,8 @@ export default function DocumentDetailPage({
                       onClick={() => setConfirmAction("rejected")}
                       className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
                     >
-                      <XCircle className={"mr-2 h-4 w-4"} />
-                      Reject
+                      <XCircle className={"md:mr-2 h-4 w-4"} />
+                      <span className="hidden md:inline">Reject</span>
                     </Button>
                   </>
                 ) : (
