@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getDocuments } from "@/lib/api/documents";
 import { getCollections } from "@/lib/api/collections";
+import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 
 interface GlobalSearchProps {
   open: boolean;
@@ -97,8 +98,6 @@ const quickNavItems: SearchResult[] = [
   },
 ];
 
-const FETCH_PAGE_SIZE = 100;
-
 export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const router = useRouter();
   const [search, setSearch] = React.useState("");
@@ -107,21 +106,8 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   // Fetch all documents when dialog is open (cached by TanStack Query)
   const { data: allDocuments, isLoading: docsLoading } = useQuery({
     queryKey: ["documents", "global-search"],
-    queryFn: async () => {
-      const first = await getDocuments({ limit: FETCH_PAGE_SIZE, offset: 0 });
-      const items = [...first.items];
-      const total = first.total;
-      const remaining = Math.ceil(total / FETCH_PAGE_SIZE) - 1;
-      if (remaining > 0) {
-        const pages = await Promise.all(
-          Array.from({ length: remaining }, (_, i) =>
-            getDocuments({ limit: FETCH_PAGE_SIZE, offset: (i + 1) * FETCH_PAGE_SIZE })
-          )
-        );
-        for (const p of pages) items.push(...p.items);
-      }
-      return items;
-    },
+    queryFn: () =>
+      fetchAllPaginated(({ limit, offset }) => getDocuments({ limit, offset })),
     enabled: open,
     staleTime: 2 * 60 * 1000,
   });

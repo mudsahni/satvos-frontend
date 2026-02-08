@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getDocuments,
   getDocument,
@@ -22,8 +22,7 @@ import {
   ReviewDocumentRequest,
   AddTagsRequest,
 } from "@/types/document";
-import { toast } from "@/lib/hooks/use-toast";
-import { getErrorMessage } from "@/lib/api/client";
+import { useMutationWithToast } from "./use-mutation-with-toast";
 
 export function useDocuments(params?: DocumentListParams) {
   return useQuery({
@@ -50,7 +49,6 @@ export function useDocument(id: string) {
     enabled: !!id,
     refetchInterval: (query) => {
       const data = query.state.data;
-      // Poll every 2 seconds while parsing
       if (
         data?.parsing_status === "pending" ||
         data?.parsing_status === "processing"
@@ -63,80 +61,44 @@ export function useDocument(id: string) {
 }
 
 export function useCreateDocument() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (data: CreateDocumentRequest) => createDocument(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["collections"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      toast({
-        title: "Document created",
-        description: "Your document has been created and is being processed.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [["documents"], ["collections"], ["stats"]],
+    successMessage: {
+      title: "Document created",
+      description: "Your document has been created and is being processed.",
     },
   });
 }
 
 export function useUpdateDocument() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({ id, data }: { id: string; data: UpdateDocumentRequest }) =>
       updateDocument(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
-      toast({
-        title: "Document updated",
-        description: "Your document has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      ["documents"],
+      (vars) => ["document", vars.id],
+    ],
+    successMessage: {
+      title: "Document updated",
+      description: "Your document has been updated successfully.",
     },
   });
 }
 
 export function useDeleteDocument() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (id: string) => deleteDocument(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      toast({
-        title: "Document deleted",
-        description: "Your document has been deleted successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [["documents"], ["stats"]],
+    successMessage: {
+      title: "Document deleted",
+      description: "Your document has been deleted successfully.",
     },
   });
 }
 
 export function useTriggerParsing() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({
       id,
       parseMode,
@@ -144,19 +106,10 @@ export function useTriggerParsing() {
       id: string;
       parseMode?: "single" | "dual";
     }) => triggerParsing(id, parseMode),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
-      toast({
-        title: "Parsing started",
-        description: "Your document is being parsed.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [(vars) => ["document", vars.id]],
+    successMessage: {
+      title: "Parsing started",
+      description: "Your document is being parsed.",
     },
   });
 }
@@ -170,54 +123,36 @@ export function useValidationResults(documentId: string) {
 }
 
 export function useTriggerValidation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: (id: string) => triggerValidation(id),
-    onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ["document", id] });
-      queryClient.invalidateQueries({ queryKey: ["validation-results", id] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      toast({
-        title: "Validation started",
-        description: "Your document is being validated.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      (id) => ["document", id],
+      (id) => ["validation-results", id],
+      ["stats"],
+    ],
+    successMessage: {
+      title: "Validation started",
+      description: "Your document is being validated.",
     },
   });
 }
 
 export function useReviewDocument() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({ id, data }: { id: string; data: ReviewDocumentRequest }) =>
       reviewDocument(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      toast({
-        title:
-          variables.data.status === "approved"
-            ? "Document approved"
-            : "Document rejected",
-        description: `The document has been ${variables.data.status}.`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
-    },
+    invalidateKeys: [
+      ["documents"],
+      (vars) => ["document", vars.id],
+      ["stats"],
+    ],
+    successMessage: (_, vars) => ({
+      title:
+        vars.data.status === "approved"
+          ? "Document approved"
+          : "Document rejected",
+      description: `The document has been ${vars.data.status}.`,
+    }),
   });
 }
 
@@ -231,35 +166,22 @@ export function useDocumentTags(documentId: string) {
 }
 
 export function useAddDocumentTag() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({ id, data }: { id: string; data: AddTagsRequest }) =>
       addDocumentTag(id, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["document-tags", variables.id],
-      });
-      queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
-      toast({
-        title: "Tag added",
-        description: "Tag has been added to the document.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      (vars) => ["document-tags", vars.id],
+      (vars) => ["document", vars.id],
+    ],
+    successMessage: {
+      title: "Tag added",
+      description: "Tag has been added to the document.",
     },
   });
 }
 
 export function useDeleteDocumentTag() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
+  return useMutationWithToast({
     mutationFn: ({
       documentId,
       tagId,
@@ -267,24 +189,13 @@ export function useDeleteDocumentTag() {
       documentId: string;
       tagId: string;
     }) => deleteDocumentTag(documentId, tagId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["document-tags", variables.documentId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["document", variables.documentId],
-      });
-      toast({
-        title: "Tag removed",
-        description: "Tag has been removed from the document.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: getErrorMessage(error),
-      });
+    invalidateKeys: [
+      (vars) => ["document-tags", vars.documentId],
+      (vars) => ["document", vars.documentId],
+    ],
+    successMessage: {
+      title: "Tag removed",
+      description: "Tag has been removed from the document.",
     },
   });
 }

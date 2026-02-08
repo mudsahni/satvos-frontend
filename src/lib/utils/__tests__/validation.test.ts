@@ -7,6 +7,7 @@ import {
   addPermissionSchema,
   createDocumentSchema,
   reviewDocumentSchema,
+  getSafeRedirectUrl,
 } from "../validation";
 
 describe("loginSchema", () => {
@@ -625,5 +626,47 @@ describe("reviewDocumentSchema", () => {
     if (result.success) {
       expect(result.data.notes).toBeUndefined();
     }
+  });
+});
+
+describe("getSafeRedirectUrl", () => {
+  it("allows valid relative paths", () => {
+    expect(getSafeRedirectUrl("/")).toBe("/");
+    expect(getSafeRedirectUrl("/documents")).toBe("/documents");
+    expect(getSafeRedirectUrl("/documents/abc-123")).toBe("/documents/abc-123");
+    expect(getSafeRedirectUrl("/collections?page=2")).toBe("/collections?page=2");
+    expect(getSafeRedirectUrl("/login?returnUrl=%2Fdocs")).toBe("/login?returnUrl=%2Fdocs");
+  });
+
+  it("rejects absolute URLs (open redirect)", () => {
+    expect(getSafeRedirectUrl("https://evil.com")).toBe("/");
+    expect(getSafeRedirectUrl("http://evil.com/phishing")).toBe("/");
+    expect(getSafeRedirectUrl("https://evil.com/login")).toBe("/");
+  });
+
+  it("rejects protocol-relative URLs", () => {
+    expect(getSafeRedirectUrl("//evil.com")).toBe("/");
+    expect(getSafeRedirectUrl("//evil.com/path")).toBe("/");
+  });
+
+  it("rejects javascript: and data: protocols", () => {
+    expect(getSafeRedirectUrl("javascript:alert(1)")).toBe("/");
+    expect(getSafeRedirectUrl("data:text/html,<script>alert(1)</script>")).toBe("/");
+    expect(getSafeRedirectUrl("JAVASCRIPT:alert(1)")).toBe("/");
+  });
+
+  it("rejects backslash-based bypasses", () => {
+    expect(getSafeRedirectUrl("/\\evil.com")).toBe("/");
+    expect(getSafeRedirectUrl("\\evil.com")).toBe("/");
+  });
+
+  it("rejects paths not starting with /", () => {
+    expect(getSafeRedirectUrl("evil.com")).toBe("/");
+    expect(getSafeRedirectUrl("documents")).toBe("/");
+    expect(getSafeRedirectUrl("")).toBe("/");
+  });
+
+  it("returns / for null input", () => {
+    expect(getSafeRedirectUrl(null)).toBe("/");
   });
 });
