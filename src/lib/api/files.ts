@@ -33,6 +33,7 @@ export async function uploadFile(
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      timeout: 300000, // 5 minutes for file uploads
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
           const progress = Math.round(
