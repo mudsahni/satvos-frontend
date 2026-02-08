@@ -1,5 +1,8 @@
-import { AxiosError, AxiosHeaders } from "axios";
+import axios, { AxiosError, AxiosHeaders } from "axios";
+import MockAdapter from "axios-mock-adapter";
 import { getErrorMessage, isApiError, renewAuthCookie } from "@/lib/api/client";
+import apiClient from "@/lib/api/client";
+import { useAuthStore } from "@/store/auth-store";
 import type { ApiResponse } from "@/types/api";
 
 // Helper to create an AxiosError with a typed response
@@ -158,6 +161,168 @@ describe("isApiError", () => {
   it("returns false when there is no response (network error)", () => {
     const error = createAxiosError(undefined, "Network Error");
     expect(isApiError(error, "ANY_CODE")).toBe(false);
+  });
+});
+
+describe("response interceptor", () => {
+  let mock: MockAdapter;
+  let axiosPostSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    mock = new MockAdapter(apiClient);
+    // Mock axios.post used by the refresh call (it uses raw axios, not apiClient)
+    axiosPostSpy = vi.spyOn(axios, "post");
+    // Reset auth store
+    useAuthStore.setState({
+      accessToken: "expired-token",
+      refreshToken: "valid-refresh-token",
+      user: null,
+      isAuthenticated: true,
+    });
+    // Clear cookies
+    document.cookie = "satvos-auth-state=; path=/; max-age=0";
+  });
+
+  afterEach(() => {
+    mock.restore();
+    axiosPostSpy.mockRestore();
+  });
+
+  it("retries a 401 request after successful token refresh", async () => {
+    // First call returns 401, retry returns success
+    mock
+      .onGet("/documents/1")
+      .replyOnce(401)
+      .onGet("/documents/1")
+      .replyOnce(200, { success: true, data: { id: "1" } });
+
+    axiosPostSpy.mockResolvedValueOnce({
+      data: {
+        data: {
+          access_token: "new-access-token",
+          refresh_token: "new-refresh-token",
+        },
+      },
+    });
+
+    const response = await apiClient.get("/documents/1");
+    expect(response.data).toEqual({ success: true, data: { id: "1" } });
+    expect(axiosPostSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("queues concurrent 401 requests and retries them after refresh", async () => {
+    // Both calls return 401 initially, then succeed
+    mock
+      .onGet("/documents/1")
+      .replyOnce(401)
+      .onGet("/documents/1")
+      .replyOnce(200, { success: true, data: { id: "1" } });
+    mock
+      .onGet("/documents/2")
+      .replyOnce(401)
+      .onGet("/documents/2")
+      .replyOnce(200, { success: true, data: { id: "2" } });
+
+    // Delay the refresh so the second request arrives while refreshing
+    axiosPostSpy.mockImplementationOnce(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                data: {
+                  data: {
+                    access_token: "new-access-token",
+                    refresh_token: "new-refresh-token",
+                  },
+                },
+              }),
+            50
+          )
+        )
+    );
+
+    const [res1, res2] = await Promise.all([
+      apiClient.get("/documents/1"),
+      apiClient.get("/documents/2"),
+    ]);
+
+    expect(res1.data).toEqual({ success: true, data: { id: "1" } });
+    expect(res2.data).toEqual({ success: true, data: { id: "2" } });
+    // Only one refresh call should have been made
+    expect(axiosPostSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("queues network errors during active refresh and retries them", async () => {
+    // Request A: returns 401 → triggers refresh
+    // Request B: network error (ECONNRESET) while refresh is in progress → should be queued
+    mock
+      .onGet("/documents/1")
+      .replyOnce(401)
+      .onGet("/documents/1")
+      .replyOnce(200, { success: true, data: { id: "1" } });
+    mock
+      .onGet("/documents/2")
+      .networkErrorOnce()
+      .onGet("/documents/2")
+      .replyOnce(200, { success: true, data: { id: "2" } });
+
+    axiosPostSpy.mockImplementationOnce(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                data: {
+                  data: {
+                    access_token: "new-access-token",
+                    refresh_token: "new-refresh-token",
+                  },
+                },
+              }),
+            50
+          )
+        )
+    );
+
+    const [res1, res2] = await Promise.all([
+      apiClient.get("/documents/1"),
+      apiClient.get("/documents/2"),
+    ]);
+
+    expect(res1.data).toEqual({ success: true, data: { id: "1" } });
+    expect(res2.data).toEqual({ success: true, data: { id: "2" } });
+    expect(axiosPostSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not queue network errors when no refresh is in progress", async () => {
+    mock.onGet("/documents/1").networkError();
+
+    await expect(apiClient.get("/documents/1")).rejects.toThrow();
+    expect(axiosPostSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects queued network errors when refresh fails", async () => {
+    mock
+      .onGet("/documents/1")
+      .replyOnce(401)
+      .onGet("/documents/2")
+      .networkErrorOnce();
+
+    axiosPostSpy.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Refresh failed")), 50)
+        )
+    );
+
+    const results = await Promise.allSettled([
+      apiClient.get("/documents/1"),
+      apiClient.get("/documents/2"),
+    ]);
+
+    expect(results[0].status).toBe("rejected");
+    expect(results[1].status).toBe("rejected");
   });
 });
 
