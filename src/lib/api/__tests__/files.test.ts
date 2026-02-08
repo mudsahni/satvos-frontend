@@ -92,10 +92,11 @@ describe("files API", () => {
     });
 
     it("calls progress callback with percentage", async () => {
-      mockPost.mockImplementation(async (_url, _data, config: any) => {
+      mockPost.mockImplementation(async (_url, _data, config) => {
         // Simulate progress event
-        if (config?.onUploadProgress) {
-          config.onUploadProgress({ loaded: 50, total: 100 });
+        const onUploadProgress = (config as Record<string, unknown>)?.onUploadProgress as ((e: { loaded: number; total: number }) => void) | undefined;
+        if (onUploadProgress) {
+          onUploadProgress({ loaded: 50, total: 100 });
         }
         return { data: { data: { id: "f-2" } } };
       });

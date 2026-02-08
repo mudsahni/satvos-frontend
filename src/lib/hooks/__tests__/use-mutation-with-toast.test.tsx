@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { useMutationWithToast } from "../use-mutation-with-toast";

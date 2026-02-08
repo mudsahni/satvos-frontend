@@ -1,7 +1,7 @@
 import { vi, describe, it, expect } from "vitest";
 import { fetchAllPaginated } from "../fetch-all-paginated";
 
-function createMockFetcher(totalItems: number, pageSize: number = 100) {
+function createMockFetcher(totalItems: number) {
   const allItems = Array.from({ length: totalItems }, (_, i) => ({ id: i + 1 }));
   return vi.fn(({ limit, offset }: { limit: number; offset: number }) => {
     const items = allItems.slice(offset, offset + limit);
@@ -130,7 +130,7 @@ describe("fetchAllPaginated", () => {
   });
 
   it("preserves item order across pages", async () => {
-    const fetcher = createMockFetcher(300, 100);
+    const fetcher = createMockFetcher(300);
 
     const result = await fetchAllPaginated(fetcher, { pageSize: 100 });
 
