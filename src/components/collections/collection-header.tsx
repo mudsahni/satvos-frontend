@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Settings, Upload, FileText, FolderOpen } from "lucide-react";
+import { ArrowLeft, Settings, Upload, FileText, FolderOpen, Download, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,8 @@ interface CollectionHeaderProps {
   isLoading?: boolean;
   canUpload?: boolean;
   documentCount?: number;
+  onExportCsv?: () => void;
+  isExportingCsv?: boolean;
 }
 
 export function CollectionHeader({
@@ -23,6 +25,8 @@ export function CollectionHeader({
   isLoading,
   canUpload = false,
   documentCount,
+  onExportCsv,
+  isExportingCsv,
 }: CollectionHeaderProps) {
   const router = useRouter();
 
@@ -95,6 +99,16 @@ export function CollectionHeader({
           </div>
         </div>
         <div className="flex gap-2 ml-12 sm:ml-0 shrink-0">
+          {onExportCsv && (
+            <Button
+              variant="outline"
+              onClick={onExportCsv}
+              disabled={isExportingCsv}
+            >
+              {isExportingCsv ? <Loader2 className="animate-spin" /> : <Download />}
+              Export CSV
+            </Button>
+          )}
           {canUpload && (
             <Button asChild>
               <Link href={`/upload?collection=${collection.id}`}>

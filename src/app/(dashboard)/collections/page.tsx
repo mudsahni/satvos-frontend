@@ -20,7 +20,7 @@ import {
   CollectionCard,
   CollectionCardSkeleton,
 } from "@/components/collections/collection-card";
-import { useCollections, useDeleteCollection } from "@/lib/hooks/use-collections";
+import { useCollections, useDeleteCollection, useExportCollectionCsv } from "@/lib/hooks/use-collections";
 import { useAuthStore } from "@/store/auth-store";
 import { canCreateCollections } from "@/lib/constants";
 import { Collection } from "@/types/collection";
@@ -68,6 +68,7 @@ export default function CollectionsPage() {
   };
 
   const deleteCollection = useDeleteCollection();
+  const exportCsv = useExportCollectionCsv();
 
   const handleDelete = async () => {
     if (deleteId) {
@@ -162,6 +163,8 @@ export default function CollectionsPage() {
                 key={collection.id}
                 collection={collection}
                 onDelete={setDeleteId}
+                onExportCsv={(id, name) => exportCsv.mutate({ id, name })}
+                isExportingCsv={exportCsv.isPending}
                 canDelete={canDelete(collection)}
               />
             ))}

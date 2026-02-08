@@ -114,3 +114,24 @@ export async function deleteCollectionPermission(
     `/collections/${collectionId}/permissions/${permissionId}`
   );
 }
+
+// CSV Export
+export async function exportCollectionCsv(
+  collectionId: string,
+  collectionName?: string
+): Promise<void> {
+  const response = await apiClient.get(
+    `/collections/${collectionId}/export/csv`,
+    { responseType: "blob" }
+  );
+
+  const blob = new Blob([response.data], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${collectionName || collectionId}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}

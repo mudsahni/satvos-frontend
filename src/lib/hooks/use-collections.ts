@@ -7,6 +7,7 @@ import {
   createCollection,
   updateCollection,
   deleteCollection,
+  exportCollectionCsv,
   getCollectionPermissions,
   addCollectionPermission,
   updateCollectionPermission,
@@ -102,6 +103,27 @@ export function useDeleteCollection() {
       toast({
         variant: "destructive",
         title: "Error",
+        description: getErrorMessage(error),
+      });
+    },
+  });
+}
+
+// CSV Export
+export function useExportCollectionCsv() {
+  return useMutation({
+    mutationFn: ({ id, name }: { id: string; name?: string }) =>
+      exportCollectionCsv(id, name),
+    onSuccess: () => {
+      toast({
+        title: "CSV exported",
+        description: "Your CSV file has been downloaded.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Export failed",
         description: getErrorMessage(error),
       });
     },

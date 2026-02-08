@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { getCollections, getCollection } from "@/lib/api/collections";
+import { getCollections, getCollection, exportCollectionCsv } from "@/lib/api/collections";
 
 // Mock the API client
 vi.mock("@/lib/api/client", () => ({
@@ -112,6 +112,68 @@ describe("collections API", () => {
       const result = await getCollection("col-1");
 
       expect(result.user_permission).toBe("owner");
+    });
+  });
+
+  describe("exportCollectionCsv", () => {
+    let createElementSpy: ReturnType<typeof vi.spyOn>;
+    let createObjectURLSpy: ReturnType<typeof vi.spyOn>;
+    let revokeObjectURLSpy: ReturnType<typeof vi.spyOn>;
+    const mockClick = vi.fn();
+    const mockRemove = vi.fn();
+
+    beforeEach(() => {
+      createElementSpy = vi.spyOn(document, "createElement").mockReturnValue({
+        href: "",
+        download: "",
+        click: mockClick,
+        remove: mockRemove,
+      } as unknown as HTMLAnchorElement);
+      vi.spyOn(document.body, "appendChild").mockImplementation((node) => node);
+      createObjectURLSpy = vi.fn().mockReturnValue("blob:http://localhost/fake");
+      revokeObjectURLSpy = vi.fn();
+      window.URL.createObjectURL = createObjectURLSpy;
+      window.URL.revokeObjectURL = revokeObjectURLSpy;
+    });
+
+    afterEach(() => {
+      createElementSpy.mockRestore();
+    });
+
+    it("calls the export endpoint with responseType blob", async () => {
+      mockGet.mockResolvedValue({ data: "csv,content" });
+
+      await exportCollectionCsv("col-1", "My Collection");
+
+      expect(mockGet).toHaveBeenCalledWith("/collections/col-1/export/csv", {
+        responseType: "blob",
+      });
+    });
+
+    it("triggers a download with the collection name as filename", async () => {
+      mockGet.mockResolvedValue({ data: "csv,content" });
+
+      await exportCollectionCsv("col-1", "Q4 Invoices");
+
+      expect(createElementSpy).toHaveBeenCalledWith("a");
+      expect(mockClick).toHaveBeenCalled();
+      expect(mockRemove).toHaveBeenCalled();
+      expect(revokeObjectURLSpy).toHaveBeenCalled();
+    });
+
+    it("falls back to collection ID when name is not provided", async () => {
+      mockGet.mockResolvedValue({ data: "csv,content" });
+      const mockAnchor = {
+        href: "",
+        download: "",
+        click: mockClick,
+        remove: mockRemove,
+      };
+      createElementSpy.mockReturnValue(mockAnchor as unknown as HTMLAnchorElement);
+
+      await exportCollectionCsv("col-abc-123");
+
+      expect(mockAnchor.download).toBe("col-abc-123.csv");
     });
   });
 });
