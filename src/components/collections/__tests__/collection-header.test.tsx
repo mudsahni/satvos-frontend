@@ -1,4 +1,5 @@
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test/test-utils";
 import { CollectionHeader } from "../collection-header";
 import { Collection } from "@/types/collection";
@@ -89,5 +90,41 @@ describe("CollectionHeader", () => {
     };
     renderWithProviders(<CollectionHeader collection={collectionNoDate} />);
     expect(screen.queryByText(/Created/)).not.toBeInTheDocument();
+  });
+
+  describe("export CSV button", () => {
+    it("shows Export CSV button when onExportCsv is provided", () => {
+      renderWithProviders(
+        <CollectionHeader collection={baseCollection} onExportCsv={() => {}} />
+      );
+      expect(screen.getByRole("button", { name: /export csv/i })).toBeInTheDocument();
+    });
+
+    it("does not show Export CSV button when onExportCsv is not provided", () => {
+      renderWithProviders(<CollectionHeader collection={baseCollection} />);
+      expect(screen.queryByRole("button", { name: /export csv/i })).not.toBeInTheDocument();
+    });
+
+    it("calls onExportCsv when clicked", async () => {
+      const user = userEvent.setup();
+      const onExportCsv = vi.fn();
+      renderWithProviders(
+        <CollectionHeader collection={baseCollection} onExportCsv={onExportCsv} />
+      );
+
+      await user.click(screen.getByRole("button", { name: /export csv/i }));
+      expect(onExportCsv).toHaveBeenCalledTimes(1);
+    });
+
+    it("disables Export CSV button when isExportingCsv is true", () => {
+      renderWithProviders(
+        <CollectionHeader
+          collection={baseCollection}
+          onExportCsv={() => {}}
+          isExportingCsv
+        />
+      );
+      expect(screen.getByRole("button", { name: /export csv/i })).toBeDisabled();
+    });
   });
 });

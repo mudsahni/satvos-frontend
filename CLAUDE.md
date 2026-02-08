@@ -273,7 +273,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - **Setup**: `src/test/setup.ts` (mocks for next/navigation, next-themes, ResizeObserver, etc.)
 - **Test Utils**: `src/test/test-utils.tsx` (renderWithProviders with QueryClient + TooltipProvider)
 - **Location**: Tests live in `__tests__/` directories next to their source files
-- **Count**: 529+ tests across 30 test files
+- **Count**: 550+ tests across 31 test files
 
 ### Test Coverage Areas
 - Utility functions (format, validation, cn)
@@ -291,7 +291,9 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - Global search (document/collection/page search, keyboard nav, data fetching)
 - Needs Attention utilities (needsAttention, matchesFilter)
 - Stats API (getStats)
-- Collections API (current_user_permission → user_permission mapping in getCollections/getCollection)
+- Collections API (current_user_permission → user_permission mapping in getCollections/getCollection, CSV export download)
+- Collection card (export CSV dropdown action)
+- Collection header (export CSV button, disabled state)
 
 ## CI/CD & Docker
 
@@ -362,6 +364,8 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] History tab: UserName component resolves user IDs to full names via `useUser()` hook
 - [x] Dark mode card contrast bump (`--card` lightness 9% → 11%), content canvas tint (`bg-muted/50`)
 - [x] `current_user_permission` integration: API layer maps backend field → `user_permission`, removed role-based permission workarounds, collection permission gates upload/bulk/edit actions
+- [x] CSV export: `GET /collections/{id}/export/csv` → blob download, button in collection header + dropdown in collection cards
+- [x] Token refresh resilience: network errors (ECONNRESET) during active refresh are queued and retried; file upload timeout increased to 5 min
 
 ### In Progress / Next Steps
 1. **Extracted Data Viewer** - Fix to work with actual API response format (user will provide sample response)

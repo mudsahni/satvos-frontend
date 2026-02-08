@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FolderOpen, FileText, MoreHorizontal, Settings, Trash2 } from "lucide-react";
+import { FolderOpen, FileText, MoreHorizontal, Settings, Trash2, Download } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,16 @@ import { cn } from "@/lib/utils";
 interface CollectionCardProps {
   collection: Collection;
   onDelete?: (id: string) => void;
+  onExportCsv?: (id: string, name: string) => void;
+  isExportingCsv?: boolean;
   canDelete?: boolean;
 }
 
 export function CollectionCard({
   collection,
   onDelete,
+  onExportCsv,
+  isExportingCsv,
   canDelete = false,
 }: CollectionCardProps) {
   return (
@@ -75,6 +79,15 @@ export function CollectionCard({
                     <Settings />
                     Settings
                   </Link>
+                </DropdownMenuItem>
+              )}
+              {onExportCsv && (
+                <DropdownMenuItem
+                  onClick={() => onExportCsv(collection.id, collection.name)}
+                  disabled={isExportingCsv}
+                >
+                  <Download />
+                  Export CSV
                 </DropdownMenuItem>
               )}
               {canDelete && (

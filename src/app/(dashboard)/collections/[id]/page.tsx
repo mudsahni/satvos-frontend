@@ -15,7 +15,7 @@ import {
 } from "@/components/collections/collection-filters";
 import { DocumentsTable } from "@/components/documents/documents-table";
 import { BulkActionsBar } from "@/components/documents/bulk-actions-bar";
-import { useCollection } from "@/lib/hooks/use-collections";
+import { useCollection, useExportCollectionCsv } from "@/lib/hooks/use-collections";
 import {
   useDocuments,
   useReviewDocument,
@@ -52,6 +52,7 @@ export default function CollectionDetailPage({
 
   const reviewDocument = useReviewDocument();
   const deleteDocument = useDeleteDocument();
+  const exportCsv = useExportCollectionCsv();
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const documents = useMemo(() => documentsData?.items || [], [documentsData]);
@@ -205,6 +206,8 @@ export default function CollectionDetailPage({
         isLoading={collectionLoading}
         canUpload={canManage}
         documentCount={documents.length}
+        onExportCsv={() => exportCsv.mutate({ id, name: collection?.name })}
+        isExportingCsv={exportCsv.isPending}
       />
 
       {/* Filters */}

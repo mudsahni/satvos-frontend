@@ -1,4 +1,5 @@
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test/test-utils";
 import { CollectionCard, CollectionCardSkeleton } from "../collection-card";
 import { Collection } from "@/types/collection";
@@ -149,6 +150,49 @@ describe("CollectionCard", () => {
 
       const link = screen.getByRole("link", { name: /Q4 Invoices/i });
       expect(link).toHaveAttribute("href", "/collections/col-xyz-789");
+    });
+  });
+
+  describe("export CSV action", () => {
+    it("shows Export CSV menu item when onExportCsv is provided", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection();
+      const onExportCsv = vi.fn();
+      renderWithProviders(
+        <CollectionCard collection={collection} onExportCsv={onExportCsv} />
+      );
+
+      // Open dropdown
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      expect(screen.getByText("Export CSV")).toBeInTheDocument();
+    });
+
+    it("does not show Export CSV when onExportCsv is not provided", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection();
+      renderWithProviders(<CollectionCard collection={collection} />);
+
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      expect(screen.queryByText("Export CSV")).not.toBeInTheDocument();
+    });
+
+    it("calls onExportCsv with collection id and name when clicked", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection({ id: "col-99", name: "Tax Docs" });
+      const onExportCsv = vi.fn();
+      renderWithProviders(
+        <CollectionCard collection={collection} onExportCsv={onExportCsv} />
+      );
+
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+      await user.click(screen.getByText("Export CSV"));
+
+      expect(onExportCsv).toHaveBeenCalledWith("col-99", "Tax Docs");
     });
   });
 });
