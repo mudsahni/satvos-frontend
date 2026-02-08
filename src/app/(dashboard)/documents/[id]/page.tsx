@@ -319,13 +319,15 @@ export default function DocumentDetailPage({
                   <RefreshCw className={cn(triggerParsing.isPending && "animate-spin")} />
                   {triggerParsing.isPending ? "Re-Parsing..." : "Re-Parse"}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleRevalidate}
-                  disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
-                >
-                  <RefreshCw className={cn(triggerValidation.isPending && "animate-spin")} />
-                  {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
-                </DropdownMenuItem>
+                {canEditData && (
+                  <DropdownMenuItem
+                    onClick={handleRevalidate}
+                    disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
+                  >
+                    <RefreshCw className={cn(triggerValidation.isPending && "animate-spin")} />
+                    {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -340,7 +342,7 @@ export default function DocumentDetailPage({
             document={document}
             validationResults={document.validation_results || []}
             parsingStatus={document.parsing_status}
-            onRevalidate={handleRevalidate}
+            onRevalidate={canEditData ? handleRevalidate : undefined}
             isRevalidating={triggerValidation.isPending}
             onSaveEdits={canEditData ? handleSaveEdits : undefined}
             isSaving={updateDoc.isPending}
@@ -383,7 +385,7 @@ export default function DocumentDetailPage({
                 document={document}
                 validationResults={document.validation_results || []}
                 parsingStatus={document.parsing_status}
-                onRevalidate={handleRevalidate}
+                onRevalidate={canEditData ? handleRevalidate : undefined}
                 isRevalidating={triggerValidation.isPending}
                 onSaveEdits={canEditData ? handleSaveEdits : undefined}
                 isSaving={updateDoc.isPending}
