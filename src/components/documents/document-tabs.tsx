@@ -143,34 +143,34 @@ export function DocumentTabs({
   return (
     <>
       <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full flex flex-col">
-        <div className="shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-x-auto">
           <TabsList className="w-full justify-start h-12 bg-transparent p-0 rounded-none">
             <TabsTrigger
               value="data"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-4"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-3 md:px-4"
             >
-              <FileText className="mr-2 h-4 w-4" />
+              <FileText className="mr-1.5 md:mr-2 h-4 w-4" />
               Extracted Data
               {parsingStatus === "processing" && (
-                <Loader2 className="ml-2 h-3.5 w-3.5 animate-spin text-primary" />
+                <Loader2 className="ml-1.5 md:ml-2 h-3.5 w-3.5 animate-spin text-primary" />
               )}
               {parsingStatus === "completed" && hasData && (
-                <CheckCircle className="ml-2 h-3.5 w-3.5 text-success" />
+                <CheckCircle className="ml-1.5 md:ml-2 h-3.5 w-3.5 text-success" />
               )}
               {parsingStatus === "failed" && (
-                <AlertCircle className="ml-2 h-3.5 w-3.5 text-error" />
+                <AlertCircle className="ml-1.5 md:ml-2 h-3.5 w-3.5 text-error" />
               )}
             </TabsTrigger>
             <TabsTrigger
               value="validation"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-4"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-3 md:px-4"
             >
-              <ShieldCheck className="mr-2 h-4 w-4" />
+              <ShieldCheck className="mr-1.5 md:mr-2 h-4 w-4" />
               Validations
               {(errorCount > 0 || warningCount > 0) && (
                 <span
                   className={cn(
-                    "ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-full",
+                    "ml-1.5 md:ml-2 inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-medium rounded-full",
                     errorCount > 0
                       ? "bg-error-bg text-error"
                       : "bg-warning-bg text-warning"
@@ -182,9 +182,9 @@ export function DocumentTabs({
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-4"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-full px-3 md:px-4"
             >
-              <History className="mr-2 h-4 w-4" />
+              <History className="mr-1.5 md:mr-2 h-4 w-4" />
               History
             </TabsTrigger>
           </TabsList>
@@ -398,7 +398,7 @@ export function DocumentTabs({
 
         <TabsContent value="validation" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-4">
+            <div className="p-4 overflow-x-hidden">
               <ValidationTab
                 validationResults={validationResults}
                 onRevalidate={onRevalidate}
