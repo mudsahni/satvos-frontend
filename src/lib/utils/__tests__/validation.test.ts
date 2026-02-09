@@ -639,34 +639,34 @@ describe("getSafeRedirectUrl", () => {
   });
 
   it("rejects absolute URLs (open redirect)", () => {
-    expect(getSafeRedirectUrl("https://evil.com")).toBe("/");
-    expect(getSafeRedirectUrl("http://evil.com/phishing")).toBe("/");
-    expect(getSafeRedirectUrl("https://evil.com/login")).toBe("/");
+    expect(getSafeRedirectUrl("https://evil.com")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("http://evil.com/phishing")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("https://evil.com/login")).toBe("/dashboard");
   });
 
   it("rejects protocol-relative URLs", () => {
-    expect(getSafeRedirectUrl("//evil.com")).toBe("/");
-    expect(getSafeRedirectUrl("//evil.com/path")).toBe("/");
+    expect(getSafeRedirectUrl("//evil.com")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("//evil.com/path")).toBe("/dashboard");
   });
 
   it("rejects javascript: and data: protocols", () => {
-    expect(getSafeRedirectUrl("javascript:alert(1)")).toBe("/");
-    expect(getSafeRedirectUrl("data:text/html,<script>alert(1)</script>")).toBe("/");
-    expect(getSafeRedirectUrl("JAVASCRIPT:alert(1)")).toBe("/");
+    expect(getSafeRedirectUrl("javascript:alert(1)")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("data:text/html,<script>alert(1)</script>")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("JAVASCRIPT:alert(1)")).toBe("/dashboard");
   });
 
   it("rejects backslash-based bypasses", () => {
-    expect(getSafeRedirectUrl("/\\evil.com")).toBe("/");
-    expect(getSafeRedirectUrl("\\evil.com")).toBe("/");
+    expect(getSafeRedirectUrl("/\\evil.com")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("\\evil.com")).toBe("/dashboard");
   });
 
   it("rejects paths not starting with /", () => {
-    expect(getSafeRedirectUrl("evil.com")).toBe("/");
-    expect(getSafeRedirectUrl("documents")).toBe("/");
-    expect(getSafeRedirectUrl("")).toBe("/");
+    expect(getSafeRedirectUrl("evil.com")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("documents")).toBe("/dashboard");
+    expect(getSafeRedirectUrl("")).toBe("/dashboard");
   });
 
-  it("returns / for null input", () => {
-    expect(getSafeRedirectUrl(null)).toBe("/");
+  it("returns /dashboard for null input", () => {
+    expect(getSafeRedirectUrl(null)).toBe("/dashboard");
   });
 });

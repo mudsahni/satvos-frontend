@@ -130,7 +130,7 @@ export default function NotFound() {
 
               <div className="flex justify-center">
                 <Button asChild>
-                  <Link href="/">
+                  <Link href="/dashboard">
                     <ArrowLeft />
                     Back to Dashboard
                   </Link>

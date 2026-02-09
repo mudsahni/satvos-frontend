@@ -22,7 +22,9 @@
       "Bash(node -e:*)",
       "Bash(grep:*)",
       "Bash(cat:*)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "WebSearch",
+      "Bash(npm install:*)"
     ]
   }
 }

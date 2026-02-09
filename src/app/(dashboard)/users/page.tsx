@@ -109,7 +109,7 @@ export default function UsersPage() {
 
   // Redirect non-admins
   if (currentUser && currentUser.role !== ROLES.ADMIN) {
-    router.push("/");
+    router.push("/dashboard");
     return null;
   }
 

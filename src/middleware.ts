@@ -6,7 +6,7 @@ const publicRoutes = ["/login"];
 
 // Routes that require authentication
 const protectedRoutes = [
-  "/",
+  "/dashboard",
   "/collections",
   "/documents",
   "/upload",
@@ -48,7 +48,7 @@ export function middleware(request: NextRequest) {
 
   // Redirect authenticated users from login to dashboard
   if (isPublicRoute && isAuthenticated && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();

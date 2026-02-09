@@ -201,6 +201,15 @@
 
 /* Custom utility classes */
 @layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Gradient backgrounds */
   .bg-gradient-card {
     @apply bg-gradient-to-b from-[hsl(var(--card))] to-[hsl(var(--background))];
