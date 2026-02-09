@@ -340,22 +340,34 @@ export default function DocumentDetailPage({
       {/* Main content - Split View */}
       <div className="flex-1 overflow-hidden">
         {isMobile ? (
-          // Mobile: Stacked tabs view
-          <DocumentTabs
-            document={document}
-            validationResults={document.validation_results || []}
-            parsingStatus={document.parsing_status}
-            onRevalidate={canEditData ? handleRevalidate : undefined}
-            isRevalidating={triggerValidation.isPending}
-            onSaveEdits={canEditData ? handleSaveEdits : undefined}
-            isSaving={updateDoc.isPending}
-            tags={tags}
-            onAddTag={handleAddTag}
-            isAddingTag={addTag.isPending}
-            onDeleteTag={handleDeleteTag}
-            onReparse={handleReparse}
-            isReparsing={triggerParsing.isPending}
-          />
+          // Mobile: Stacked view — PDF on top, tabs below
+          <div className="flex flex-col h-full overflow-auto">
+            <div className="h-[40vh] min-h-[250px] shrink-0 bg-muted/30 border-b border-border">
+              <PDFViewer
+                url={fileUrl}
+                isLoading={fileLoading}
+                fileName={document.name}
+                className="h-full"
+              />
+            </div>
+            <div className="flex-1">
+              <DocumentTabs
+                document={document}
+                validationResults={document.validation_results || []}
+                parsingStatus={document.parsing_status}
+                onRevalidate={canEditData ? handleRevalidate : undefined}
+                isRevalidating={triggerValidation.isPending}
+                onSaveEdits={canEditData ? handleSaveEdits : undefined}
+                isSaving={updateDoc.isPending}
+                tags={tags}
+                onAddTag={handleAddTag}
+                isAddingTag={addTag.isPending}
+                onDeleteTag={handleDeleteTag}
+                onReparse={handleReparse}
+                isReparsing={triggerParsing.isPending}
+              />
+            </div>
+          </div>
         ) : (
           // Desktop: Split view with PDF and tabs
           <PanelGroup orientation="horizontal" className="h-full">
