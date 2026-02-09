@@ -22,7 +22,8 @@ export type ValidationRuleType =
   | "math"
   | "logical"
   | "cross_field"
-  | "business";
+  | "business"
+  | "custom";
 
 export type ValidationSeverity = "error" | "warning";
 

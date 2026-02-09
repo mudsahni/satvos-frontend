@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   Filter,
   ChevronRight,
+  Copy,
+  FileText,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -58,11 +60,58 @@ function getRuleName(result: ValidationResult): string {
   return message.substring(0, Math.min(50, message.length));
 }
 
+// Check if this is a duplicate invoice detection result
+function isDuplicateResult(result: ValidationResult): boolean {
+  return (
+    !result.passed &&
+    (result.rule_name?.includes("Duplicate Invoice") ||
+      result.message?.includes("Duplicate Invoice"))
+  );
+}
+
+// Parse quoted document names from duplicate detection message
+// e.g. '..."Invoice-ABC.pdf" (uploaded 2025-01-10), "Invoice-DEF.pdf" (uploaded 2025-01-08)'
+function parseDuplicateDocuments(
+  message: string
+): { name: string; date: string }[] {
+  const matches = [...message.matchAll(/"([^"]+)"\s*\(uploaded\s+([^)]+)\)/g)];
+  return matches.map((m) => ({ name: m[1], date: m[2] }));
+}
+
+function DuplicateDetails({ result }: { result: ValidationResult }) {
+  const docs = parseDuplicateDocuments(result.message);
+
+  if (docs.length === 0) {
+    // Fallback to raw message if parsing fails
+    return <p className="text-sm text-muted-foreground">{result.message}</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">
+        {result.actual_value || "Duplicate invoices found"} — matching documents:
+      </p>
+      <ul className="space-y-1.5">
+        {docs.map((doc) => (
+          <li key={doc.name} className="flex items-center gap-2 text-sm">
+            <FileText className="h-3.5 w-3.5 text-warning shrink-0" />
+            <span className="font-medium">{doc.name}</span>
+            <span className="text-xs text-muted-foreground">
+              uploaded {doc.date}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ValidationResultCard({ result }: { result: ValidationResult }) {
   const [isOpen, setIsOpen] = useState(false);
   const severity = getValidationSeverity(result);
   const ruleType = getRuleType(result);
   const ruleName = getRuleName(result);
+  const isDuplicate = isDuplicateResult(result);
 
   const hasDetails = result.message || (!result.passed && (result.expected_value || result.actual_value));
 
@@ -102,6 +151,12 @@ function ValidationResultCard({ result }: { result: ValidationResult }) {
             <Badge variant="outline" className="text-[11px] capitalize shrink-0 px-1.5 py-0">
               {ruleType.replace("_", "-")}
             </Badge>
+            {isDuplicate && (
+              <Badge variant="warning" className="text-[11px] shrink-0 px-1.5 py-0">
+                <Copy className="h-3 w-3" />
+                Duplicate
+              </Badge>
+            )}
             {result.reconciliation_critical && (
               <Badge variant="secondary" className="text-[11px] shrink-0 px-1.5 py-0">
                 Recon Critical
@@ -123,8 +178,12 @@ function ValidationResultCard({ result }: { result: ValidationResult }) {
             <code className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded sm:hidden">
               {result.field_path}
             </code>
-            <p className="text-sm text-muted-foreground">{result.message}</p>
-            {!result.passed && (result.expected_value || result.actual_value) && (
+            {isDuplicate ? (
+              <DuplicateDetails result={result} />
+            ) : (
+              <p className="text-sm text-muted-foreground">{result.message}</p>
+            )}
+            {!result.passed && !isDuplicate && (result.expected_value || result.actual_value) && (
               <div className="text-sm space-y-1 font-mono">
                 {result.expected_value && (
                   <div className="flex items-baseline gap-2">
