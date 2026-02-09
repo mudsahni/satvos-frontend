@@ -81,16 +81,16 @@ export type ReviewDocumentFormData = z.infer<typeof reviewDocumentSchema>;
  * Returns "/" if the URL is unsafe.
  */
 export function getSafeRedirectUrl(url: string | null): string {
-  if (!url) return "/";
+  if (!url) return "/dashboard";
 
   // Must start with exactly one slash (reject protocol-relative "//evil.com")
-  if (!url.startsWith("/") || url.startsWith("//")) return "/";
+  if (!url.startsWith("/") || url.startsWith("//")) return "/dashboard";
 
   // Reject any URL with a protocol (javascript:, data:, etc.)
-  if (/^[a-z]+:/i.test(url)) return "/";
+  if (/^[a-z]+:/i.test(url)) return "/dashboard";
 
   // Reject backslash (some browsers treat \ as /)
-  if (url.includes("\\")) return "/";
+  if (url.includes("\\")) return "/dashboard";
 
   return url;
 }

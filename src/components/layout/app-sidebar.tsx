@@ -38,7 +38,7 @@ const navItems: Array<{
 }> = [
   {
     label: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: Home,
     roles: ["admin", "manager", "member", "viewer"],
   },
@@ -113,7 +113,7 @@ export function AppSidebar() {
               tooltip="Satvos"
               className="hover:bg-transparent active:bg-transparent"
             >
-              <Link href="/">
+              <Link href="/dashboard">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <FileStack className="h-4 w-4" />
                 </div>
@@ -130,7 +130,7 @@ export function AppSidebar() {
               {filteredNavItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== "/" && pathname.startsWith(item.href));
+                  pathname.startsWith(item.href + "/");
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
