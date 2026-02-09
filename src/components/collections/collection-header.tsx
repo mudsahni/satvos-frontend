@@ -98,7 +98,7 @@ export function CollectionHeader({
             </div>
           </div>
         </div>
-        <div className="flex gap-2 ml-12 sm:ml-0 shrink-0">
+        <div className="flex gap-2 ml-12 sm:ml-0 shrink-0 justify-end sm:justify-start">
           {onExportCsv && (
             <Button
               variant="outline"
@@ -106,14 +106,14 @@ export function CollectionHeader({
               disabled={isExportingCsv}
             >
               {isExportingCsv ? <Loader2 className="animate-spin" /> : <Download />}
-              Export CSV
+              <span className="hidden sm:inline">Export CSV</span>
             </Button>
           )}
           {canUpload && (
             <Button asChild>
               <Link href={`/upload?collection=${collection.id}`}>
                 <Upload />
-                Upload
+                <span className="hidden sm:inline">Upload</span>
               </Link>
             </Button>
           )}
@@ -121,7 +121,7 @@ export function CollectionHeader({
             <Button variant="outline" asChild>
               <Link href={`/collections/${collection.id}/settings`}>
                 <Settings />
-                Settings
+                <span className="hidden sm:inline">Settings</span>
               </Link>
             </Button>
           )}
