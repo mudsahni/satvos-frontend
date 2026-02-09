@@ -40,8 +40,8 @@ vi.mock("@/components/documents/status-badge", () => ({
   ),
 }));
 
-vi.mock("@/components/documents/pdf-viewer", () => ({
-  PDFViewer: () => <div data-testid="pdf-viewer" />,
+vi.mock("@/components/documents/document-viewer", () => ({
+  DocumentViewer: () => <div data-testid="pdf-viewer" />,
 }));
 
 vi.mock("@/components/documents/document-tabs", () => ({

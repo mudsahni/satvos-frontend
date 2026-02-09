@@ -54,7 +54,7 @@ import { StructuredInvoiceData } from "@/types/document";
 import { useFileUrl } from "@/lib/hooks/use-files";
 import { useCollection } from "@/lib/hooks/use-collections";
 import { StatusBadge } from "@/components/documents/status-badge";
-import { PDFViewer } from "@/components/documents/pdf-viewer";
+import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -343,7 +343,7 @@ export default function DocumentDetailPage({
           // Mobile: Stacked view — PDF on top, tabs below
           <div className="flex flex-col h-full overflow-auto">
             <div className="h-[40vh] min-h-[250px] shrink-0 bg-muted/30 border-b border-border">
-              <PDFViewer
+              <DocumentViewer
                 url={fileUrl}
                 isLoading={fileLoading}
                 fileName={document.name}
@@ -373,7 +373,7 @@ export default function DocumentDetailPage({
           <PanelGroup orientation="horizontal" className="h-full">
             {/* PDF Viewer Panel */}
             <Panel id="pdf-panel" minSize={25} defaultSize={50} className="bg-muted/30">
-              <PDFViewer
+              <DocumentViewer
                 url={fileUrl}
                 isLoading={fileLoading}
                 fileName={document.name}

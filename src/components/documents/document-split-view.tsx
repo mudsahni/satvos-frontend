@@ -7,7 +7,7 @@ import {
   Separator as PanelResizeHandle,
 } from "react-resizable-panels";
 import { Loader2, FileText } from "lucide-react";
-import { PDFViewer } from "./pdf-viewer";
+import { DocumentViewer as PDFViewer } from "./document-viewer";
 import { InlineParsedData } from "./inline-parsed-data";
 import { ParsedInvoice } from "@/types/document";
 import { ValidationResult } from "@/types/validation";

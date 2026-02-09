@@ -171,13 +171,13 @@ The document detail page (`/documents/[id]`) features:
 - Actions overflow menu (icon-only `MoreVertical` button) with Re-Parse, Re-Validate
 - Review buttons (Approve/Reject) on right side of title row, keyboard hint "A to approve, R to reject"
 - Split-pane view using `react-resizable-panels`, height: `calc(100vh-3.5rem)` matching TopNav `h-14`
-- Left panel: PDF viewer (with Google Docs viewer fallback for S3)
+- Left panel: `DocumentViewer` — auto-detects file type from file name extension. Renders PDF viewer (with Google Docs viewer fallback) for `.pdf` files, or image viewer with zoom/rotate controls for `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.bmp`, `.tiff` files
 - Right panel: `DocumentTabs` — tabbed interface (Extracted Data, Validations, History)
 - **Tags**: Inline pill row at top of Extracted Data tab (not in page header), with compact "+" Add button
 - **Retry Parsing**: Button shown in Extracted Data tab when parsing failed, with loading state
 - Data tab has status indicators: spinner (parsing), check (data ready), error (failed)
 - Validation tab: compact expandable result cards with left-border color accent
-- Mobile: Stacked tabs instead of split view
+- Mobile: Stacked layout — document viewer on top (40vh), tabs below, scrollable
 - Keyboard shortcuts: A=approve, R=reject
 
 ## Types
@@ -294,6 +294,7 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - Collections API (current_user_permission → user_permission mapping in getCollections/getCollection, CSV export download)
 - Collection card (export CSV dropdown action)
 - Collection header (export CSV button, disabled state)
+- Document viewer (isImageFile detection, PDF rendering, image rendering with zoom/rotate, error/retry states)
 
 ## CI/CD & Docker
 
@@ -366,6 +367,9 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] `current_user_permission` integration: API layer maps backend field → `user_permission`, removed role-based permission workarounds, collection permission gates upload/bulk/edit actions
 - [x] CSV export: `GET /collections/{id}/export/csv` → blob download, button in collection header + dropdown in collection cards
 - [x] Token refresh resilience: network errors (ECONNRESET) during active refresh are queued and retried; file upload timeout increased to 5 min
+- [x] Document viewer: `DocumentViewer` component replaces `PDFViewer`, auto-detects PDF vs image from file name, image viewer has zoom/rotate/reset controls
+- [x] Mobile document detail: stacked layout (document viewer on top 40vh, tabs below) instead of tabs-only
+- [x] Product landing page with routing migration (`/` → landing, `/dashboard` → authenticated dashboard)
 
 ### In Progress / Next Steps
 1. **Extracted Data Viewer** - Fix to work with actual API response format (user will provide sample response)
