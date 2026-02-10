@@ -26,7 +26,7 @@ export function useAuth() {
       queryClient.clear();
       logoutStore();
       document.cookie = "satvos-auth-state=; path=/; max-age=0";
-      router.push("/login");
+      router.push("/");
     }
   };
 

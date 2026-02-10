@@ -37,7 +37,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
     queryClient.clear();
     logout();
     document.cookie = "satvos-auth-state=; path=/; max-age=0";
-    router.push("/login");
+    router.push("/");
   };
 
   const userInitials = user?.full_name
