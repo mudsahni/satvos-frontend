@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopNav } from "@/components/layout/top-nav";
@@ -14,17 +13,18 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const { isAuthenticated, isHydrated } = useAuthStore();
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (isHydrated && !isAuthenticated) {
-      // Clear stale middleware cookie so the server-side redirect kicks in too
+      // Clear stale middleware cookie so the server-side redirect kicks in
+      // on the next page navigation. Actual routing is handled by the
+      // component that triggered the logout (e.g. handleLogout in TopNav)
+      // or by handleSessionExpired in the API client.
       document.cookie = "satvos-auth-state=; path=/; max-age=0";
-      router.replace("/login");
     }
-  }, [isAuthenticated, isHydrated, router]);
+  }, [isAuthenticated, isHydrated]);
 
   // Keyboard shortcut for search
   useEffect(() => {
