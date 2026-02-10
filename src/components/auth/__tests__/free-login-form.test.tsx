@@ -1,9 +1,7 @@
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "@/test/test-utils";
-import { LoginForm } from "../login-form";
+import { FreeLoginForm } from "../free-login-form";
 
-// Default mock from setup.ts returns empty URLSearchParams.
-// Override per-test to simulate session_expired param.
 const mockSearchParams = vi.fn(() => new URLSearchParams());
 
 vi.mock("next/navigation", () => ({
@@ -16,31 +14,44 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({}),
 }));
 
-describe("LoginForm (Enterprise)", () => {
+describe("FreeLoginForm", () => {
   afterEach(() => {
     mockSearchParams.mockReturnValue(new URLSearchParams());
   });
 
-  it("renders the enterprise login form with all fields", () => {
-    renderWithProviders(<LoginForm />);
+  it("renders the free login form with email and password only", () => {
+    renderWithProviders(<FreeLoginForm />);
 
-    expect(screen.getByText("Enterprise Sign In")).toBeInTheDocument();
-    expect(screen.getByLabelText("Organization")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to Satvos")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it("shows link to free login page", () => {
-    renderWithProviders(<LoginForm />);
+  it("does not show Organization field", () => {
+    renderWithProviders(<FreeLoginForm />);
 
-    const link = screen.getByRole("link", { name: /sign in here/i });
+    expect(screen.queryByLabelText("Organization")).not.toBeInTheDocument();
+  });
+
+  it("shows link to enterprise login", () => {
+    renderWithProviders(<FreeLoginForm />);
+
+    const link = screen.getByRole("link", { name: /log in with your organization/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/login");
+    expect(link).toHaveAttribute("href", "/login/enterprise");
+  });
+
+  it("shows link to register page", () => {
+    renderWithProviders(<FreeLoginForm />);
+
+    const link = screen.getByRole("link", { name: /sign up free/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/register");
   });
 
   it("does not show session expired banner by default", () => {
-    renderWithProviders(<LoginForm />);
+    renderWithProviders(<FreeLoginForm />);
 
     expect(screen.queryByText(/session has expired/i)).not.toBeInTheDocument();
   });
@@ -50,7 +61,7 @@ describe("LoginForm (Enterprise)", () => {
       new URLSearchParams("session_expired=true&returnUrl=/documents/123")
     );
 
-    renderWithProviders(<LoginForm />);
+    renderWithProviders(<FreeLoginForm />);
 
     expect(
       screen.getByText(/your session has expired/i)
@@ -62,7 +73,7 @@ describe("LoginForm (Enterprise)", () => {
       new URLSearchParams("session_expired=false")
     );
 
-    renderWithProviders(<LoginForm />);
+    renderWithProviders(<FreeLoginForm />);
 
     expect(screen.queryByText(/session has expired/i)).not.toBeInTheDocument();
   });

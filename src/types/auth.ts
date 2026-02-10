@@ -1,4 +1,5 @@
 import type { User } from "./user";
+import type { Collection } from "./collection";
 export type { User };
 
 export interface TokenPair {
@@ -44,6 +45,28 @@ export function decodeJwtPayload(token: string): Record<string, unknown> | null 
   } catch {
     return null;
   }
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  full_name: string;
+}
+
+/**
+ * The unwrapped data from POST /auth/register.
+ * The backend may return tokens flat (like login) or nested in a `tokens` object.
+ * The register-form handles both formats defensively.
+ */
+export interface RegisterResponseData {
+  user: User;
+  collection?: Collection;
+  // Flat token format (same as LoginResponse)
+  access_token?: string;
+  refresh_token?: string;
+  expires_at?: string;
+  // Nested token format
+  tokens?: TokenPair;
 }
 
 export interface AuthState {

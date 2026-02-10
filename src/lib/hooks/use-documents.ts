@@ -63,7 +63,7 @@ export function useDocument(id: string) {
 export function useCreateDocument() {
   return useMutationWithToast({
     mutationFn: (data: CreateDocumentRequest) => createDocument(data),
-    invalidateKeys: [["documents"], ["collections"], ["stats"]],
+    invalidateKeys: [["documents"], ["collections"], ["stats"], ["user"]],
     successMessage: {
       title: "Document created",
       description: "Your document has been created and is being processed.",

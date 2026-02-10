@@ -19,6 +19,7 @@ const tiers = [
       "Email support",
     ],
     cta: "Get Started",
+    href: "/register",
     popular: false,
   },
   {
@@ -36,6 +37,7 @@ const tiers = [
       "API access",
     ],
     cta: "Start Free Trial",
+    href: "/login",
     popular: true,
   },
   {
@@ -53,6 +55,7 @@ const tiers = [
       "On-premise option",
     ],
     cta: "Contact Sales",
+    href: "mailto:sales@satvos.com",
     popular: false,
   },
 ];
@@ -143,11 +146,11 @@ export function Pricing() {
               </ul>
 
               <Link
-                href="/login"
+                href={tier.href}
                 className={cn(
-                  "block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition-all",
+                  "block w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition-all duration-150",
                   tier.popular
-                    ? "bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
+                    ? "bg-primary text-white hover:bg-primary/90"
                     : "border border-border bg-background text-foreground hover:bg-muted"
                 )}
               >

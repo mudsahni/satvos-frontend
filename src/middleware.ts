@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Routes that don't require authentication
-const publicRoutes = ["/login"];
+const publicRoutes = ["/login", "/register"];
 
 // Routes that require authentication
 const protectedRoutes = [
@@ -46,8 +46,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users from login to dashboard
-  if (isPublicRoute && isAuthenticated && pathname === "/login") {
+  // Redirect authenticated users from login/register to dashboard
+  if (isPublicRoute && isAuthenticated && (pathname.startsWith("/login") || pathname === "/register")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

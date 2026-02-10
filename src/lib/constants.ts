@@ -5,6 +5,7 @@ export const ROLES = {
   MANAGER: "manager",
   MEMBER: "member",
   VIEWER: "viewer",
+  FREE: "free",
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -14,6 +15,7 @@ export const ROLE_HIERARCHY: Record<Role, number> = {
   manager: 3,
   member: 2,
   viewer: 1,
+  free: 0,
 };
 
 export const PERMISSION_LEVELS = {
@@ -100,7 +102,7 @@ export function hasRole(userRole: Role, requiredRole: Role): boolean {
 }
 
 export function canUpload(role: Role): boolean {
-  return hasRole(role, ROLES.MEMBER);
+  return role === ROLES.FREE || hasRole(role, ROLES.MEMBER);
 }
 
 export function canManageUsers(role: Role): boolean {
@@ -109,4 +111,12 @@ export function canManageUsers(role: Role): boolean {
 
 export function canCreateCollections(role: Role): boolean {
   return hasRole(role, ROLES.MEMBER);
+}
+
+export function isFreeUser(role: Role): boolean {
+  return role === ROLES.FREE;
+}
+
+export function hasQuota(user: { monthly_document_limit?: number }): boolean {
+  return (user.monthly_document_limit ?? 0) > 0;
 }

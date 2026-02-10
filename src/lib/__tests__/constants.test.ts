@@ -16,14 +16,17 @@ import {
   canUpload,
   canManageUsers,
   canCreateCollections,
+  isFreeUser,
+  hasQuota,
 } from "../constants";
 
 describe("constant values exist and are correct", () => {
-  it("ROLES has all four roles", () => {
+  it("ROLES has all five roles including FREE", () => {
     expect(ROLES.ADMIN).toBe("admin");
     expect(ROLES.MANAGER).toBe("manager");
     expect(ROLES.MEMBER).toBe("member");
     expect(ROLES.VIEWER).toBe("viewer");
+    expect(ROLES.FREE).toBe("free");
   });
 
   it("ROLE_HIERARCHY assigns correct numeric levels", () => {
@@ -31,12 +34,14 @@ describe("constant values exist and are correct", () => {
     expect(ROLE_HIERARCHY.manager).toBe(3);
     expect(ROLE_HIERARCHY.member).toBe(2);
     expect(ROLE_HIERARCHY.viewer).toBe(1);
+    expect(ROLE_HIERARCHY.free).toBe(0);
   });
 
   it("ROLE_HIERARCHY maintains proper ordering", () => {
     expect(ROLE_HIERARCHY.admin).toBeGreaterThan(ROLE_HIERARCHY.manager);
     expect(ROLE_HIERARCHY.manager).toBeGreaterThan(ROLE_HIERARCHY.member);
     expect(ROLE_HIERARCHY.member).toBeGreaterThan(ROLE_HIERARCHY.viewer);
+    expect(ROLE_HIERARCHY.viewer).toBeGreaterThan(ROLE_HIERARCHY.free);
   });
 
   it("PERMISSION_LEVELS has all three levels", () => {
@@ -223,5 +228,85 @@ describe("canCreateCollections", () => {
 
   it("viewer cannot create collections", () => {
     expect(canCreateCollections("viewer")).toBe(false);
+  });
+
+  it("free user cannot create collections", () => {
+    expect(canCreateCollections("free")).toBe(false);
+  });
+});
+
+describe("free tier helpers", () => {
+  describe("isFreeUser", () => {
+    it("returns true for 'free' role", () => {
+      expect(isFreeUser("free")).toBe(true);
+    });
+
+    it("returns false for 'admin' role", () => {
+      expect(isFreeUser("admin")).toBe(false);
+    });
+
+    it("returns false for 'manager' role", () => {
+      expect(isFreeUser("manager")).toBe(false);
+    });
+
+    it("returns false for 'member' role", () => {
+      expect(isFreeUser("member")).toBe(false);
+    });
+
+    it("returns false for 'viewer' role", () => {
+      expect(isFreeUser("viewer")).toBe(false);
+    });
+  });
+
+  describe("hasQuota", () => {
+    it("returns true when monthly_document_limit is positive", () => {
+      expect(hasQuota({ monthly_document_limit: 5 })).toBe(true);
+    });
+
+    it("returns true when monthly_document_limit is 1", () => {
+      expect(hasQuota({ monthly_document_limit: 1 })).toBe(true);
+    });
+
+    it("returns false when monthly_document_limit is 0", () => {
+      expect(hasQuota({ monthly_document_limit: 0 })).toBe(false);
+    });
+
+    it("returns false when monthly_document_limit is not set", () => {
+      expect(hasQuota({})).toBe(false);
+    });
+  });
+
+  describe("canUpload for free user", () => {
+    it("free user can upload", () => {
+      expect(canUpload("free")).toBe(true);
+    });
+  });
+
+  describe("canManageUsers for free user", () => {
+    it("free user cannot manage users", () => {
+      expect(canManageUsers("free")).toBe(false);
+    });
+  });
+
+  describe("hasRole for free user", () => {
+    it("free user does NOT have viewer role", () => {
+      expect(hasRole("free", "viewer")).toBe(false);
+    });
+
+    it("free user does NOT have member role", () => {
+      expect(hasRole("free", "member")).toBe(false);
+    });
+
+    it("free user does NOT have manager role", () => {
+      expect(hasRole("free", "manager")).toBe(false);
+    });
+
+    it("free user does NOT have admin role", () => {
+      expect(hasRole("free", "admin")).toBe(false);
+    });
+
+    it("free user has free role", () => {
+      expect(hasRole("free", "free")).toBe(true);
+    });
   });
 });

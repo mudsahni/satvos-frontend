@@ -20,14 +20,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { loginSchema, type LoginFormData, getSafeRedirectUrl } from "@/lib/utils/validation";
+import { freeLoginSchema, type FreeLoginFormData, getSafeRedirectUrl } from "@/lib/utils/validation";
 import { login } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
 import { getErrorMessage, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
 
-export function LoginForm() {
+export function FreeLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -42,27 +42,29 @@ export function LoginForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<FreeLoginFormData>({
+    resolver: zodResolver(freeLoginSchema),
     defaultValues: {
-      tenant_slug: "",
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: FreeLoginFormData) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await login(data);
+      const response = await login({
+        tenant_slug: "satvos",
+        email: data.email,
+        password: data.password,
+      });
 
       // Clear any stale cache from a previous user session
       queryClient.clear();
 
       // Store auth state with tokens first (enables authenticated API calls)
-      // Login response may or may not include user data
       const partialUser = response.user ?? null;
       loginToStore(
         {
@@ -71,7 +73,7 @@ export function LoginForm() {
           expires_at: response.expires_at,
         },
         partialUser as import("@/types/user").User,
-        data.tenant_slug,
+        "satvos",
         rememberMe
       );
 
@@ -107,9 +109,9 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Enterprise Sign In</CardTitle>
+        <CardTitle className="text-2xl font-bold">Sign in to Satvos</CardTitle>
         <CardDescription>
-          Enter your organization and credentials
+          Enter your email and password
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -126,21 +128,6 @@ export function LoginForm() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-
-          <div className="space-y-2">
-            <Label htmlFor="tenant_slug">Organization</Label>
-            <Input
-              id="tenant_slug"
-              placeholder="your-organization"
-              {...register("tenant_slug")}
-              disabled={isLoading}
-            />
-            {errors.tenant_slug && (
-              <p className="text-sm text-destructive">
-                {errors.tenant_slug.message}
-              </p>
-            )}
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -193,12 +180,20 @@ export function LoginForm() {
             Sign in
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Free user?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">
-              Sign in here
-            </Link>
-          </p>
+          <div className="space-y-2 text-center text-sm text-muted-foreground">
+            <p>
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="text-primary hover:underline font-medium">
+                Sign up free
+              </Link>
+            </p>
+            <p>
+              Enterprise user?{" "}
+              <Link href="/login/enterprise" className="text-primary hover:underline font-medium">
+                Log in with your organization
+              </Link>
+            </p>
+          </div>
         </form>
       </CardContent>
     </Card>
