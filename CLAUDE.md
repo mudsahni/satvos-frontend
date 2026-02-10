@@ -370,6 +370,9 @@ Tags use a `Record<string, string>` format (`{ tags: { key: value } }`):
 - [x] Document viewer: `DocumentViewer` component replaces `PDFViewer`, auto-detects PDF vs image from file name, image viewer has zoom/rotate/reset controls
 - [x] Mobile document detail: stacked layout (document viewer on top 40vh, tabs below) instead of tabs-only
 - [x] Product landing page with routing migration (`/` → landing, `/dashboard` → authenticated dashboard)
+- [x] Landing page polish: twinkling cross background (matches grid pattern), shimmer glint on "on Autopilot" gradient text, floating gradient orbs in hero
+- [x] Landing page visual rhythm: alternating white/gray sections, full-bleed dark CTA section, dark footer with seamless CTA→footer gradient transition (bookend effect)
+- [x] Landing page buttons: flat `bg-primary` with `hover:bg-primary/90`, hero CTA is white (`bg-white text-slate-900`) for contrast on dark bg, ghost buttons use `border-white/10` with subtle hover
 
 ### In Progress / Next Steps
 1. **Extracted Data Viewer** - Fix to work with actual API response format (user will provide sample response)
