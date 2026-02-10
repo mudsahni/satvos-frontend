@@ -193,6 +193,15 @@ export function LoginForm() {
             Sign in
           </Button>
 
+          <div className="text-center">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-muted-foreground hover:text-primary hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+
           <p className="text-center text-sm text-muted-foreground">
             Free user?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium">

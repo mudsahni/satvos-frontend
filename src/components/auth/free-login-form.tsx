@@ -180,6 +180,15 @@ export function FreeLoginForm() {
             Sign in
           </Button>
 
+          <div className="text-center">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-muted-foreground hover:text-primary hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+
           <div className="space-y-2 text-center text-sm text-muted-foreground">
             <p>
               Don&apos;t have an account?{" "}

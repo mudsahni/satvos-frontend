@@ -9,6 +9,8 @@ const mockUser: User = {
   full_name: "Test User",
   role: "member",
   is_active: true,
+  email_verified: true,
+  email_verified_at: "2025-01-01T00:00:00Z",
   created_at: "2025-01-01T00:00:00Z",
   updated_at: "2025-01-01T00:00:00Z",
 };

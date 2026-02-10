@@ -41,7 +41,8 @@ import { UpgradeDialog } from "@/components/ui/upgrade-dialog";
 import { useCollections, useCreateCollection } from "@/lib/hooks/use-collections";
 import { useUpload, FileToUpload } from "@/lib/hooks/use-upload";
 import { useAuthStore } from "@/store/auth-store";
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, ParseMode, isFreeUser, canCreateCollections } from "@/lib/constants";
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, ParseMode, isFreeUser, canCreateCollections, needsEmailVerification } from "@/lib/constants";
+import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { formatFileSize } from "@/lib/utils/format";
 
 type CollectionMode = "new" | "existing";
@@ -83,6 +84,7 @@ function UploadPageContent() {
   const user = useAuthStore((state) => state.user);
   const showQuota = user && isFreeUser(user.role);
   const canCreate = user ? canCreateCollections(user.role) : true;
+  const emailNotVerified = user && needsEmailVerification(user);
 
   // Upgrade dialog state
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -282,8 +284,13 @@ function UploadPageContent() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      {/* Email verification alert for free users */}
+      {emailNotVerified && (
+        <EmailVerificationBanner email={user.email} variant="inline" />
+      )}
+
       {/* Quota indicator for free users */}
-      {showQuota && (
+      {showQuota && !emailNotVerified && (
         <QuotaIndicator
           used={user.documents_used_this_period ?? 0}
           limit={user.monthly_document_limit ?? 5}
@@ -601,7 +608,8 @@ function UploadPageContent() {
           <>
             <Button
               onClick={handleUpload}
-              disabled={isUploading || !isFormValid}
+              disabled={isUploading || !isFormValid || !!emailNotVerified}
+              title={emailNotVerified ? "Verify your email to upload files" : undefined}
             >
               {isUploading && (
                 <Loader2 className="animate-spin" />

@@ -77,4 +77,12 @@ describe("FreeLoginForm", () => {
 
     expect(screen.queryByText(/session has expired/i)).not.toBeInTheDocument();
   });
+
+  it("shows forgot password link", () => {
+    renderWithProviders(<FreeLoginForm />);
+
+    const link = screen.getByRole("link", { name: /forgot your password/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/forgot-password");
+  });
 });

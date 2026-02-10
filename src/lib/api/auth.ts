@@ -7,6 +7,8 @@ import {
   RefreshResponse,
   RegisterRequest,
   RegisterResponseData,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from "@/types/auth";
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -30,6 +32,37 @@ export async function refreshToken(
 export async function register(data: RegisterRequest): Promise<RegisterResponseData> {
   const response = await apiClient.post<ApiResponse<RegisterResponseData>>(
     "/auth/register",
+    data
+  );
+  return response.data.data;
+}
+
+export async function verifyEmail(token: string): Promise<{ message: string }> {
+  const response = await apiClient.get<ApiResponse<{ message: string }>>(
+    "/auth/verify-email",
+    { params: { token } }
+  );
+  return response.data.data;
+}
+
+export async function resendVerification(): Promise<{ message: string }> {
+  const response = await apiClient.post<ApiResponse<{ message: string }>>(
+    "/auth/resend-verification"
+  );
+  return response.data.data;
+}
+
+export async function forgotPassword(data: ForgotPasswordRequest): Promise<{ message: string }> {
+  const response = await apiClient.post<ApiResponse<{ message: string }>>(
+    "/auth/forgot-password",
+    data
+  );
+  return response.data.data;
+}
+
+export async function resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
+  const response = await apiClient.post<ApiResponse<{ message: string }>>(
+    "/auth/reset-password",
     data
   );
   return response.data.data;

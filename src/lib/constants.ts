@@ -120,3 +120,7 @@ export function isFreeUser(role: Role): boolean {
 export function hasQuota(user: { monthly_document_limit?: number }): boolean {
   return (user.monthly_document_limit ?? 0) > 0;
 }
+
+export function needsEmailVerification(user: { role: Role; email_verified: boolean }): boolean {
+  return isFreeUser(user.role) && !user.email_verified;
+}

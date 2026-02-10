@@ -69,6 +69,16 @@ export interface RegisterResponseData {
   tokens?: TokenPair;
 }
 
+export interface ForgotPasswordRequest {
+  tenant_slug: string;
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  new_password: string;
+}
+
 export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;

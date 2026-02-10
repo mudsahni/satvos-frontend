@@ -7,7 +7,7 @@ import { createDocument } from "@/lib/api/documents";
 import { UploadProgress, FileRecord } from "@/types/file";
 import { ParseMode } from "@/lib/constants";
 import { toast } from "@/lib/hooks/use-toast";
-import { getErrorMessage } from "@/lib/api/client";
+import { getErrorMessage, isEmailNotVerifiedError } from "@/lib/api/client";
 
 const UPLOAD_CONCURRENCY = 3;
 
@@ -90,21 +90,27 @@ export function useUpload() {
           });
           return { fileId, documentId: document.id };
         } catch (docError) {
+          const message = isEmailNotVerifiedError(docError)
+            ? "Please verify your email before creating documents"
+            : getErrorMessage(docError);
           updateUpload(fileId, {
             status: "error",
-            error: getErrorMessage(docError),
+            error: message,
           });
           return {
             fileId,
-            error: `Document creation failed: ${getErrorMessage(docError)}`,
+            error: isEmailNotVerifiedError(docError) ? message : `Document creation failed: ${message}`,
           };
         }
       } catch (error) {
+        const message = isEmailNotVerifiedError(error)
+          ? "Please verify your email before uploading files"
+          : getErrorMessage(error);
         updateUpload(fileId, {
           status: "error",
-          error: getErrorMessage(error),
+          error: message,
         });
-        return { fileId, error: getErrorMessage(error) };
+        return { fileId, error: message };
       }
     },
     [updateUpload]

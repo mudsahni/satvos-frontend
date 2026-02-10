@@ -185,5 +185,17 @@ export function isApiError(error: unknown, code: string): boolean {
   return false;
 }
 
+// Check if an error is a 403 EMAIL_NOT_VERIFIED response
+export function isEmailNotVerifiedError(error: unknown): boolean {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<ApiResponse<unknown>>;
+    return (
+      axiosError.response?.status === 403 &&
+      axiosError.response?.data?.error?.code === "EMAIL_NOT_VERIFIED"
+    );
+  }
+  return false;
+}
+
 export { renewAuthCookie };
 export default apiClient;
