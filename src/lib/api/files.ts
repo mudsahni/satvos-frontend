@@ -44,6 +44,7 @@ export async function uploadFile(
       },
     }
   );
+
   return response.data.data;
 }
 

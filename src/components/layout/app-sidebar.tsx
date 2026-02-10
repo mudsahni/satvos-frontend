@@ -16,6 +16,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -26,8 +27,9 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { QuotaIndicator } from "@/components/layout/quota-indicator";
 import { useAuthStore } from "@/store/auth-store";
-import { Role } from "@/lib/constants";
+import { Role, isFreeUser } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const navItems: Array<{
@@ -40,31 +42,31 @@ const navItems: Array<{
     label: "Dashboard",
     href: "/dashboard",
     icon: Home,
-    roles: ["admin", "manager", "member", "viewer"],
+    roles: ["admin", "manager", "member", "viewer", "free"],
   },
   {
     label: "Collections",
     href: "/collections",
     icon: FolderOpen,
-    roles: ["admin", "manager", "member", "viewer"],
+    roles: ["admin", "manager", "member", "viewer", "free"],
   },
   {
     label: "Documents",
     href: "/documents",
     icon: FileText,
-    roles: ["admin", "manager", "member", "viewer"],
+    roles: ["admin", "manager", "member", "viewer", "free"],
   },
   {
     label: "Needs Attention",
     href: "/exceptions",
     icon: AlertTriangle,
-    roles: ["admin", "manager", "member", "viewer"],
+    roles: ["admin", "manager", "member", "viewer", "free"],
   },
   {
     label: "Upload",
     href: "/upload",
     icon: Upload,
-    roles: ["admin", "manager", "member", "viewer"],
+    roles: ["admin", "manager", "member", "viewer", "free"],
   },
 ];
 
@@ -194,6 +196,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {user && isFreeUser(user.role) && (
+        <SidebarFooter className="p-3">
+          <QuotaIndicator
+            used={user.documents_used_this_period ?? 0}
+            limit={user.monthly_document_limit ?? 5}
+          />
+        </SidebarFooter>
+      )}
 
       <SidebarRail />
     </Sidebar>

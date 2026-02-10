@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileStack, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth-store";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -15,6 +16,7 @@ const navLinks = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAuthenticated, isHydrated } = useAuthStore();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -69,21 +71,32 @@ export function Navbar() {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className={cn(
-                "text-sm font-medium transition-colors",
-                scrolled ? "text-foreground hover:text-primary" : "text-white/80 hover:text-white"
-              )}
-            >
-              Log in
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
-            >
-              Get Started
-            </Link>
+            {isHydrated && isAuthenticated ? (
+              <Link
+                href="/dashboard"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary/90"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className={cn(
+                    "text-sm font-medium transition-colors",
+                    scrolled ? "text-foreground hover:text-primary" : "text-white/80 hover:text-white"
+                  )}
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary/90"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -120,18 +133,29 @@ export function Navbar() {
                 </a>
               ))}
               <div className="border-t border-border pt-3 space-y-2">
-                <Link
-                  href="/login"
-                  className="block text-sm font-medium text-foreground py-2"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/login"
-                  className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white"
-                >
-                  Get Started
-                </Link>
+                {isHydrated && isAuthenticated ? (
+                  <Link
+                    href="/dashboard"
+                    className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="block text-sm font-medium text-foreground py-2"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white"
+                    >
+                      Get Started
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

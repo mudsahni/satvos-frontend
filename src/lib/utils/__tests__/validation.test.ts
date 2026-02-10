@@ -1,5 +1,7 @@
 import {
   loginSchema,
+  freeLoginSchema,
+  registerSchema,
   createUserSchema,
   updateUserSchema,
   createCollectionSchema,
@@ -111,6 +113,172 @@ describe("loginSchema", () => {
       expect(errors.email).toBeDefined();
       expect(errors.password).toBeDefined();
     }
+  });
+});
+
+describe("freeLoginSchema", () => {
+  it("validates correct free login data", () => {
+    const result = freeLoginSchema.safeParse({
+      email: "user@example.com",
+      password: "secret123",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("does not require tenant_slug", () => {
+    const result = freeLoginSchema.safeParse({
+      email: "user@example.com",
+      password: "secret123",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("tenant_slug");
+    }
+  });
+
+  it("rejects invalid email", () => {
+    const result = freeLoginSchema.safeParse({
+      email: "not-an-email",
+      password: "secret123",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing email", () => {
+    const result = freeLoginSchema.safeParse({
+      password: "secret123",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing password", () => {
+    const result = freeLoginSchema.safeParse({
+      email: "user@example.com",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty password", () => {
+    const result = freeLoginSchema.safeParse({
+      email: "user@example.com",
+      password: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("provides appropriate error messages", () => {
+    const result = freeLoginSchema.safeParse({
+      email: "bad",
+      password: "",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.email).toBeDefined();
+      expect(errors.password).toBeDefined();
+    }
+  });
+});
+
+describe("registerSchema", () => {
+  const validData = {
+    full_name: "Test User",
+    email: "test@example.com",
+    password: "password123",
+    confirm_password: "password123",
+  };
+
+  it("validates correct registration data", () => {
+    const result = registerSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty full_name", () => {
+    const result = registerSchema.safeParse({
+      ...validData,
+      full_name: "",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.full_name).toBeDefined();
+    }
+  });
+
+  it("rejects missing full_name", () => {
+    const result = registerSchema.safeParse({
+      email: validData.email,
+      password: validData.password,
+      confirm_password: validData.confirm_password,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid email", () => {
+    const result = registerSchema.safeParse({
+      ...validData,
+      email: "not-an-email",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.email).toBeDefined();
+    }
+  });
+
+  it("rejects password shorter than 8 characters", () => {
+    const result = registerSchema.safeParse({
+      ...validData,
+      password: "short",
+      confirm_password: "short",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.password).toBeDefined();
+      expect(errors.password?.[0]).toContain("8 characters");
+    }
+  });
+
+  it("rejects mismatched passwords", () => {
+    const result = registerSchema.safeParse({
+      ...validData,
+      password: "password123",
+      confirm_password: "different456",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.confirm_password).toBeDefined();
+      expect(errors.confirm_password?.[0]).toContain("do not match");
+    }
+  });
+
+  it("rejects missing email", () => {
+    const result = registerSchema.safeParse({
+      full_name: validData.full_name,
+      password: validData.password,
+      confirm_password: validData.confirm_password,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing password", () => {
+    const result = registerSchema.safeParse({
+      full_name: validData.full_name,
+      email: validData.email,
+      confirm_password: validData.confirm_password,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts password at exactly 8 characters", () => {
+    const result = registerSchema.safeParse({
+      ...validData,
+      password: "12345678",
+      confirm_password: "12345678",
+    });
+    expect(result.success).toBe(true);
   });
 });
 

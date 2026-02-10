@@ -11,11 +11,32 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
+export const freeLoginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type FreeLoginFormData = z.infer<typeof freeLoginSchema>;
+
+export const registerSchema = z
+  .object({
+    full_name: z.string().min(1, "Name is required").max(100),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirm_password: z.string(),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+export type RegisterFormData = z.infer<typeof registerSchema>;
+
 export const createUserSchema = z.object({
   email: z.string().email("Invalid email address"),
   full_name: z.string().min(1, "Full name is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["admin", "manager", "member", "viewer"]),
+  role: z.enum(["admin", "manager", "member", "viewer", "free"]),
 });
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>;
@@ -28,7 +49,7 @@ export const updateUserSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .optional()
     .or(z.literal("")),
-  role: z.enum(["admin", "manager", "member", "viewer"]).optional(),
+  role: z.enum(["admin", "manager", "member", "viewer", "free"]).optional(),
   is_active: z.boolean().optional(),
 });
 

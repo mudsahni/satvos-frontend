@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,65 +20,82 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { loginSchema, type LoginFormData, getSafeRedirectUrl } from "@/lib/utils/validation";
-import { login } from "@/lib/api/auth";
+import { registerSchema, type RegisterFormData } from "@/lib/utils/validation";
+import { register } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
 import { getErrorMessage, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
 
-export function LoginForm() {
+export function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const returnUrl = getSafeRedirectUrl(searchParams.get("returnUrl"));
-  const sessionExpired = searchParams.get("session_expired") === "true";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const loginToStore = useAuthStore((state) => state.login);
 
   const {
-    register,
+    register: registerField,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
-      tenant_slug: "",
+      full_name: "",
       email: "",
       password: "",
+      confirm_password: "",
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await login(data);
+      const response = await register({
+        full_name: data.full_name,
+        email: data.email,
+        password: data.password,
+      });
 
       // Clear any stale cache from a previous user session
       queryClient.clear();
 
-      // Store auth state with tokens first (enables authenticated API calls)
-      // Login response may or may not include user data
+      // Extract tokens — handle both flat and nested formats
+      const accessToken =
+        response.access_token ?? response.tokens?.access_token;
+      const refreshToken =
+        response.refresh_token ?? response.tokens?.refresh_token;
+      const expiresAt =
+        response.expires_at ?? response.tokens?.expires_at;
+
+      if (!accessToken || !refreshToken) {
+        setError("Registration succeeded but no tokens received. Please log in.");
+        return;
+      }
+
+      // Store auth state with tokens (enables authenticated API calls)
       const partialUser = response.user ?? null;
       loginToStore(
         {
-          access_token: response.access_token,
-          refresh_token: response.refresh_token,
-          expires_at: response.expires_at,
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_at: expiresAt,
         },
         partialUser as import("@/types/user").User,
-        data.tenant_slug,
-        rememberMe
+        "satvos"
       );
 
-      // Fetch full user profile using user ID from login response or JWT
-      let userId = response.user?.id;
+      // Store personal collection ID for free users
+      if (response.collection?.id) {
+        localStorage.setItem("satvos_personal_collection_id", response.collection.id);
+      }
+
+      // Fetch full user profile (same pattern as login-form)
+      let userId: string | undefined = response.user?.id;
       if (!userId) {
-        const payload = decodeJwtPayload(response.access_token);
+        const payload = decodeJwtPayload(accessToken);
         userId = (payload?.user_id ?? payload?.sub) as string | undefined;
       }
 
@@ -94,11 +111,15 @@ export function LoginForm() {
       // Set cookie for middleware
       renewAuthCookie();
 
-      // Redirect to return URL or dashboard
-      router.push(returnUrl);
+      // Redirect to dashboard
+      router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(getErrorMessage(err));
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        setError("An account with this email already exists.");
+      } else {
+        setError(getErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -107,37 +128,37 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Enterprise Sign In</CardTitle>
+        <CardTitle className="text-2xl font-bold">Create your account</CardTitle>
         <CardDescription>
-          Enter your organization and credentials
+          Start processing invoices for free — no credit card required
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {sessionExpired && (
-            <Alert variant="warning">
-              <AlertDescription>
-                Your session has expired. Please sign in again to continue.
-              </AlertDescription>
-            </Alert>
-          )}
           {error && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>
+                {error}{" "}
+                {error.includes("already exists") && (
+                  <Link href="/login" className="underline font-medium">
+                    Log in instead
+                  </Link>
+                )}
+              </AlertDescription>
             </Alert>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="tenant_slug">Organization</Label>
+            <Label htmlFor="full_name">Full Name</Label>
             <Input
-              id="tenant_slug"
-              placeholder="your-organization"
-              {...register("tenant_slug")}
+              id="full_name"
+              placeholder="John Doe"
+              {...registerField("full_name")}
               disabled={isLoading}
             />
-            {errors.tenant_slug && (
+            {errors.full_name && (
               <p className="text-sm text-destructive">
-                {errors.tenant_slug.message}
+                {errors.full_name.message}
               </p>
             )}
           </div>
@@ -148,7 +169,7 @@ export function LoginForm() {
               id="email"
               type="email"
               placeholder="name@example.com"
-              {...register("email")}
+              {...registerField("email")}
               disabled={isLoading}
             />
             {errors.email && (
@@ -161,7 +182,8 @@ export function LoginForm() {
             <Input
               id="password"
               type="password"
-              {...register("password")}
+              placeholder="At least 8 characters"
+              {...registerField("password")}
               disabled={isLoading}
             />
             {errors.password && (
@@ -171,32 +193,30 @@ export function LoginForm() {
             )}
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="remember-me"
-              checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(checked === true)}
+          <div className="space-y-2">
+            <Label htmlFor="confirm_password">Confirm Password</Label>
+            <Input
+              id="confirm_password"
+              type="password"
+              {...registerField("confirm_password")}
               disabled={isLoading}
             />
-            <div className="grid gap-0.5 leading-none">
-              <Label htmlFor="remember-me" className="text-sm font-medium cursor-pointer">
-                Remember me
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Stay signed in for 30 days
+            {errors.confirm_password && (
+              <p className="text-sm text-destructive">
+                {errors.confirm_password.message}
               </p>
-            </div>
+            )}
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="animate-spin" />}
-            Sign in
+            Create Account
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Free user?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium">
-              Sign in here
+              Log in
             </Link>
           </p>
         </form>

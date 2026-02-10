@@ -5,6 +5,8 @@ import {
   LoginResponse,
   RefreshRequest,
   RefreshResponse,
+  RegisterRequest,
+  RegisterResponseData,
 } from "@/types/auth";
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -20,6 +22,14 @@ export async function refreshToken(
 ): Promise<RefreshResponse> {
   const response = await apiClient.post<ApiResponse<RefreshResponse>>(
     "/auth/refresh",
+    data
+  );
+  return response.data.data;
+}
+
+export async function register(data: RegisterRequest): Promise<RegisterResponseData> {
+  const response = await apiClient.post<ApiResponse<RegisterResponseData>>(
+    "/auth/register",
     data
   );
   return response.data.data;

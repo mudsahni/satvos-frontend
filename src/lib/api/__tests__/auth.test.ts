@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { login, refreshToken, logout } from "@/lib/api/auth";
+import { login, refreshToken, logout, register } from "@/lib/api/auth";
 
 vi.mock("@/lib/api/client", () => ({
   default: {
@@ -93,6 +93,68 @@ describe("auth API", () => {
       await expect(
         refreshToken({ refresh_token: "expired-rt" })
       ).rejects.toThrow("Token expired");
+    });
+  });
+
+  describe("register", () => {
+    it("calls POST /auth/register with registration data", async () => {
+      const registerResponse = {
+        user: { id: "u1", full_name: "Test User", email: "test@example.com" },
+        collection: { id: "c1", name: "Personal" },
+        access_token: "tok",
+        refresh_token: "ref",
+      };
+
+      mockPost.mockResolvedValue({ data: { data: registerResponse } });
+
+      const result = await register({
+        email: "test@example.com",
+        password: "password123",
+        full_name: "Test User",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/auth/register", {
+        email: "test@example.com",
+        password: "password123",
+        full_name: "Test User",
+      });
+      expect(result).toEqual(registerResponse);
+    });
+
+    it("unwraps the nested data response", async () => {
+      const registerResponse = {
+        user: { id: "u2", full_name: "Jane Doe", email: "jane@example.com" },
+        access_token: "at-abc",
+        refresh_token: "rt-xyz",
+      };
+
+      mockPost.mockResolvedValue({ data: { data: registerResponse } });
+
+      const result = await register({
+        email: "jane@example.com",
+        password: "securepass",
+        full_name: "Jane Doe",
+      });
+
+      expect(result.user).toEqual({
+        id: "u2",
+        full_name: "Jane Doe",
+        email: "jane@example.com",
+      });
+      expect(result.access_token).toBe("at-abc");
+      expect(result.refresh_token).toBe("rt-xyz");
+    });
+
+    it("propagates API errors", async () => {
+      mockPost.mockRejectedValue(new Error("Email already exists"));
+
+      await expect(
+        register({
+          email: "taken@example.com",
+          password: "password123",
+          full_name: "Dupe User",
+        })
+      ).rejects.toThrow("Email already exists");
     });
   });
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   Settings,
@@ -29,9 +30,11 @@ interface TopNavProps {
 
 export function TopNav({ onSearchClick }: TopNavProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, logout, tenantSlug } = useAuthStore();
 
   const handleLogout = () => {
+    queryClient.clear();
     logout();
     document.cookie = "satvos-auth-state=; path=/; max-age=0";
     router.push("/login");

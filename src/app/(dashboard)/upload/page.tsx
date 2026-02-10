@@ -36,9 +36,12 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { QuotaIndicator } from "@/components/layout/quota-indicator";
+import { UpgradeDialog } from "@/components/ui/upgrade-dialog";
 import { useCollections, useCreateCollection } from "@/lib/hooks/use-collections";
 import { useUpload, FileToUpload } from "@/lib/hooks/use-upload";
-import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, ParseMode } from "@/lib/constants";
+import { useAuthStore } from "@/store/auth-store";
+import { ACCEPTED_FILE_TYPES, MAX_FILE_SIZE, ParseMode, isFreeUser, canCreateCollections } from "@/lib/constants";
 import { formatFileSize } from "@/lib/utils/format";
 
 type CollectionMode = "new" | "existing";
@@ -77,10 +80,16 @@ function UploadPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedCollectionId = searchParams.get("collection");
+  const user = useAuthStore((state) => state.user);
+  const showQuota = user && isFreeUser(user.role);
+  const canCreate = user ? canCreateCollections(user.role) : true;
 
-  // Collection state
+  // Upgrade dialog state
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
+  // Collection state — free users default to "existing" since they can't create collections
   const [collectionMode, setCollectionMode] = useState<CollectionMode>(
-    preselectedCollectionId ? "existing" : "new"
+    preselectedCollectionId || !canCreate ? "existing" : "new"
   );
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
     preselectedCollectionId || ""
@@ -114,6 +123,20 @@ function UploadPageContent() {
       }
     }
   }, [preselectedCollectionId, collections]);
+
+  // Auto-select the personal collection for free users
+  useEffect(() => {
+    if (!canCreate && collections.length > 0 && !selectedCollectionId) {
+      // Try to use the stored personal collection from registration
+      const personalCollectionId = localStorage.getItem("satvos_personal_collection_id");
+      if (personalCollectionId && collections.some((c) => c.id === personalCollectionId)) {
+        setSelectedCollectionId(personalCollectionId);
+      } else if (collections.length === 1) {
+        // Free users typically have exactly one collection
+        setSelectedCollectionId(collections[0].id);
+      }
+    }
+  }, [canCreate, collections, selectedCollectionId]);
 
   // Selection helpers
   const selectedCount = useMemo(
@@ -201,6 +224,15 @@ function UploadPageContent() {
       parseMode,
     });
 
+    // Check for quota exceeded (429) errors
+    const quotaExceeded = results.some(
+      (r) => r.error && (r.error.includes("quota") || r.error.includes("limit") || r.error.includes("429"))
+    );
+    if (quotaExceeded && showQuota) {
+      setShowUpgradeDialog(true);
+      return;
+    }
+
     // Redirect to collection page if all succeeded
     const allSucceeded = results.every((r) => !r.error);
     if (allSucceeded && results.length > 0) {
@@ -250,6 +282,15 @@ function UploadPageContent() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      {/* Quota indicator for free users */}
+      {showQuota && (
+        <QuotaIndicator
+          used={user.documents_used_this_period ?? 0}
+          limit={user.monthly_document_limit ?? 5}
+          className="rounded-lg border border-border bg-card p-4"
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Upload Documents</h1>
@@ -268,26 +309,32 @@ function UploadPageContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Radio toggle for Create New / Use Existing */}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant={collectionMode === "new" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCollectionMode("new")}
-              disabled={isUploading}
-            >
-              Create New
-            </Button>
-            <Button
-              type="button"
-              variant={collectionMode === "existing" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCollectionMode("existing")}
-              disabled={isUploading}
-            >
-              Use Existing
-            </Button>
-          </div>
+          {canCreate ? (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={collectionMode === "new" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCollectionMode("new")}
+                disabled={isUploading}
+              >
+                Create New
+              </Button>
+              <Button
+                type="button"
+                variant={collectionMode === "existing" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCollectionMode("existing")}
+                disabled={isUploading}
+              >
+                Use Existing
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Upload to your personal collection
+            </p>
+          )}
 
           {collectionMode === "new" ? (
             <div className="space-y-4 border rounded-xl p-4">
@@ -571,6 +618,16 @@ function UploadPageContent() {
           </>
         )}
       </div>
+
+      {/* Upgrade dialog for quota exceeded */}
+      {showQuota && (
+        <UpgradeDialog
+          open={showUpgradeDialog}
+          onOpenChange={setShowUpgradeDialog}
+          used={user.documents_used_this_period ?? 0}
+          limit={user.monthly_document_limit ?? 5}
+        />
+      )}
     </div>
   );
 }

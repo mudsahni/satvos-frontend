@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 
 /* ------------------------------------------------------------------ */
 /*  Shared chrome                                                     */
@@ -364,7 +365,38 @@ function MarqueeShowcase() {
 /*  Hero section                                                      */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Twinkling crosses — matches the background grid plus-sign pattern  */
+/* ------------------------------------------------------------------ */
+
+const TWINKLE_CROSSES = [
+  // x%, y%, size(px), duration(s), delay(s)
+  { x: 5, y: 10, sz: 10, d: 5, dl: 0 },
+  { x: 14, y: 28, sz: 8, d: 6.5, dl: 2.8 },
+  { x: 8, y: 55, sz: 10, d: 5.8, dl: 4.1 },
+  { x: 3, y: 78, sz: 8, d: 7, dl: 1.3 },
+  { x: 22, y: 12, sz: 10, d: 6, dl: 3.5 },
+  { x: 30, y: 72, sz: 8, d: 5.5, dl: 0.7 },
+  { x: 42, y: 88, sz: 10, d: 6.8, dl: 2.2 },
+  { x: 55, y: 8, sz: 8, d: 5.2, dl: 4.8 },
+  { x: 60, y: 78, sz: 10, d: 7.2, dl: 1.6 },
+  { x: 72, y: 15, sz: 8, d: 6.2, dl: 3.0 },
+  { x: 78, y: 62, sz: 10, d: 5.6, dl: 0.4 },
+  { x: 85, y: 85, sz: 8, d: 6.6, dl: 2.5 },
+  { x: 90, y: 20, sz: 10, d: 5.3, dl: 4.4 },
+  { x: 95, y: 48, sz: 8, d: 7.4, dl: 1.9 },
+  { x: 48, y: 70, sz: 10, d: 6.1, dl: 3.8 },
+  { x: 18, y: 90, sz: 8, d: 5.9, dl: 0.2 },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Hero section                                                      */
+/* ------------------------------------------------------------------ */
+
 export function Hero() {
+  const { isAuthenticated, isHydrated } = useAuthStore();
+  const loggedIn = isHydrated && isAuthenticated;
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#312E81]">
       {/* Marquee keyframe — defined once, scoped to this section */}
@@ -372,6 +404,22 @@ export function Hero() {
         @keyframes marquee-scroll {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.03; }
+          50% { opacity: 0.2; }
+        }
+        @keyframes text-glint {
+          0%, 100% { background-position: 100% center; }
+          50% { background-position: 0% center; }
+        }
+        @keyframes float-1 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(15px, -20px); }
+        }
+        @keyframes float-2 {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(-20px, 15px); }
         }
       `}</style>
 
@@ -383,9 +431,36 @@ export function Hero() {
         }}
       />
 
-      {/* Gradient orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]" />
+      {/* Gradient orbs — slow drift */}
+      <div
+        className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"
+        style={{ animation: "float-1 15s ease-in-out infinite" }}
+      />
+      <div
+        className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]"
+        style={{ animation: "float-2 18s ease-in-out infinite" }}
+      />
+
+      {/* Twinkling crosses — some grid plus signs glow brighter then fade */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        {TWINKLE_CROSSES.map((c, i) => (
+          <svg
+            key={i}
+            className="absolute text-white"
+            width={c.sz}
+            height={c.sz}
+            viewBox="0 0 10 10"
+            fill="currentColor"
+            style={{
+              left: `${c.x}%`,
+              top: `${c.y}%`,
+              animation: `twinkle ${c.d}s ease-in-out ${c.dl}s infinite`,
+            }}
+          >
+            <path d="M4 0v4H0v2h4v4h2V6h4V4H6V0z" />
+          </svg>
+        ))}
+      </div>
 
       <div className="relative pt-28 pb-20 lg:pb-28">
         {/* Centered headline block — constrained width */}
@@ -410,7 +485,15 @@ export function Hero() {
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tight"
             >
               Invoice Processing{" "}
-              <span className="bg-gradient-to-r from-indigo-300 via-primary to-violet-400 bg-clip-text text-transparent">
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(110deg, #a5b4fc, #6366f1 20%, #a78bfa 40%, #e0e7ff 50%, #a78bfa 60%, #6366f1 80%, #a5b4fc)",
+                  backgroundSize: "300% 100%",
+                  animation: "text-glint 14s ease-in-out infinite",
+                }}
+              >
                 on Autopilot
               </span>
             </motion.h1>
@@ -432,15 +515,15 @@ export function Hero() {
               className="mt-8 flex flex-col sm:flex-row gap-3 justify-center"
             >
               <Link
-                href="/login"
-                className="group inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5"
+                href={loggedIn ? "/dashboard" : "/register"}
+                className="group inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition-colors duration-150 hover:bg-white/90"
               >
-                Start Free Trial
+                {loggedIn ? "Go to Dashboard" : "Start Free Trial"}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a
                 href="#how-it-works"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10 hover:border-white/25"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-colors duration-150 hover:bg-white/10 hover:border-white/20"
               >
                 See How It Works
               </a>

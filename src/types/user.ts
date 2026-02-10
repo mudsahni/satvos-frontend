@@ -9,6 +9,9 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  monthly_document_limit?: number;
+  documents_used_this_period?: number;
+  current_period_start?: string;
 }
 
 export interface CreateUserRequest {
