@@ -89,11 +89,18 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Skip refresh for auth endpoints
-    if (
-      originalRequest.url?.includes("/auth/login") ||
-      originalRequest.url?.includes("/auth/refresh")
-    ) {
+    // Skip refresh for public auth endpoints — they use their own
+    // authentication mechanisms (credentials, reset tokens, etc.),
+    // not Bearer tokens, so a 401 here is a real error, not a stale token.
+    const publicAuthPaths = [
+      "/auth/login",
+      "/auth/refresh",
+      "/auth/register",
+      "/auth/verify-email",
+      "/auth/forgot-password",
+      "/auth/reset-password",
+    ];
+    if (publicAuthPaths.some((path) => originalRequest.url?.includes(path))) {
       return Promise.reject(error);
     }
 
@@ -124,9 +131,11 @@ apiClient.interceptors.response.use(
     }
 
     try {
-      const response = await axios.post(`${API_URL}/auth/refresh`, {
-        refresh_token: refreshToken,
-      });
+      const response = await axios.post(
+        `${API_URL}/auth/refresh`,
+        { refresh_token: refreshToken },
+        { timeout: 15000 }
+      );
 
       const { access_token, refresh_token } = response.data.data;
 

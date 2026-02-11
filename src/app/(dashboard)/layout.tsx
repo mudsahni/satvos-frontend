@@ -24,21 +24,24 @@ export default function DashboardLayout({
   const showVerificationBanner =
     !bannerDismissed && user && needsEmailVerification(user);
 
-  // Poll for email verification status every 30s so banner auto-dismisses
+  // Check verification status immediately on mount, then poll every 30s
   useEffect(() => {
     if (!showVerificationBanner || !user) return;
 
-    const interval = setInterval(async () => {
+    async function checkVerification() {
       try {
-        const fresh = await getUser(user.id);
+        const fresh = await getUser(user!.id);
         if (fresh.email_verified) {
           setUser(fresh);
         }
       } catch {
-        // Silently ignore — non-critical polling
+        // Silently ignore — non-critical
       }
-    }, 30000);
+    }
 
+    checkVerification();
+
+    const interval = setInterval(checkVerification, 30000);
     return () => clearInterval(interval);
   }, [showVerificationBanner, user, setUser]);
 
