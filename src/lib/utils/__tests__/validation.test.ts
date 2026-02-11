@@ -2,6 +2,8 @@ import {
   loginSchema,
   freeLoginSchema,
   registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   createUserSchema,
   updateUserSchema,
   createCollectionSchema,
@@ -279,6 +281,107 @@ describe("registerSchema", () => {
       confirm_password: "12345678",
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("forgotPasswordSchema", () => {
+  it("validates correct email", () => {
+    const result = forgotPasswordSchema.safeParse({
+      email: "user@example.com",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid email", () => {
+    const result = forgotPasswordSchema.safeParse({
+      email: "not-an-email",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.email).toBeDefined();
+      expect(errors.email?.[0]).toContain("Invalid email");
+    }
+  });
+
+  it("rejects empty email", () => {
+    const result = forgotPasswordSchema.safeParse({
+      email: "",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing email", () => {
+    const result = forgotPasswordSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("resetPasswordSchema", () => {
+  const validData = {
+    new_password: "password123",
+    confirm_password: "password123",
+  };
+
+  it("validates correct data", () => {
+    const result = resetPasswordSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects password shorter than 8 characters", () => {
+    const result = resetPasswordSchema.safeParse({
+      new_password: "short",
+      confirm_password: "short",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.new_password).toBeDefined();
+      expect(errors.new_password?.[0]).toContain("8 characters");
+    }
+  });
+
+  it("rejects mismatched passwords", () => {
+    const result = resetPasswordSchema.safeParse({
+      new_password: "password123",
+      confirm_password: "different456",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.confirm_password).toBeDefined();
+      expect(errors.confirm_password?.[0]).toContain("do not match");
+    }
+  });
+
+  it("accepts password at exactly 8 characters", () => {
+    const result = resetPasswordSchema.safeParse({
+      new_password: "12345678",
+      confirm_password: "12345678",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing new_password", () => {
+    const result = resetPasswordSchema.safeParse({
+      confirm_password: "password123",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing confirm_password", () => {
+    const result = resetPasswordSchema.safeParse({
+      new_password: "password123",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty passwords", () => {
+    const result = resetPasswordSchema.safeParse({
+      new_password: "",
+      confirm_password: "",
+    });
+    expect(result.success).toBe(false);
   });
 });
 

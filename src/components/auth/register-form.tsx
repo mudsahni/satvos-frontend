@@ -26,6 +26,7 @@ import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
 import { getErrorMessage, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
+import { toast } from "@/lib/hooks/use-toast";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -110,6 +111,16 @@ export function RegisterForm() {
 
       // Set cookie for middleware
       renewAuthCookie();
+
+      // Show verification email toast if email is not yet verified
+      const resolvedUser = useAuthStore.getState().user;
+      if (resolvedUser && !resolvedUser.email_verified) {
+        toast({
+          title: "Check your inbox!",
+          description: `We sent a verification email to ${data.email}. Verify to start uploading documents.`,
+          duration: 10000,
+        });
+      }
 
       // Redirect to dashboard
       router.push("/dashboard");

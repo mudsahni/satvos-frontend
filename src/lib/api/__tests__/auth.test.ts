@@ -1,15 +1,26 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { login, refreshToken, logout, register } from "@/lib/api/auth";
+import {
+  login,
+  refreshToken,
+  logout,
+  register,
+  verifyEmail,
+  resendVerification,
+  forgotPassword,
+  resetPassword,
+} from "@/lib/api/auth";
 
 vi.mock("@/lib/api/client", () => ({
   default: {
     post: vi.fn(),
+    get: vi.fn(),
   },
 }));
 
 import apiClient from "@/lib/api/client";
 
 const mockPost = vi.mocked(apiClient.post);
+const mockGet = vi.mocked(apiClient.get);
 
 describe("auth API", () => {
   beforeEach(() => {
@@ -155,6 +166,114 @@ describe("auth API", () => {
           full_name: "Dupe User",
         })
       ).rejects.toThrow("Email already exists");
+    });
+  });
+
+  describe("verifyEmail", () => {
+    it("calls GET /auth/verify-email with token param", async () => {
+      mockGet.mockResolvedValue({
+        data: { data: { message: "email verified successfully" } },
+      });
+
+      const result = await verifyEmail("jwt-token-123");
+
+      expect(mockGet).toHaveBeenCalledWith("/auth/verify-email", {
+        params: { token: "jwt-token-123" },
+      });
+      expect(result.message).toBe("email verified successfully");
+    });
+
+    it("propagates errors on invalid token", async () => {
+      mockGet.mockRejectedValue(new Error("unauthorized"));
+
+      await expect(verifyEmail("bad-token")).rejects.toThrow("unauthorized");
+    });
+  });
+
+  describe("resendVerification", () => {
+    it("calls POST /auth/resend-verification", async () => {
+      mockPost.mockResolvedValue({
+        data: { data: { message: "verification email sent" } },
+      });
+
+      const result = await resendVerification();
+
+      expect(mockPost).toHaveBeenCalledWith("/auth/resend-verification");
+      expect(result.message).toBe("verification email sent");
+    });
+  });
+
+  describe("forgotPassword", () => {
+    it("calls POST /auth/forgot-password with tenant_slug and email", async () => {
+      mockPost.mockResolvedValue({
+        data: {
+          data: {
+            message:
+              "if an account with that email exists, a password reset link has been sent",
+          },
+        },
+      });
+
+      const result = await forgotPassword({
+        tenant_slug: "satvos",
+        email: "user@test.com",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/auth/forgot-password", {
+        tenant_slug: "satvos",
+        email: "user@test.com",
+      });
+      expect(result.message).toContain("password reset link");
+    });
+
+    it("always returns 200 — does not throw for unknown emails", async () => {
+      mockPost.mockResolvedValue({
+        data: {
+          data: {
+            message:
+              "if an account with that email exists, a password reset link has been sent",
+          },
+        },
+      });
+
+      const result = await forgotPassword({
+        tenant_slug: "satvos",
+        email: "nonexistent@test.com",
+      });
+
+      expect(result.message).toBeDefined();
+    });
+  });
+
+  describe("resetPassword", () => {
+    it("calls POST /auth/reset-password with token and new_password", async () => {
+      mockPost.mockResolvedValue({
+        data: {
+          data: { message: "password has been reset successfully" },
+        },
+      });
+
+      const result = await resetPassword({
+        token: "reset-jwt-token",
+        new_password: "newpassword123",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/auth/reset-password", {
+        token: "reset-jwt-token",
+        new_password: "newpassword123",
+      });
+      expect(result.message).toBe("password has been reset successfully");
+    });
+
+    it("propagates errors on invalid/expired token", async () => {
+      mockPost.mockRejectedValue(new Error("Token expired"));
+
+      await expect(
+        resetPassword({
+          token: "expired-token",
+          new_password: "newpassword123",
+        })
+      ).rejects.toThrow("Token expired");
     });
   });
 

@@ -2,9 +2,10 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Sun, CloudSun, Moon, Upload } from "lucide-react";
+import { Sun, CloudSun, Moon, Upload, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth-store";
+import { needsEmailVerification } from "@/lib/constants";
 
 function getGreeting(): { text: string; icon: typeof Sun } {
   const hour = new Date().getHours();
@@ -122,16 +123,23 @@ export function GreetingBanner({ pendingReview = 0, needsValidation = 0, parsing
         </h1>
         <p className="text-sm text-white/70">{subtitle}</p>
         <div className="pt-2">
-          <Button
-            size="sm"
-            asChild
-            className="bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm"
-          >
-            <Link href="/upload">
-              <Upload />
-              Upload Documents
-            </Link>
-          </Button>
+          {user && needsEmailVerification(user) ? (
+            <div className="flex items-center gap-2 text-sm text-white/70">
+              <Mail className="h-4 w-4" />
+              <span>Verify your email to start uploading</span>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              asChild
+              className="bg-white/15 hover:bg-white/25 text-white border-0 backdrop-blur-sm"
+            >
+              <Link href="/upload">
+                <Upload />
+                Upload Documents
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </div>
