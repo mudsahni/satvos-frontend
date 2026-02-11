@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -36,11 +36,11 @@ function VerifyEmailContent() {
   );
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
-  const [attempted, setAttempted] = useState(false);
+  const attemptedRef = useRef(false);
 
   useEffect(() => {
-    if (!token || attempted) return;
-    setAttempted(true);
+    if (!token || attemptedRef.current) return;
+    attemptedRef.current = true;
 
     let cancelled = false;
 
@@ -71,7 +71,7 @@ function VerifyEmailContent() {
     return () => {
       cancelled = true;
     };
-  }, [token, attempted]);
+  }, [token]);
 
   const handleResend = useCallback(async () => {
     setIsResending(true);
