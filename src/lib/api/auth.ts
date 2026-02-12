@@ -9,6 +9,8 @@ import {
   RegisterResponseData,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  SocialLoginRequest,
+  SocialLoginResponse,
 } from "@/types/auth";
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -63,6 +65,14 @@ export async function forgotPassword(data: ForgotPasswordRequest): Promise<{ mes
 export async function resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
   const response = await apiClient.post<ApiResponse<{ message: string }>>(
     "/auth/reset-password",
+    data
+  );
+  return response.data.data;
+}
+
+export async function socialLogin(data: SocialLoginRequest): Promise<SocialLoginResponse> {
+  const response = await apiClient.post<ApiResponse<SocialLoginResponse>>(
+    "/auth/social-login",
     data
   );
   return response.data.data;

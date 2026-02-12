@@ -21,18 +21,20 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { registerSchema, type RegisterFormData } from "@/lib/utils/validation";
-import { register } from "@/lib/api/auth";
+import { register, socialLogin } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
-import { getErrorMessage, renewAuthCookie } from "@/lib/api/client";
+import { getErrorMessage, isApiError, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
 import { toast } from "@/lib/hooks/use-toast";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
 export function RegisterForm() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSocialLoading, setSocialLoading] = useState(false);
   const loginToStore = useAuthStore((state) => state.login);
 
   const {
@@ -136,6 +138,67 @@ export function RegisterForm() {
     }
   };
 
+  const handleGoogleLogin = async (idToken: string) => {
+    setSocialLoading(true);
+    setError(null);
+
+    try {
+      const response = await socialLogin({ provider: "google", id_token: idToken });
+
+      queryClient.clear();
+
+      loginToStore(
+        response.tokens,
+        response.user,
+        "satvos"
+      );
+
+      // Store personal collection ID for free users
+      if (response.collection?.id) {
+        localStorage.setItem("satvos_personal_collection_id", response.collection.id);
+      }
+
+      // Fetch full user profile
+      if (response.user?.id) {
+        try {
+          const fullUser = await getUser(response.user.id);
+          useAuthStore.getState().setUser(fullUser);
+        } catch {
+          // Non-critical
+        }
+      }
+
+      renewAuthCookie();
+
+      // Show verification email toast for new users who aren't verified yet
+      const resolvedUser = useAuthStore.getState().user;
+      if (response.is_new_user && resolvedUser && !resolvedUser.email_verified) {
+        toast({
+          title: "Check your inbox!",
+          description: `We sent a verification email to ${resolvedUser.email}. Verify to start uploading documents.`,
+          duration: 10000,
+        });
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      if (isApiError(err, "INVALID_SOCIAL_TOKEN")) {
+        setError("Google sign-in failed. Please try again.");
+      } else if (isApiError(err, "NOT_FOUND")) {
+        setError("Social login is not available.");
+      } else if (isApiError(err, "DUPLICATE_EMAIL")) {
+        setError("An account with this email already exists.");
+      } else if (isApiError(err, "USER_INACTIVE")) {
+        setError("Your account has been deactivated. Contact support.");
+      } else {
+        setError(getErrorMessage(err));
+      }
+    } finally {
+      setSocialLoading(false);
+    }
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
@@ -165,7 +228,7 @@ export function RegisterForm() {
               id="full_name"
               placeholder="John Doe"
               {...registerField("full_name")}
-              disabled={isLoading}
+              disabled={isLoading || isSocialLoading}
             />
             {errors.full_name && (
               <p className="text-sm text-destructive">
@@ -181,7 +244,7 @@ export function RegisterForm() {
               type="email"
               placeholder="name@example.com"
               {...registerField("email")}
-              disabled={isLoading}
+              disabled={isLoading || isSocialLoading}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -195,7 +258,7 @@ export function RegisterForm() {
               type="password"
               placeholder="At least 8 characters"
               {...registerField("password")}
-              disabled={isLoading}
+              disabled={isLoading || isSocialLoading}
             />
             {errors.password && (
               <p className="text-sm text-destructive">
@@ -210,7 +273,7 @@ export function RegisterForm() {
               id="confirm_password"
               type="password"
               {...registerField("confirm_password")}
-              disabled={isLoading}
+              disabled={isLoading || isSocialLoading}
             />
             {errors.confirm_password && (
               <p className="text-sm text-destructive">
@@ -219,10 +282,16 @@ export function RegisterForm() {
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>
             {isLoading && <Loader2 className="animate-spin" />}
             Create Account
           </Button>
+
+          <GoogleSignInButton
+            onCredentialResponse={handleGoogleLogin}
+            disabled={isLoading || isSocialLoading}
+            text="signup_with"
+          />
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}

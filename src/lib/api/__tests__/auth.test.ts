@@ -8,6 +8,7 @@ import {
   resendVerification,
   forgotPassword,
   resetPassword,
+  socialLogin,
 } from "@/lib/api/auth";
 
 vi.mock("@/lib/api/client", () => ({
@@ -274,6 +275,66 @@ describe("auth API", () => {
           new_password: "newpassword123",
         })
       ).rejects.toThrow("Token expired");
+    });
+  });
+
+  describe("socialLogin", () => {
+    it("calls POST /auth/social-login with provider and id_token", async () => {
+      const socialLoginResponse = {
+        user: { id: "u1", full_name: "Google User", email: "google@test.com" },
+        collection: null,
+        tokens: {
+          access_token: "at-google",
+          refresh_token: "rt-google",
+          expires_at: "2026-12-31T00:00:00Z",
+        },
+        is_new_user: false,
+      };
+
+      mockPost.mockResolvedValue({ data: { data: socialLoginResponse } });
+
+      const result = await socialLogin({
+        provider: "google",
+        id_token: "google-jwt-token",
+      });
+
+      expect(mockPost).toHaveBeenCalledWith("/auth/social-login", {
+        provider: "google",
+        id_token: "google-jwt-token",
+      });
+      expect(result).toEqual(socialLoginResponse);
+    });
+
+    it("unwraps the nested data response", async () => {
+      const socialLoginResponse = {
+        user: { id: "u2", full_name: "New User", email: "new@test.com" },
+        collection: { id: "c1", name: "Personal" },
+        tokens: {
+          access_token: "at-new",
+          refresh_token: "rt-new",
+        },
+        is_new_user: true,
+      };
+
+      mockPost.mockResolvedValue({ data: { data: socialLoginResponse } });
+
+      const result = await socialLogin({
+        provider: "google",
+        id_token: "new-user-token",
+      });
+
+      expect(result.user.id).toBe("u2");
+      expect(result.is_new_user).toBe(true);
+      expect(result.tokens.access_token).toBe("at-new");
+      expect(result.collection?.id).toBe("c1");
+    });
+
+    it("propagates API errors", async () => {
+      mockPost.mockRejectedValue(new Error("Invalid social token"));
+
+      await expect(
+        socialLogin({ provider: "google", id_token: "bad-token" })
+      ).rejects.toThrow("Invalid social token");
     });
   });
 

@@ -96,6 +96,7 @@ apiClient.interceptors.response.use(
       "/auth/login",
       "/auth/refresh",
       "/auth/register",
+      "/auth/social-login",
       "/auth/verify-email",
       "/auth/forgot-password",
       "/auth/reset-password",
