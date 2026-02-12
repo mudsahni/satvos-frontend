@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import Script from "next/script";
+import { useTheme } from "next-themes";
 import { Separator } from "@/components/ui/separator";
 
 declare global {
@@ -46,10 +47,19 @@ export function GoogleSignInButton({
   text = "signin_with",
 }: GoogleSignInButtonProps) {
   const buttonRef = useRef<HTMLDivElement>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [ready, setReady] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  // Handle script already loaded from a previous page visit (client-side navigation)
+  useEffect(() => {
+    if (window.google?.accounts) {
+      setReady(true);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!scriptLoaded || !buttonRef.current || !GOOGLE_CLIENT_ID) return;
+    if (!ready || !buttonRef.current || !GOOGLE_CLIENT_ID || !resolvedTheme)
+      return;
 
     window.google?.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
@@ -59,14 +69,14 @@ export function GoogleSignInButton({
     });
 
     window.google?.accounts.id.renderButton(buttonRef.current, {
-      theme: "outline",
+      theme: resolvedTheme === "dark" ? "filled_black" : "outline",
       size: "large",
       width: buttonRef.current.offsetWidth || 400,
       text,
       shape: "rectangular",
       logo_alignment: "left",
     });
-  }, [scriptLoaded, onCredentialResponse, text]);
+  }, [ready, onCredentialResponse, text, resolvedTheme]);
 
   if (!GOOGLE_CLIENT_ID) return null;
 
@@ -81,7 +91,7 @@ export function GoogleSignInButton({
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
-        onLoad={() => setScriptLoaded(true)}
+        onLoad={() => setReady(true)}
       />
       <div
         ref={buttonRef}
