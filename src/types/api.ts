@@ -46,17 +46,18 @@ export interface ListParams {
 
 // Helper to transform backend pagination to frontend format
 export function transformPagination<T>(
-  data: T[],
+  data: T[] | null | undefined,
   meta?: PaginationMeta
 ): PaginatedResponse<T> {
-  const total = meta?.total ?? data.length;
+  const items = data ?? [];
+  const total = meta?.total ?? items.length;
   const offset = meta?.offset ?? 0;
   const limit = meta?.limit ?? 20;
   const page = Math.floor(offset / limit) + 1;
   const total_pages = Math.ceil(total / limit);
 
   return {
-    items: data,
+    items,
     total,
     page,
     page_size: limit,
