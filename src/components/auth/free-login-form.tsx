@@ -21,11 +21,12 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { freeLoginSchema, type FreeLoginFormData, getSafeRedirectUrl } from "@/lib/utils/validation";
-import { login } from "@/lib/api/auth";
+import { login, socialLogin } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
-import { getErrorMessage, renewAuthCookie } from "@/lib/api/client";
+import { getErrorMessage, isApiError, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
+import { GoogleSignInButton } from "./google-sign-in-button";
 
 export function FreeLoginForm() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export function FreeLoginForm() {
   const sessionExpired = searchParams.get("session_expired") === "true";
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSocialLoading, setSocialLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const loginToStore = useAuthStore((state) => state.login);
 
@@ -100,9 +102,59 @@ export function FreeLoginForm() {
       router.push(returnUrl);
       router.refresh();
     } catch (err) {
-      setError(getErrorMessage(err));
+      if (isApiError(err, "PASSWORD_LOGIN_NOT_ALLOWED")) {
+        setError(
+          "This account uses Google sign-in. Please use the Google button below to log in."
+        );
+      } else {
+        setError(getErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async (idToken: string) => {
+    setSocialLoading(true);
+    setError(null);
+
+    try {
+      const response = await socialLogin({ provider: "google", id_token: idToken });
+
+      queryClient.clear();
+
+      loginToStore(
+        response.tokens,
+        response.user,
+        "satvos",
+        rememberMe
+      );
+
+      // Fetch full user profile
+      if (response.user?.id) {
+        try {
+          const fullUser = await getUser(response.user.id);
+          useAuthStore.getState().setUser(fullUser);
+        } catch {
+          // Non-critical
+        }
+      }
+
+      renewAuthCookie();
+      router.push(returnUrl);
+      router.refresh();
+    } catch (err) {
+      if (isApiError(err, "INVALID_SOCIAL_TOKEN")) {
+        setError("Google sign-in failed. Please try again.");
+      } else if (isApiError(err, "NOT_FOUND")) {
+        setError("Social login is not available.");
+      } else if (isApiError(err, "USER_INACTIVE")) {
+        setError("Your account has been deactivated. Contact support.");
+      } else {
+        setError(getErrorMessage(err));
+      }
+    } finally {
+      setSocialLoading(false);
     }
   };
 
@@ -136,7 +188,7 @@ export function FreeLoginForm() {
               type="email"
               placeholder="name@example.com"
               {...register("email")}
-              disabled={isLoading}
+              disabled={isLoading || isSocialLoading}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -149,7 +201,7 @@ export function FreeLoginForm() {
               id="password"
               type="password"
               {...register("password")}
-              disabled={isLoading}
+              disabled={isLoading || isSocialLoading}
             />
             {errors.password && (
               <p className="text-sm text-destructive">
@@ -163,7 +215,7 @@ export function FreeLoginForm() {
               id="remember-me"
               checked={rememberMe}
               onCheckedChange={(checked) => setRememberMe(checked === true)}
-              disabled={isLoading}
+              disabled={isLoading || isSocialLoading}
             />
             <div className="grid gap-0.5 leading-none">
               <Label htmlFor="remember-me" className="text-sm font-medium cursor-pointer">
@@ -175,10 +227,15 @@ export function FreeLoginForm() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || isSocialLoading}>
             {isLoading && <Loader2 className="animate-spin" />}
             Sign in
           </Button>
+
+          <GoogleSignInButton
+            onCredentialResponse={handleGoogleLogin}
+            disabled={isLoading || isSocialLoading}
+          />
 
           <div className="text-center">
             <Link

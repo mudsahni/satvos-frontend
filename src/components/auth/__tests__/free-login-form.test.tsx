@@ -1,6 +1,7 @@
-import { screen } from "@testing-library/react";
-import { renderWithProviders } from "@/test/test-utils";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders, userEvent } from "@/test/test-utils";
 import { FreeLoginForm } from "../free-login-form";
+import { AxiosError } from "axios";
 
 const mockSearchParams = vi.fn(() => new URLSearchParams());
 
@@ -14,9 +15,51 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({}),
 }));
 
+const mockLogin = vi.fn();
+vi.mock("@/lib/api/auth", () => ({
+  login: (...args: unknown[]) => mockLogin(...args),
+  socialLogin: vi.fn(),
+}));
+
+vi.mock("@/lib/api/users", () => ({
+  getUser: vi.fn(),
+}));
+
+vi.mock("@/lib/api/client", () => ({
+  getErrorMessage: vi.fn((err: unknown) =>
+    err instanceof Error ? err.message : "Something went wrong"
+  ),
+  isApiError: vi.fn((error: unknown, code: string) => {
+    if (error && typeof error === "object" && "response" in error) {
+      const axiosErr = error as AxiosError<{ error?: { code: string } }>;
+      return axiosErr.response?.data?.error?.code === code;
+    }
+    return false;
+  }),
+  renewAuthCookie: vi.fn(),
+  default: {
+    post: vi.fn(),
+    get: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn() },
+      response: { use: vi.fn() },
+    },
+  },
+}));
+
+vi.mock("../google-sign-in-button", () => ({
+  GoogleSignInButton: () => (
+    <>
+      <span>Or</span>
+      <div data-testid="google-signin-button" />
+    </>
+  ),
+}));
+
 describe("FreeLoginForm", () => {
   afterEach(() => {
     mockSearchParams.mockReturnValue(new URLSearchParams());
+    vi.clearAllMocks();
   });
 
   it("renders the free login form with email and password only", () => {
@@ -84,5 +127,46 @@ describe("FreeLoginForm", () => {
     const link = screen.getByRole("link", { name: /forgot your password/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/forgot-password");
+  });
+
+  it("renders the Google sign-in button", () => {
+    renderWithProviders(<FreeLoginForm />);
+
+    expect(screen.getByTestId("google-signin-button")).toBeInTheDocument();
+  });
+
+  it("renders the 'Or' divider", () => {
+    renderWithProviders(<FreeLoginForm />);
+
+    expect(screen.getByText("Or")).toBeInTheDocument();
+  });
+
+  it("shows PASSWORD_LOGIN_NOT_ALLOWED error with Google sign-in prompt", async () => {
+    const passwordNotAllowedError = {
+      response: {
+        status: 400,
+        data: {
+          error: {
+            code: "PASSWORD_LOGIN_NOT_ALLOWED",
+            message: "Password login not allowed",
+          },
+        },
+      },
+      isAxiosError: true,
+    };
+    mockLogin.mockRejectedValueOnce(passwordNotAllowedError);
+
+    const user = userEvent.setup();
+    renderWithProviders(<FreeLoginForm />);
+
+    await user.type(screen.getByLabelText("Email"), "google-user@test.com");
+    await user.type(screen.getByLabelText("Password"), "somepassword");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/this account uses google sign-in/i)
+      ).toBeInTheDocument();
+    });
   });
 });

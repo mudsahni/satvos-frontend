@@ -79,6 +79,18 @@ export interface ResetPasswordRequest {
   new_password: string;
 }
 
+export interface SocialLoginRequest {
+  provider: "google";
+  id_token: string;
+}
+
+export interface SocialLoginResponse {
+  user: User;
+  collection: Collection | null;
+  tokens: TokenPair;
+  is_new_user: boolean;
+}
+
 export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;

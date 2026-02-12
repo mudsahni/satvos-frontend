@@ -14,6 +14,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/api/auth", () => ({
   register: vi.fn(),
+  socialLogin: vi.fn(),
 }));
 
 vi.mock("@/lib/api/users", () => ({
@@ -24,6 +25,7 @@ vi.mock("@/lib/api/client", () => ({
   getErrorMessage: vi.fn((err: unknown) =>
     err instanceof Error ? err.message : "Something went wrong"
   ),
+  isApiError: vi.fn(() => false),
   renewAuthCookie: vi.fn(),
   default: {
     post: vi.fn(),
@@ -33,6 +35,15 @@ vi.mock("@/lib/api/client", () => ({
       response: { use: vi.fn() },
     },
   },
+}));
+
+vi.mock("../google-sign-in-button", () => ({
+  GoogleSignInButton: () => (
+    <>
+      <span>Or</span>
+      <div data-testid="google-signin-button" />
+    </>
+  ),
 }));
 
 describe("RegisterForm", () => {
@@ -84,5 +95,17 @@ describe("RegisterForm", () => {
     expect(
       screen.getByText(/start processing invoices for free/i)
     ).toBeInTheDocument();
+  });
+
+  it("renders the Google sign-in button", () => {
+    renderWithProviders(<RegisterForm />);
+
+    expect(screen.getByTestId("google-signin-button")).toBeInTheDocument();
+  });
+
+  it("renders the 'Or' divider", () => {
+    renderWithProviders(<RegisterForm />);
+
+    expect(screen.getByText("Or")).toBeInTheDocument();
   });
 });
