@@ -36,6 +36,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Pagination } from "@/components/ui/pagination";
 import { QuotaIndicator } from "@/components/layout/quota-indicator";
 import { UpgradeDialog } from "@/components/ui/upgrade-dialog";
 import { useCollections, useCreateCollection } from "@/lib/hooks/use-collections";
@@ -103,6 +104,20 @@ function UploadPageContent() {
   const [files, setFiles] = useState<FileToUpload[]>([]);
   const [skippedCount, setSkippedCount] = useState(0);
 
+  // File list pagination
+  const [filePage, setFilePage] = useState(1);
+  const [filePageSize, setFilePageSize] = useState(10);
+  const totalFilePages = Math.ceil(files.length / filePageSize);
+  const paginatedFiles = useMemo(() => {
+    const start = (filePage - 1) * filePageSize;
+    return files.slice(start, start + filePageSize);
+  }, [files, filePage, filePageSize]);
+
+  const handleFilePageSizeChange = useCallback((newSize: number) => {
+    setFilePageSize(newSize);
+    setFilePage(1);
+  }, []);
+
   // Options
   const [parseMode, setParseMode] = useState<ParseMode>("single");
 
@@ -166,8 +181,14 @@ function UploadPageContent() {
   }, []);
 
   const removeFile = useCallback((id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-  }, []);
+    setFiles((prev) => {
+      const next = prev.filter((f) => f.id !== id);
+      // Clamp page if removing a file leaves the current page empty
+      const maxPage = Math.max(1, Math.ceil(next.length / filePageSize));
+      setFilePage((p) => Math.min(p, maxPage));
+      return next;
+    });
+  }, [filePageSize]);
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
@@ -248,6 +269,7 @@ function UploadPageContent() {
   const handleClear = () => {
     setFiles([]);
     setSkippedCount(0);
+    setFilePage(1);
     clearUploads();
   };
 
@@ -469,7 +491,7 @@ function UploadPageContent() {
 
               {/* File entries */}
               <div className="border rounded-xl divide-y">
-                {files.map((f) => (
+                {paginatedFiles.map((f) => (
                   <div key={f.id} className="p-3 space-y-2">
                     <div className="flex items-center gap-3">
                       <Checkbox
@@ -513,6 +535,16 @@ function UploadPageContent() {
                   </div>
                 ))}
               </div>
+
+              {/* File list pagination */}
+              <Pagination
+                page={filePage}
+                totalPages={totalFilePages}
+                total={files.length}
+                pageSize={filePageSize}
+                onPageChange={setFilePage}
+                onPageSizeChange={handleFilePageSizeChange}
+              />
             </div>
           )}
 

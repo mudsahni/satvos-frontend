@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { use, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { FolderOpen, Upload, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionHeader } from "@/components/collections/collection-header";
 import {
@@ -43,6 +44,15 @@ export default function CollectionDetailPage({
   type SortOrder = "asc" | "desc";
   const [sortField, setSortField] = useState<SortField | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  }, []);
 
   const { data: collection, isPending: collectionLoading } = useCollection(id);
   const { data: documentsData, isLoading: documentsLoading } = useDocuments({
@@ -115,6 +125,7 @@ export default function CollectionDetailPage({
   const handleSort = (field: SortField, order: SortOrder) => {
     setSortField(field);
     setSortOrder(order);
+    setPage(1);
   };
 
   // Filter documents based on filters
@@ -166,6 +177,14 @@ export default function CollectionDetailPage({
     });
   }, [filteredDocuments, sortField, sortOrder]);
 
+  // Paginate sorted documents
+  const totalPages = Math.ceil(sortedDocuments.length / pageSize);
+  const paginatedDocuments = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedDocuments.slice(start, start + pageSize);
+  }, [sortedDocuments, page, pageSize]);
+
+
   if (collectionLoading) {
     return (
       <div className="space-y-6">
@@ -213,11 +232,11 @@ export default function CollectionDetailPage({
       {/* Filters */}
       <CollectionFilters
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
         validationStatus={validationStatus}
-        onValidationStatusChange={setValidationStatus}
+        onValidationStatusChange={(v) => { setValidationStatus(v); setPage(1); }}
         reviewStatus={reviewStatus}
-        onReviewStatusChange={setReviewStatus}
+        onReviewStatusChange={(v) => { setReviewStatus(v); setPage(1); }}
         totalFiltered={filteredDocuments.length}
         total={documents.length}
       />
@@ -263,14 +282,24 @@ export default function CollectionDetailPage({
               )}
             </div>
           ) : (
-            <DocumentsTable
-              documents={sortedDocuments}
-              selectedIds={canManage ? selectedIds : []}
-              onSelectionChange={canManage ? setSelectedIds : undefined}
-              onSort={handleSort}
-              sortField={sortField}
-              sortOrder={sortOrder}
-            />
+            <>
+              <DocumentsTable
+                documents={paginatedDocuments}
+                selectedIds={canManage ? selectedIds : []}
+                onSelectionChange={canManage ? setSelectedIds : undefined}
+                onSort={handleSort}
+                sortField={sortField}
+                sortOrder={sortOrder}
+              />
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={sortedDocuments.length}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </>
           )}
         </CardContent>
       </Card>
