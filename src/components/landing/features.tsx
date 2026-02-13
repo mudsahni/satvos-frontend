@@ -5,7 +5,7 @@ import {
   Sparkles,
   ShieldCheck,
   ArrowLeftRight,
-  Layers,
+  Mail,
   Users,
   History,
 } from "lucide-react";
@@ -36,12 +36,12 @@ const features = [
     bg: "bg-sky-500/10 group-hover:bg-sky-500/15",
   },
   {
-    icon: Layers,
-    title: "Bulk Operations",
+    icon: Mail,
+    title: "Email & WhatsApp Intake",
     description:
-      "Process hundreds of invoices at once. Bulk upload, approve, reject, or export entire collections with a few clicks instead of one-by-one.",
-    color: "text-amber-500",
-    bg: "bg-amber-500/10 group-hover:bg-amber-500/15",
+      "Forward invoices by email, send photos via WhatsApp, or upload through the dashboard. Every channel feeds the same automated pipeline — no login required to submit.",
+    color: "text-sky-500",
+    bg: "bg-sky-500/10 group-hover:bg-sky-500/15",
   },
   {
     icon: Users,
@@ -55,7 +55,7 @@ const features = [
     icon: History,
     title: "Complete Audit Trail",
     description:
-      "Every action is logged. Parse results, edits, reviews, and status changes are timestamped with the user who made them. Audit-ready from day one.",
+      "Every action is logged — including the source channel (email, WhatsApp, or upload). Parse results, edits, reviews, and status changes are timestamped. Audit-ready from day one.",
     color: "text-teal-500",
     bg: "bg-teal-500/10 group-hover:bg-teal-500/15",
   },

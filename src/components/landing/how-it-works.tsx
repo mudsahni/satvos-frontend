@@ -1,15 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Upload, Sparkles, FileCheck } from "lucide-react";
+import { Mail, Sparkles, FileCheck } from "lucide-react";
 
 const steps = [
   {
     number: "01",
-    icon: Upload,
-    title: "Upload Your Invoices",
+    icon: Mail,
+    title: "Send Your Invoices",
     description:
-      "Drag and drop PDFs, scanned images, or photos. Upload individually or in bulk — hundreds at a time. We accept any format your vendors send.",
+      "Forward invoices from your email, snap a photo on WhatsApp, or drag-and-drop in the dashboard. Every document gets queued for processing automatically.",
     color: "text-sky-500",
     bg: "bg-sky-500/10 border-sky-500/20",
     badge: "bg-sky-500",
@@ -79,14 +79,21 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="relative grid md:grid-cols-3 gap-8"
         >
-          {/* Connecting line (desktop) */}
-          <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-sky-500/30 via-violet-500/30 to-emerald-500/30" />
+          {/* Connecting lines (desktop) — two segments stopping before each icon */}
+          <div
+            className="hidden md:block absolute top-7 h-px z-0 bg-gradient-to-r from-sky-500/30 to-violet-500/30"
+            style={{ left: "calc(16.67% + 36px)", right: "calc(50% + 36px)" }}
+          />
+          <div
+            className="hidden md:block absolute top-7 h-px z-0 bg-gradient-to-r from-violet-500/30 to-emerald-500/30"
+            style={{ left: "calc(50% + 36px)", right: "calc(16.67% + 36px)" }}
+          />
 
           {steps.map((step) => (
             <motion.div
               key={step.number}
               variants={cardVariants}
-              className="relative text-center"
+              className="relative z-10 text-center"
             >
               {/* Number circle */}
               <div className="relative inline-flex mb-6">

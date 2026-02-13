@@ -31,18 +31,18 @@ export function CtaSection() {
           className="text-center"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Ready to automate your invoice processing?
+            Your invoices are already in your inbox. Start forwarding them to Satvos.
           </h2>
           <p className="text-lg text-white/60 max-w-xl mx-auto mb-8">
-            Join 500+ accounting firms already saving hours every week.
-            Start your free trial today — no credit card required.
+            Set up in 2 minutes. Forward your first invoice by email, WhatsApp it, or
+            upload it. Extraction starts immediately — no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href={loggedIn ? "/dashboard" : "/register"}
               className="group inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition-colors duration-150 hover:bg-white/90"
             >
-              {loggedIn ? "Go to Dashboard" : "Start Uploading"}
+              {loggedIn ? "Go to Dashboard" : "Start for Free"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <a

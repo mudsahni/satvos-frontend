@@ -12,6 +12,16 @@ const faqs = [
       "Satvos accepts PDF files, scanned images (JPEG, PNG), and photographs of invoices. Our AI model handles various layouts including printed invoices, handwritten bills, and computer-generated PDFs. If a human can read it, Satvos can extract it.",
   },
   {
+    question: "How does email submission work?",
+    answer:
+      "You get a dedicated email address (e.g., invoices@yourfirm.satvos.com). Forward any invoice as an attachment and it gets queued for AI extraction automatically. You\u2019ll receive a confirmation, and the processed document appears in your dashboard within minutes.",
+  },
+  {
+    question: "Can I submit invoices via WhatsApp?",
+    answer:
+      "Yes! Send invoice photos or PDF files to your assigned WhatsApp number. You\u2019ll get an instant confirmation when processing starts. This is perfect for field staff, vendors, or anyone who doesn\u2019t need dashboard access.",
+  },
+  {
     question: "How accurate is the AI extraction?",
     answer:
       "Our extraction accuracy typically exceeds 95% for structured fields like invoice numbers, dates, GSTINs, and totals. For complex line items and handwritten notes, accuracy is around 90%. Every extraction includes confidence scores so you can prioritize manual review where needed.",
