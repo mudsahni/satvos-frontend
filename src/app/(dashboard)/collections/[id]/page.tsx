@@ -178,7 +178,8 @@ export default function CollectionDetailPage({
   }, [filteredDocuments, sortField, sortOrder]);
 
   // Paginate sorted documents
-  const totalPages = Math.ceil(sortedDocuments.length / pageSize);
+  const totalItems = documentsData?.total ?? sortedDocuments.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
   const paginatedDocuments = useMemo(() => {
     const start = (page - 1) * pageSize;
     return sortedDocuments.slice(start, start + pageSize);
@@ -224,7 +225,7 @@ export default function CollectionDetailPage({
         collection={collection}
         isLoading={collectionLoading}
         canUpload={canManage}
-        documentCount={documents.length}
+        documentCount={documentsData?.total ?? documents.length}
         onExportCsv={() => exportCsv.mutate({ id, name: collection?.name })}
         isExportingCsv={exportCsv.isPending}
       />
@@ -238,7 +239,7 @@ export default function CollectionDetailPage({
         reviewStatus={reviewStatus}
         onReviewStatusChange={(v) => { setReviewStatus(v); setPage(1); }}
         totalFiltered={filteredDocuments.length}
-        total={documents.length}
+        total={documentsData?.total ?? documents.length}
       />
 
       {/* Bulk Actions — only for editors/owners */}
@@ -294,7 +295,7 @@ export default function CollectionDetailPage({
               <Pagination
                 page={page}
                 totalPages={totalPages}
-                total={sortedDocuments.length}
+                total={totalItems}
                 pageSize={pageSize}
                 onPageChange={setPage}
                 onPageSizeChange={handlePageSizeChange}

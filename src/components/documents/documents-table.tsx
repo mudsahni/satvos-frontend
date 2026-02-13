@@ -31,6 +31,7 @@ import { StatusBadge } from "@/components/documents/status-badge";
 import { Document } from "@/types/document";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { UserName } from "@/components/ui/user-name";
 
 type SortField = "name" | "created_at" | "validation_status" | "review_status";
 type SortOrder = "asc" | "desc";
@@ -221,8 +222,13 @@ export function DocumentsTable({
                 <TableCell>
                   <StatusBadge status={doc.review_status} type="review" />
                 </TableCell>
-                <TableCell className="hidden lg:table-cell text-muted-foreground whitespace-nowrap">
-                  {formatRelativeTime(doc.created_at)}
+                <TableCell className="hidden lg:table-cell text-muted-foreground">
+                  <div>
+                    <div>{formatRelativeTime(doc.created_at)}</div>
+                    <div className="text-xs">
+                      by <span className="text-foreground"><UserName id={doc.created_by} /></span>
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
