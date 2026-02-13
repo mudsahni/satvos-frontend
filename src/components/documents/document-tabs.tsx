@@ -106,12 +106,20 @@ export function DocumentTabs({
     setEditedValues(prev => ({ ...prev, [fieldPath]: value }));
   };
 
+  const [isSavingLocal, setIsSavingLocal] = useState(false);
+  const savingInProgress = isSaving || isSavingLocal;
+
   const handleSave = async () => {
     if (!structuredData || !onSaveEdits) return;
-    const updated = applyEditsToStructuredData(structuredData, editedValues);
-    await onSaveEdits(updated);
-    setIsEditing(false);
-    setEditedValues({});
+    setIsSavingLocal(true);
+    try {
+      const updated = applyEditsToStructuredData(structuredData, editedValues);
+      await onSaveEdits(updated);
+      setIsEditing(false);
+      setEditedValues({});
+    } finally {
+      setIsSavingLocal(false);
+    }
   };
 
   const handleCancel = () => {
@@ -294,7 +302,7 @@ export function DocumentTabs({
                           variant="ghost"
                           size="sm"
                           onClick={handleCancel}
-                          disabled={isSaving}
+                          disabled={savingInProgress}
                         >
                           <X className="mt-0.5 h-4 w-4" />
                           Cancel
@@ -302,14 +310,14 @@ export function DocumentTabs({
                         <Button
                           size="sm"
                           onClick={handleSave}
-                          disabled={isSaving || Object.keys(editedValues).length === 0}
+                          disabled={savingInProgress || Object.keys(editedValues).length === 0}
                         >
-                          {isSaving ? (
+                          {savingInProgress ? (
                             <Loader2 className="animate-spin" />
                           ) : (
                             <CheckCircle />
                           )}
-                          {isSaving ? "Saving..." : "Save Changes"}
+                          {savingInProgress ? "Saving..." : "Save Changes"}
                         </Button>
                       </>
                     ) : (
@@ -422,7 +430,7 @@ export function DocumentTabs({
         <TabsContent value="history" className="flex-1 m-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-4">
-              <HistoryTab document={document} />
+              <HistoryTab documentId={document.id} />
             </div>
           </ScrollArea>
         </TabsContent>

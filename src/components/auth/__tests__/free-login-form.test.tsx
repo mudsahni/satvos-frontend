@@ -3,15 +3,12 @@ import { renderWithProviders, userEvent } from "@/test/test-utils";
 import { FreeLoginForm } from "../free-login-form";
 import { AxiosError } from "axios";
 
-const mockSearchParams = vi.fn(() => new URLSearchParams());
-
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     refresh: vi.fn(),
     back: vi.fn(),
   }),
-  useSearchParams: () => mockSearchParams(),
   useParams: () => ({}),
 }));
 
@@ -58,7 +55,6 @@ vi.mock("../google-sign-in-button", () => ({
 
 describe("FreeLoginForm", () => {
   afterEach(() => {
-    mockSearchParams.mockReturnValue(new URLSearchParams());
     vi.clearAllMocks();
   });
 
@@ -99,24 +95,18 @@ describe("FreeLoginForm", () => {
     expect(screen.queryByText(/session has expired/i)).not.toBeInTheDocument();
   });
 
-  it("shows session expired banner when session_expired=true is in URL", () => {
-    mockSearchParams.mockReturnValue(
-      new URLSearchParams("session_expired=true&returnUrl=/documents/123")
+  it("shows session expired banner when sessionExpired is true", () => {
+    renderWithProviders(
+      <FreeLoginForm sessionExpired returnUrl="/documents/123" />
     );
-
-    renderWithProviders(<FreeLoginForm />);
 
     expect(
       screen.getByText(/your session has expired/i)
     ).toBeInTheDocument();
   });
 
-  it("does not show session expired banner when session_expired is not true", () => {
-    mockSearchParams.mockReturnValue(
-      new URLSearchParams("session_expired=false")
-    );
-
-    renderWithProviders(<FreeLoginForm />);
+  it("does not show session expired banner when sessionExpired is false", () => {
+    renderWithProviders(<FreeLoginForm sessionExpired={false} />);
 
     expect(screen.queryByText(/session has expired/i)).not.toBeInTheDocument();
   });

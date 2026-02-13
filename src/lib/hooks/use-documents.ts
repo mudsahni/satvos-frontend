@@ -78,6 +78,7 @@ export function useUpdateDocument() {
     invalidateKeys: [
       ["documents"],
       (vars) => ["document", vars.id],
+      (vars) => ["document-audit", vars.id],
     ],
     successMessage: {
       title: "Document updated",
@@ -128,6 +129,7 @@ export function useTriggerValidation() {
     invalidateKeys: [
       (id) => ["document", id],
       (id) => ["validation-results", id],
+      (id) => ["document-audit", id],
       ["stats"],
     ],
     successMessage: {

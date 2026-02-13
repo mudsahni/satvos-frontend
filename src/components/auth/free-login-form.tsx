@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -28,12 +28,18 @@ import { getErrorMessage, isApiError, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
-export function FreeLoginForm() {
+interface FreeLoginFormProps {
+  returnUrl?: string;
+  sessionExpired?: boolean;
+}
+
+export function FreeLoginForm({
+  returnUrl: returnUrlProp,
+  sessionExpired = false,
+}: FreeLoginFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const returnUrl = getSafeRedirectUrl(searchParams.get("returnUrl"));
-  const sessionExpired = searchParams.get("session_expired") === "true";
+  const returnUrl = getSafeRedirectUrl(returnUrlProp ?? null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setSocialLoading] = useState(false);
