@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,9 +26,11 @@ import { getErrorMessage, isApiError } from "@/lib/api/client";
 
 type ResetState = "form" | "success" | "invalid_token";
 
-export function ResetPasswordForm() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+interface ResetPasswordFormProps {
+  token?: string;
+}
+
+export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
   const [state, setState] = useState<ResetState>(token ? "form" : "invalid_token");
   const [isLoading, setIsLoading] = useState(false);

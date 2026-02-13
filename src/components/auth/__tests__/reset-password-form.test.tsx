@@ -2,15 +2,12 @@ import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders, userEvent } from "@/test/test-utils";
 import { ResetPasswordForm } from "../reset-password-form";
 
-const mockSearchParams = vi.fn(() => new URLSearchParams());
-
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     refresh: vi.fn(),
     back: vi.fn(),
   }),
-  useSearchParams: () => mockSearchParams(),
   useParams: () => ({}),
 }));
 
@@ -51,7 +48,6 @@ const mockResetPassword = vi.mocked(resetPassword);
 describe("ResetPasswordForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSearchParams.mockReturnValue(new URLSearchParams());
   });
 
   describe("without token", () => {
@@ -80,14 +76,8 @@ describe("ResetPasswordForm", () => {
   });
 
   describe("with valid token", () => {
-    beforeEach(() => {
-      mockSearchParams.mockReturnValue(
-        new URLSearchParams("token=valid-jwt-token")
-      );
-    });
-
     it("renders the password form", () => {
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       expect(screen.getByText("Set new password")).toBeInTheDocument();
       expect(screen.getByLabelText("New password")).toBeInTheDocument();
@@ -99,7 +89,7 @@ describe("ResetPasswordForm", () => {
 
     it("validates password minimum length", async () => {
       const user = userEvent.setup();
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       await user.type(screen.getByLabelText("New password"), "short");
       await user.type(screen.getByLabelText("Confirm password"), "short");
@@ -118,7 +108,7 @@ describe("ResetPasswordForm", () => {
 
     it("validates passwords match", async () => {
       const user = userEvent.setup();
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       await user.type(screen.getByLabelText("New password"), "password123");
       await user.type(
@@ -144,7 +134,7 @@ describe("ResetPasswordForm", () => {
       });
 
       const user = userEvent.setup();
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       await user.type(screen.getByLabelText("New password"), "newpassword123");
       await user.type(
@@ -167,7 +157,7 @@ describe("ResetPasswordForm", () => {
       mockResetPassword.mockResolvedValue({ message: "done" });
 
       const user = userEvent.setup();
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       await user.type(screen.getByLabelText("New password"), "securepass99");
       await user.type(
@@ -199,7 +189,7 @@ describe("ResetPasswordForm", () => {
       mockResetPassword.mockRejectedValue(apiError);
 
       const user = userEvent.setup();
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       await user.type(screen.getByLabelText("New password"), "newpassword123");
       await user.type(
@@ -223,7 +213,7 @@ describe("ResetPasswordForm", () => {
       mockResetPassword.mockRejectedValue(new Error("Network error"));
 
       const user = userEvent.setup();
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       await user.type(screen.getByLabelText("New password"), "newpassword123");
       await user.type(
@@ -243,7 +233,7 @@ describe("ResetPasswordForm", () => {
     });
 
     it("shows back to login link on the form", () => {
-      renderWithProviders(<ResetPasswordForm />);
+      renderWithProviders(<ResetPasswordForm token="valid-jwt-token" />);
 
       const link = screen.getByRole("link", { name: /back to login/i });
       expect(link).toHaveAttribute("href", "/login");

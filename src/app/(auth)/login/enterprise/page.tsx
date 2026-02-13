@@ -1,10 +1,15 @@
-import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/login-form";
 
-export default function EnterpriseLoginPage() {
+export default async function EnterpriseLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ returnUrl?: string; session_expired?: string }>;
+}) {
+  const params = await searchParams;
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginForm />
-    </Suspense>
+    <LoginForm
+      returnUrl={params.returnUrl}
+      sessionExpired={params.session_expired === "true"}
+    />
   );
 }
