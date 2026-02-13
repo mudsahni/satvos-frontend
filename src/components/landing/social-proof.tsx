@@ -34,6 +34,16 @@ const testimonials = [
     accent: "border-l-emerald-500",
     avatarBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   },
+  {
+    quote:
+      "Our field staff used to collect invoices in a box and bring them in weekly. Now they just WhatsApp them. Everything is in the system the same day.",
+    name: "Vikram Mehta",
+    title: "Operations Head",
+    company: "BuildRight Constructions",
+    rating: 5,
+    accent: "border-l-amber-500",
+    avatarBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  },
 ];
 
 const containerVariants = {
@@ -77,7 +87,7 @@ export function SocialProof() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="grid md:grid-cols-3 gap-6"
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           {testimonials.map((testimonial) => (
             <motion.div
