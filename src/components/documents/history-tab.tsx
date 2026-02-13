@@ -19,7 +19,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AuditEntry, AuditAction } from "@/types/audit";
+import { AuditEntry } from "@/types/audit";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import { UserName } from "@/components/ui/user-name";
