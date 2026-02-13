@@ -4,6 +4,11 @@ import { renderWithProviders } from "@/test/test-utils";
 import { CollectionHeader } from "../collection-header";
 import { Collection } from "@/types/collection";
 
+// Mock useUser to prevent network requests from UserName component
+vi.mock("@/lib/hooks/use-users", () => ({
+  useUser: () => ({ data: { full_name: "Test User" }, isLoading: false }),
+}));
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useRouter: () => ({

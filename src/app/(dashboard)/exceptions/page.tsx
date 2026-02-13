@@ -33,6 +33,7 @@ import { useStats } from "@/lib/hooks/use-stats";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { cn } from "@/lib/utils";
+import { UserName } from "@/components/ui/user-name";
 import { Pagination } from "@/components/ui/pagination";
 import { ErrorState } from "@/components/ui/error-state";
 import { AttentionFilter, matchesFilter } from "@/lib/utils/needs-attention";
@@ -329,6 +330,8 @@ function NeedsAttentionContent() {
                       <p className="font-medium truncate">{doc.name}</p>
                       <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                         <span>{formatRelativeTime(doc.created_at)}</span>
+                        <span>&middot;</span>
+                        <span className="text-foreground"><UserName id={doc.created_by} /></span>
                         {collectionName && (
                           <>
                             <span>&middot;</span>

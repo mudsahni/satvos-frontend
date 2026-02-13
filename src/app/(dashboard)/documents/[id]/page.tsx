@@ -58,6 +58,8 @@ import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils/format";
+import { UserName } from "@/components/ui/user-name";
 
 interface DocumentDetailPageProps {
   params: Promise<{ id: string }>;
@@ -203,37 +205,42 @@ export default function DocumentDetailPage({
       {/* Header */}
       <header className="border-b bg-background">
         {/* Breadcrumb — always visible */}
-        <div className="flex items-center gap-1.5 px-4 lg:px-6 pt-3 pb-1 text-xs text-muted-foreground">
-          <Link
-            href="/documents"
-            className="hover:text-primary transition-colors"
-          >
-            Documents
-          </Link>
-          {document.collection_id && (
-            <>
-              <ChevronRight className="h-3 w-3 shrink-0" />
-              {collection?.name ? (
-                <Link
-                  href={`/collections/${document.collection_id}`}
-                  className="hover:text-primary transition-colors truncate max-w-[200px]"
-                >
-                  {collection.name}
-                </Link>
-              ) : collectionPending && !collectionError ? (
-                <Skeleton className="h-3.5 w-24" />
-              ) : (
-                <Link
-                  href={`/collections/${document.collection_id}`}
-                  className="hover:text-primary transition-colors truncate max-w-[200px]"
-                >
-                  Collection
-                </Link>
-              )}
-            </>
-          )}
-          <ChevronRight className="h-3 w-3 shrink-0" />
-          <span className="text-foreground truncate">{document.name}</span>
+        <div className="flex items-center justify-between px-4 lg:px-6 pt-3 pb-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Link
+              href="/documents"
+              className="hover:text-primary transition-colors shrink-0"
+            >
+              Documents
+            </Link>
+            {document.collection_id && (
+              <>
+                <ChevronRight className="h-3 w-3 shrink-0" />
+                {collection?.name ? (
+                  <Link
+                    href={`/collections/${document.collection_id}`}
+                    className="hover:text-primary transition-colors truncate max-w-[200px]"
+                  >
+                    {collection.name}
+                  </Link>
+                ) : collectionPending && !collectionError ? (
+                  <Skeleton className="h-3.5 w-24" />
+                ) : (
+                  <Link
+                    href={`/collections/${document.collection_id}`}
+                    className="hover:text-primary transition-colors truncate max-w-[200px]"
+                  >
+                    Collection
+                  </Link>
+                )}
+              </>
+            )}
+            <ChevronRight className="h-3 w-3 shrink-0" />
+            <span className="text-foreground truncate">{document.name}</span>
+          </div>
+          <span className="hidden sm:block shrink-0 ml-4">
+            Created {formatRelativeTime(document.created_at)} by <span className="text-foreground"><UserName id={document.created_by} /></span>
+          </span>
         </div>
 
         {/* Title row */}

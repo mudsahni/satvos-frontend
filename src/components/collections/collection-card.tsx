@@ -21,6 +21,7 @@ import {
 import { Collection, getCollectionDocumentCount } from "@/types/collection";
 import { formatDate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { UserName } from "@/components/ui/user-name";
 
 interface CollectionCardProps {
   collection: Collection;
@@ -108,26 +109,31 @@ export function CollectionCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="flex items-center justify-between gap-2 mt-3">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
-              <span>{getCollectionDocumentCount(collection)} docs</span>
+        <div className="mt-3 space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                <span>{getCollectionDocumentCount(collection)} docs</span>
+              </div>
+              <span className="text-border">|</span>
+              <span>{formatDate(collection.created_at)}</span>
             </div>
-            <span className="text-border">|</span>
-            <span>{formatDate(collection.created_at)}</span>
+            <Badge
+              variant="outline"
+              className={cn(
+                "capitalize text-xs",
+                collection.user_permission === "owner" && "border-transparent bg-primary/10 text-primary",
+                collection.user_permission === "editor" && "border-transparent bg-warning-bg text-warning",
+                collection.user_permission === "viewer" && "border-transparent bg-muted"
+              )}
+            >
+              {collection.user_permission || "viewer"}
+            </Badge>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              "capitalize text-xs",
-              collection.user_permission === "owner" && "border-transparent bg-primary/10 text-primary",
-              collection.user_permission === "editor" && "border-transparent bg-warning-bg text-warning",
-              collection.user_permission === "viewer" && "border-transparent bg-muted"
-            )}
-          >
-            {collection.user_permission || "viewer"}
-          </Badge>
+          <p className="text-xs text-muted-foreground">
+            Created by <span className="text-foreground"><UserName id={collection.created_by} /></span>
+          </p>
         </div>
       </CardContent>
     </Card>

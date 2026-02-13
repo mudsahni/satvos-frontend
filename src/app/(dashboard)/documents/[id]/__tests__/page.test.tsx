@@ -34,6 +34,10 @@ vi.mock("@/lib/hooks/use-mobile", () => ({
   useIsMobile: vi.fn(() => true),
 }));
 
+vi.mock("@/lib/hooks/use-users", () => ({
+  useUser: () => ({ data: { full_name: "Test User" }, isLoading: false }),
+}));
+
 vi.mock("@/components/documents/status-badge", () => ({
   StatusBadge: ({ type, status }: { type: string; status: string }) => (
     <span data-testid={`status-badge-${type}`}>{status}</span>

@@ -50,9 +50,11 @@ import { useCollections } from "@/lib/hooks/use-collections";
 import { getDocuments } from "@/lib/api/documents";
 import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { formatRelativeTime } from "@/lib/utils/format";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { ErrorState } from "@/components/ui/error-state";
+import { UserName } from "@/components/ui/user-name";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -243,6 +245,16 @@ export default function DocumentsPage() {
             </div>
           </div>
         </CardHeader>
+        <div className="flex items-center gap-2 px-6 pb-2 text-sm text-muted-foreground">
+          <span>
+            Showing {documents.length} of {total} document{total !== 1 ? "s" : ""}
+          </span>
+          {hasFilters && (
+            <Badge variant="secondary" className="text-xs">
+              Filtered
+            </Badge>
+          )}
+        </div>
         <CardContent>
           {isLoading ? (
             <div className="space-y-2">
@@ -277,12 +289,12 @@ export default function DocumentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Collection</TableHead>
-                  <TableHead>Parsing</TableHead>
-                  <TableHead>Validation</TableHead>
-                  <TableHead>Review</TableHead>
-                  <TableHead className="hidden lg:table-cell">Created</TableHead>
+                  <TableHead className="text-sm normal-case tracking-normal">Name</TableHead>
+                  <TableHead className="hidden md:table-cell text-sm normal-case tracking-normal">Collection</TableHead>
+                  <TableHead className="text-sm normal-case tracking-normal">Parsing</TableHead>
+                  <TableHead className="text-sm normal-case tracking-normal">Validation</TableHead>
+                  <TableHead className="text-sm normal-case tracking-normal">Review</TableHead>
+                  <TableHead className="hidden lg:table-cell text-sm normal-case tracking-normal">Created</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -329,7 +341,12 @@ export default function DocumentsPage() {
                         <StatusBadge status={doc.review_status} type="review" />
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
-                        {formatRelativeTime(doc.created_at)}
+                        <div>
+                          <div>{formatRelativeTime(doc.created_at)}</div>
+                          <div className="text-xs">
+                            by <span className="text-foreground"><UserName id={doc.created_by} /></span>
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Collection, getCollectionDocumentCount } from "@/types/collection";
 import { formatDate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { UserName } from "@/components/ui/user-name";
 
 interface CollectionHeaderProps {
   collection: Collection | undefined;
@@ -91,8 +92,8 @@ export function CollectionHeader({
               </span>
               {formatDate(collection.created_at) !== "-" && (
                 <>
-                  <span className="text-border">·</span>
-                  <span>Created {formatDate(collection.created_at)}</span>
+                  <span>|</span>
+                  <span>Created {formatDate(collection.created_at)} by <span className="text-foreground"><UserName id={collection.created_by} /></span></span>
                 </>
               )}
             </div>
