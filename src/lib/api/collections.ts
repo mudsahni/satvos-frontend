@@ -74,44 +74,67 @@ export async function deleteCollection(id: string): Promise<void> {
 }
 
 // Permissions
+// Backend returns `permission` field; frontend uses `permission_level`.
+// Backend doesn't embed a `user` object; frontend resolves via UserName.
+interface RawCollectionPermission {
+  id: string;
+  collection_id: string;
+  tenant_id?: string;
+  user_id: string;
+  permission: PermissionLevel;
+  granted_by?: string;
+  created_at: string;
+}
+
+function mapPermissionEntry(raw: RawCollectionPermission): CollectionPermission {
+  return {
+    id: raw.id,
+    collection_id: raw.collection_id,
+    user_id: raw.user_id,
+    permission_level: raw.permission,
+    created_at: raw.created_at,
+    updated_at: raw.created_at,
+  };
+}
+
 export async function getCollectionPermissions(
   collectionId: string
 ): Promise<CollectionPermission[]> {
-  const response = await apiClient.get<ApiResponse<CollectionPermission[]>>(
+  const response = await apiClient.get<ApiResponse<RawCollectionPermission[]>>(
     `/collections/${collectionId}/permissions`
   );
-  return response.data.data;
+  return response.data.data.map(mapPermissionEntry);
 }
 
 export async function addCollectionPermission(
   collectionId: string,
   data: AddPermissionRequest
 ): Promise<CollectionPermission> {
-  const response = await apiClient.post<ApiResponse<CollectionPermission>>(
+  const response = await apiClient.post<ApiResponse<RawCollectionPermission>>(
     `/collections/${collectionId}/permissions`,
-    data
+    { user_id: data.user_id, permission: data.permission_level }
   );
-  return response.data.data;
+  return mapPermissionEntry(response.data.data);
 }
 
 export async function updateCollectionPermission(
   collectionId: string,
-  permissionId: string,
+  userId: string,
   data: UpdatePermissionRequest
 ): Promise<CollectionPermission> {
-  const response = await apiClient.put<ApiResponse<CollectionPermission>>(
-    `/collections/${collectionId}/permissions/${permissionId}`,
-    data
+  const response = await apiClient.put<ApiResponse<RawCollectionPermission>>(
+    `/collections/${collectionId}/permissions/${userId}`,
+    { permission: data.permission_level }
   );
-  return response.data.data;
+  return mapPermissionEntry(response.data.data);
 }
 
 export async function deleteCollectionPermission(
   collectionId: string,
-  permissionId: string
+  userId: string
 ): Promise<void> {
   await apiClient.delete(
-    `/collections/${collectionId}/permissions/${permissionId}`
+    `/collections/${collectionId}/permissions/${userId}`
   );
 }
 

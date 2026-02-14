@@ -54,6 +54,7 @@ import { StructuredInvoiceData } from "@/types/document";
 import { useFileUrl } from "@/lib/hooks/use-files";
 import { useCollection } from "@/lib/hooks/use-collections";
 import { StatusBadge } from "@/components/documents/status-badge";
+import { AssignReviewer } from "@/components/documents/assign-reviewer";
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
@@ -265,6 +266,19 @@ export default function DocumentDetailPage({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Assignment */}
+            {document.parsing_status === "completed" && canEditData && (
+              <>
+                <AssignReviewer
+                  documentId={document.id}
+                  assignedTo={document.assigned_to}
+                  disabled={!canEditData}
+                />
+                {document.assigned_to && (
+                  <div className="h-5 w-px bg-border" />
+                )}
+              </>
+            )}
             {/* Review Actions */}
             {document.parsing_status === "completed" && (
               <>

@@ -173,6 +173,9 @@ export function DocumentsTable({
             <TableHead>
               <SortableHeader field="review_status">Review</SortableHeader>
             </TableHead>
+            <TableHead className="hidden lg:table-cell text-sm normal-case tracking-normal">
+              Assigned To
+            </TableHead>
             <TableHead className="hidden lg:table-cell">
               <SortableHeader field="created_at">Created</SortableHeader>
             </TableHead>
@@ -221,6 +224,9 @@ export function DocumentsTable({
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={doc.review_status} type="review" />
+                </TableCell>
+                <TableCell className="hidden lg:table-cell text-muted-foreground">
+                  {doc.assigned_to ? <UserName id={doc.assigned_to} /> : "-"}
                 </TableCell>
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
                   <div>

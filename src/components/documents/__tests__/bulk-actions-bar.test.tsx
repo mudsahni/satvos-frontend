@@ -34,6 +34,33 @@ describe("BulkActionsBar", () => {
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
+  it("does not render assign button when onAssign is not provided", () => {
+    renderWithProviders(<BulkActionsBar {...defaultProps} />);
+    expect(screen.queryByRole("button", { name: /^assign$/i })).not.toBeInTheDocument();
+  });
+
+  it("renders assign button when onAssign is provided", () => {
+    renderWithProviders(<BulkActionsBar {...defaultProps} onAssign={vi.fn()} />);
+    expect(screen.getByRole("button", { name: /^assign$/i })).toBeInTheDocument();
+  });
+
+  it("calls onAssign when assign button is clicked", async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    const onAssign = vi.fn();
+    renderWithProviders(<BulkActionsBar {...defaultProps} onAssign={onAssign} />);
+
+    await user.click(screen.getByRole("button", { name: /^assign$/i }));
+    expect(onAssign).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables assign button when isProcessing is true", () => {
+    renderWithProviders(
+      <BulkActionsBar {...defaultProps} onAssign={vi.fn()} isProcessing />
+    );
+    expect(screen.getByRole("button", { name: /^assign$/i })).toBeDisabled();
+  });
+
   it("calls onDeselect when deselect button is clicked", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();

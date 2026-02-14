@@ -11,6 +11,8 @@ import {
   getValidationResults,
   triggerValidation,
   reviewDocument,
+  assignDocument,
+  getReviewQueue,
   getDocumentTags,
   addDocumentTag,
   deleteDocumentTag,
@@ -20,6 +22,7 @@ import {
   CreateDocumentRequest,
   UpdateDocumentRequest,
   ReviewDocumentRequest,
+  AssignDocumentRequest,
   AddTagsRequest,
 } from "@/types/document";
 import { useMutationWithToast } from "./use-mutation-with-toast";
@@ -107,7 +110,7 @@ export function useTriggerParsing() {
       id: string;
       parseMode?: "single" | "dual";
     }) => triggerParsing(id, parseMode),
-    invalidateKeys: [(vars) => ["document", vars.id]],
+    invalidateKeys: [(vars) => ["document", vars.id], ["review-queue"]],
     successMessage: {
       title: "Parsing started",
       description: "Your document is being parsed.",
@@ -147,6 +150,7 @@ export function useReviewDocument() {
       ["documents"],
       (vars) => ["document", vars.id],
       ["stats"],
+      ["review-queue"],
     ],
     successMessage: (_, vars) => ({
       title:
@@ -155,6 +159,39 @@ export function useReviewDocument() {
           : "Document rejected",
       description: `The document has been ${vars.data.status}.`,
     }),
+  });
+}
+
+// Assignment hooks
+export function useAssignDocument() {
+  return useMutationWithToast({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: AssignDocumentRequest;
+    }) => assignDocument(id, data),
+    invalidateKeys: [
+      ["documents"],
+      (vars) => ["document", vars.id],
+      (vars) => ["document-audit", vars.id],
+      ["review-queue"],
+    ],
+    successMessage: (_, vars) => ({
+      title: vars.data.assignee_id ? "Reviewer assigned" : "Reviewer unassigned",
+      description: vars.data.assignee_id
+        ? "The document has been assigned for review."
+        : "The reviewer has been unassigned from this document.",
+    }),
+  });
+}
+
+export function useReviewQueue(params?: { offset?: number; limit?: number }) {
+  return useQuery({
+    queryKey: ["review-queue", params],
+    queryFn: () => getReviewQueue(params),
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -16,12 +16,15 @@ import {
 } from "@/components/collections/collection-filters";
 import { DocumentsTable } from "@/components/documents/documents-table";
 import { BulkActionsBar } from "@/components/documents/bulk-actions-bar";
+import { BulkAssignDialog } from "@/components/documents/bulk-assign-dialog";
 import { useCollection, useExportCollectionCsv } from "@/lib/hooks/use-collections";
 import {
   useDocuments,
   useReviewDocument,
   useDeleteDocument,
+  useAssignDocument,
 } from "@/lib/hooks/use-documents";
+import { toast } from "@/lib/hooks/use-toast";
 
 interface CollectionDetailPageProps {
   params: Promise<{ id: string }>;
@@ -62,8 +65,10 @@ export default function CollectionDetailPage({
 
   const reviewDocument = useReviewDocument();
   const deleteDocument = useDeleteDocument();
+  const assignDocument = useAssignDocument();
   const exportCsv = useExportCollectionCsv();
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
 
   const documents = useMemo(() => documentsData?.items || [], [documentsData]);
 
@@ -120,6 +125,34 @@ export default function CollectionDetailPage({
       setIsBulkProcessing(false);
     }
     return { succeeded, failed };
+  };
+
+  const handleBulkAssign = async (userId: string) => {
+    setIsBulkProcessing(true);
+    setShowAssignDialog(false);
+    try {
+      const results = await Promise.allSettled(
+        selectedIds.map((docId) =>
+          assignDocument.mutateAsync({
+            id: docId,
+            data: { assignee_id: userId },
+          })
+        )
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (succeeded > 0) setSelectedIds([]);
+      toast({
+        title: failed === 0 ? "Reviewer assigned" : "Some assignments failed",
+        description:
+          failed === 0
+            ? `All ${succeeded} document${succeeded !== 1 ? "s" : ""} assigned successfully.`
+            : `${succeeded} assigned, ${failed} failed.`,
+        variant: failed > 0 ? "destructive" : undefined,
+      });
+    } finally {
+      setIsBulkProcessing(false);
+    }
   };
 
   const handleSort = (field: SortField, order: SortOrder) => {
@@ -250,9 +283,19 @@ export default function CollectionDetailPage({
           onApprove={handleBulkApprove}
           onReject={handleBulkReject}
           onDelete={handleBulkDelete}
+          onAssign={() => setShowAssignDialog(true)}
           isProcessing={isBulkProcessing}
         />
       )}
+
+      {/* Bulk Assign Dialog */}
+      <BulkAssignDialog
+        open={showAssignDialog}
+        onOpenChange={setShowAssignDialog}
+        selectedCount={selectedIds.length}
+        onConfirm={handleBulkAssign}
+        isProcessing={isBulkProcessing}
+      />
 
       {/* Documents table */}
       <Card>

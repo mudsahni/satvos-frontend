@@ -32,6 +32,9 @@ export interface Document {
   reviewed_at?: string;
   reviewed_by?: string | null;
   reviewer_notes?: string;
+  assigned_to: string | null;
+  assigned_at: string | null;
+  assigned_by: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -262,12 +265,17 @@ export interface ReviewDocumentRequest {
   notes?: string;
 }
 
+export interface AssignDocumentRequest {
+  assignee_id: string | null;
+}
+
 export interface AddTagsRequest {
   tags: Record<string, string>;
 }
 
 export interface DocumentListParams {
   collection_id?: string;
+  assigned_to?: string;
   parsing_status?: ParsingStatus;
   validation_status?: ValidationStatus;
   review_status?: ReviewStatus;

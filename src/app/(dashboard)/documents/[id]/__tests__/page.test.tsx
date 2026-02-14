@@ -52,6 +52,10 @@ vi.mock("@/components/documents/document-tabs", () => ({
   DocumentTabs: () => <div data-testid="document-tabs" />,
 }));
 
+vi.mock("@/components/documents/assign-reviewer", () => ({
+  AssignReviewer: () => <div data-testid="assign-reviewer" />,
+}));
+
 import { useDocument } from "@/lib/hooks/use-documents";
 import { useCollection } from "@/lib/hooks/use-collections";
 
@@ -69,6 +73,9 @@ function createMockDocument(overrides: Record<string, unknown> = {}) {
     review_status: "pending",
     reconciliation_status: "pending",
     parse_mode: "single",
+    assigned_to: null,
+    assigned_at: null,
+    assigned_by: null,
     created_by: "user-1",
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",

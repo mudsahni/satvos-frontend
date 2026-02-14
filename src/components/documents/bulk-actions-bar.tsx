@@ -7,6 +7,7 @@ import {
   Trash2,
   X,
   AlertTriangle,
+  UserPlus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type BulkAction = "approve" | "reject" | "delete";
+type BulkAction = "approve" | "reject" | "delete" | "assign";
 
 interface BulkActionResult {
   succeeded: number;
@@ -35,6 +36,7 @@ interface BulkActionsBarProps {
   onApprove: (ids: string[]) => Promise<BulkActionResult>;
   onReject: (ids: string[]) => Promise<BulkActionResult>;
   onDelete: (ids: string[]) => Promise<BulkActionResult>;
+  onAssign?: () => void;
   isProcessing?: boolean;
 }
 
@@ -45,7 +47,7 @@ interface ResultsBanner {
 }
 
 const confirmConfig: Record<
-  BulkAction,
+  "approve" | "reject" | "delete",
   {
     title: string;
     description: string;
@@ -82,6 +84,7 @@ const actionLabels: Record<BulkAction, string> = {
   approve: "approved",
   reject: "rejected",
   delete: "deleted",
+  assign: "assigned",
 };
 
 function getResultMessage(results: ResultsBanner): string {
@@ -109,9 +112,12 @@ export function BulkActionsBar({
   onApprove,
   onReject,
   onDelete,
+  onAssign,
   isProcessing = false,
 }: BulkActionsBarProps) {
-  const [confirmAction, setConfirmAction] = useState<BulkAction | null>(null);
+  const [confirmAction, setConfirmAction] = useState<
+    "approve" | "reject" | "delete" | null
+  >(null);
   const [results, setResults] = useState<ResultsBanner | null>(null);
 
   const dismissResults = useCallback(() => setResults(null), []);
@@ -197,6 +203,17 @@ export function BulkActionsBar({
           </Button>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            {onAssign && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onAssign}
+                disabled={isProcessing}
+              >
+                <UserPlus />
+                Assign
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
@@ -256,3 +273,5 @@ export function BulkActionsBar({
     </>
   );
 }
+
+export type { BulkActionResult };
