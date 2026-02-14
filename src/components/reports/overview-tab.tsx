@@ -249,9 +249,19 @@ export function OverviewTab({ timeSeriesParams, baseParams }: OverviewTabProps) 
                     colorClass="bg-warning"
                   />
                   <ProgressRow
+                    label="Validation Invalid"
+                    value={col.validation_invalid_pct}
+                    colorClass="bg-destructive"
+                  />
+                  <ProgressRow
                     label="Review Approved"
                     value={col.review_approved_pct}
                     colorClass="bg-primary"
+                  />
+                  <ProgressRow
+                    label="Review Pending"
+                    value={col.review_pending_pct}
+                    colorClass="bg-muted-foreground/40"
                   />
                 </CardContent>
               </Card>
@@ -272,7 +282,8 @@ function ProgressRow({
   value: number;
   colorClass: string;
 }) {
-  const pct = Math.round(value * 100);
+  // Backend returns percentages as 0-100 (e.g. 80.0 for 80%)
+  const pct = Math.round(value);
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
@@ -282,7 +293,7 @@ function ProgressRow({
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
           className={`h-full rounded-full ${colorClass}`}
-          style={{ width: `${pct}%` }}
+          style={{ width: `${Math.min(pct, 100)}%` }}
         />
       </div>
     </div>
