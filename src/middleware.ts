@@ -12,6 +12,8 @@ const protectedRoutes = [
   "/upload",
   "/users",
   "/settings",
+  "/review-queue",
+  "/exceptions",
 ];
 
 export function middleware(request: NextRequest) {
