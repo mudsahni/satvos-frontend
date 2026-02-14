@@ -12,6 +12,7 @@ import {
   Settings,
   AlertTriangle,
   ClipboardCheck,
+  BarChart3,
 } from "lucide-react";
 
 import {
@@ -67,6 +68,12 @@ const navItems: Array<{
     label: "Review Queue",
     href: "/review-queue",
     icon: ClipboardCheck,
+    roles: ["admin", "manager", "member", "viewer", "free"],
+  },
+  {
+    label: "Reports",
+    href: "/reports",
+    icon: BarChart3,
     roles: ["admin", "manager", "member", "viewer", "free"],
   },
   {

@@ -14,6 +14,7 @@ const protectedRoutes = [
   "/settings",
   "/review-queue",
   "/exceptions",
+  "/reports",
 ];
 
 export function middleware(request: NextRequest) {
