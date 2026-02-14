@@ -39,9 +39,9 @@ const mockGetCollections = vi.mocked(getCollections);
 import { Document } from "@/types/document";
 
 const mockDocuments: Document[] = [
-  { id: "d1", name: "Invoice-001.pdf", collection_id: "c1", parsing_status: "completed", validation_status: "valid", review_status: "approved", reconciliation_status: "valid", parse_mode: "single", tenant_id: "t1", file_id: "f1", created_by: "u1", created_at: "2025-01-01T00:00:00Z", updated_at: "2025-01-01T00:00:00Z" },
-  { id: "d2", name: "Receipt-002.pdf", collection_id: "c1", parsing_status: "completed", validation_status: "valid", review_status: "approved", reconciliation_status: "valid", parse_mode: "single", tenant_id: "t1", file_id: "f2", created_by: "u1", created_at: "2025-01-02T00:00:00Z", updated_at: "2025-01-02T00:00:00Z" },
-  { id: "d3", name: "Invoice-003.pdf", collection_id: "c2", parsing_status: "failed", validation_status: "pending", review_status: "pending", reconciliation_status: "pending", parse_mode: "single", tenant_id: "t1", file_id: "f3", created_by: "u1", created_at: "2025-01-03T00:00:00Z", updated_at: "2025-01-03T00:00:00Z" },
+  { id: "d1", name: "Invoice-001.pdf", collection_id: "c1", parsing_status: "completed", validation_status: "valid", review_status: "approved", reconciliation_status: "valid", parse_mode: "single", tenant_id: "t1", file_id: "f1", created_by: "u1", assigned_to: null, assigned_at: null, assigned_by: null, created_at: "2025-01-01T00:00:00Z", updated_at: "2025-01-01T00:00:00Z" },
+  { id: "d2", name: "Receipt-002.pdf", collection_id: "c1", parsing_status: "completed", validation_status: "valid", review_status: "approved", reconciliation_status: "valid", parse_mode: "single", tenant_id: "t1", file_id: "f2", created_by: "u1", assigned_to: null, assigned_at: null, assigned_by: null, created_at: "2025-01-02T00:00:00Z", updated_at: "2025-01-02T00:00:00Z" },
+  { id: "d3", name: "Invoice-003.pdf", collection_id: "c2", parsing_status: "failed", validation_status: "pending", review_status: "pending", reconciliation_status: "pending", parse_mode: "single", tenant_id: "t1", file_id: "f3", created_by: "u1", assigned_to: null, assigned_at: null, assigned_by: null, created_at: "2025-01-03T00:00:00Z", updated_at: "2025-01-03T00:00:00Z" },
 ];
 
 const mockCollections = [

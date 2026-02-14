@@ -11,6 +11,7 @@ import {
   Users,
   Settings,
   AlertTriangle,
+  ClipboardCheck,
 } from "lucide-react";
 
 import {
@@ -60,6 +61,12 @@ const navItems: Array<{
     label: "Needs Attention",
     href: "/exceptions",
     icon: AlertTriangle,
+    roles: ["admin", "manager", "member", "viewer", "free"],
+  },
+  {
+    label: "Review Queue",
+    href: "/review-queue",
+    icon: ClipboardCheck,
     roles: ["admin", "manager", "member", "viewer", "free"],
   },
   {

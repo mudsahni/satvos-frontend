@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,7 +62,8 @@ import {
   useAddCollectionPermission,
   useDeleteCollectionPermission,
 } from "@/lib/hooks/use-collections";
-import { useSearchUsers } from "@/lib/hooks/use-users";
+import { useUsers } from "@/lib/hooks/use-users";
+import { UserName } from "@/components/ui/user-name";
 import {
   updateCollectionSchema,
   type UpdateCollectionFormData,
@@ -87,16 +88,30 @@ export default function CollectionSettingsPage({
   const addPermission = useAddCollectionPermission();
   const deletePermission = useDeleteCollectionPermission();
 
+  const { data: usersData } = useUsers({ limit: 100 });
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAddPermissionDialog, setShowAddPermissionDialog] = useState(false);
-  const [deletePermissionId, setDeletePermissionId] = useState<string | null>(null);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedPermissionLevel, setSelectedPermissionLevel] =
     useState<PermissionLevel>("viewer");
 
-  const { data: searchResults } = useSearchUsers(searchQuery);
+  // Client-side filter of all tenant users for the add-user dialog
+  const searchResults = useMemo(() => {
+    if (searchQuery.length < 2 || !usersData?.items) return [];
+    const existingUserIds = new Set(permissions?.map((p) => p.user_id) ?? []);
+    const q = searchQuery.toLowerCase();
+    return usersData.items.filter((u) => {
+      if (existingUserIds.has(u.id)) return false;
+      return (
+        u.full_name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+      );
+    });
+  }, [searchQuery, usersData, permissions]);
 
   const {
     register,
@@ -140,14 +155,14 @@ export default function CollectionSettingsPage({
   };
 
   const handleDeletePermission = async () => {
-    if (!deletePermissionId) return;
+    if (!deleteUserId) return;
 
     await deletePermission.mutateAsync({
       collectionId: id,
-      permissionId: deletePermissionId,
+      userId: deleteUserId,
     });
 
-    setDeletePermissionId(null);
+    setDeleteUserId(null);
   };
 
   if (collectionLoading) {
@@ -339,13 +354,8 @@ export default function CollectionSettingsPage({
                 {permissions.map((permission) => (
                   <TableRow key={permission.id}>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">
-                          {permission.user?.full_name || "Unknown User"}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {permission.user?.email || permission.user_id}
-                        </div>
+                      <div className="font-medium">
+                        <UserName id={permission.user_id} fallback={permission.user_id} />
                       </div>
                     </TableCell>
                     <TableCell>
@@ -357,7 +367,7 @@ export default function CollectionSettingsPage({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setDeletePermissionId(permission.id)}
+                        onClick={() => setDeleteUserId(permission.user_id)}
                         aria-label="Delete permission"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -426,8 +436,8 @@ export default function CollectionSettingsPage({
 
       {/* Delete Permission Dialog */}
       <AlertDialog
-        open={!!deletePermissionId}
-        onOpenChange={() => setDeletePermissionId(null)}
+        open={!!deleteUserId}
+        onOpenChange={() => setDeleteUserId(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>

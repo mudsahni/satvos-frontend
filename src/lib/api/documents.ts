@@ -6,6 +6,7 @@ import {
   CreateDocumentRequest,
   UpdateDocumentRequest,
   ReviewDocumentRequest,
+  AssignDocumentRequest,
   AddTagsRequest,
   DocumentListParams,
 } from "@/types/document";
@@ -80,6 +81,29 @@ export async function triggerValidation(id: string): Promise<Document> {
     `/documents/${id}/validate`
   );
   return response.data.data;
+}
+
+// Assignment
+export async function assignDocument(
+  id: string,
+  data: AssignDocumentRequest
+): Promise<Document> {
+  const response = await apiClient.put<ApiResponse<Document>>(
+    `/documents/${id}/assign`,
+    data
+  );
+  return response.data.data;
+}
+
+// Review Queue
+export async function getReviewQueue(
+  params?: { offset?: number; limit?: number }
+): Promise<PaginatedResponse<Document>> {
+  const response = await apiClient.get<ApiPaginatedResponse<Document>>(
+    "/documents/review-queue",
+    { params }
+  );
+  return transformPagination(response.data.data, response.data.meta);
 }
 
 // Review

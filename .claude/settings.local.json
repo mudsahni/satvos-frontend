@@ -28,7 +28,9 @@
       "Bash(ls /Users/musahni/Documents/projects/satvos/satvos-frontend/src/app/\\\\\\(auth\\\\\\)/)",
       "Bash(npm run lint)",
       "Bash(python3 -c \"\nimport json\nwith open\\(''/Users/musahni/Documents/projects/satvos/satvos-frontend/swagger.json''\\) as f:\n    spec = json.load\\(f\\)\n# Get POST /files/upload\nupload = spec[''paths''][''/files/upload''][''post'']\nprint\\(json.dumps\\(upload, indent=2\\)\\)\n\")",
-      "Bash(python3 -c \"\nimport json\nwith open\\(''/Users/musahni/Documents/projects/satvos/satvos-frontend/swagger.json''\\) as f:\n    spec = json.load\\(f\\)\n# Get domain.FileMeta\nprint\\(json.dumps\\(spec[''definitions''][''domain.FileMeta''], indent=2\\)\\)\nprint\\(\\)\n# Also check handler.Response\nprint\\(''--- handler.Response ---''\\)\nprint\\(json.dumps\\(spec[''definitions''][''handler.Response''], indent=2\\)\\)\n\")"
+      "Bash(python3 -c \"\nimport json\nwith open\\(''/Users/musahni/Documents/projects/satvos/satvos-frontend/swagger.json''\\) as f:\n    spec = json.load\\(f\\)\n# Get domain.FileMeta\nprint\\(json.dumps\\(spec[''definitions''][''domain.FileMeta''], indent=2\\)\\)\nprint\\(\\)\n# Also check handler.Response\nprint\\(''--- handler.Response ---''\\)\nprint\\(json.dumps\\(spec[''definitions''][''handler.Response''], indent=2\\)\\)\n\")",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ]
   }
 }

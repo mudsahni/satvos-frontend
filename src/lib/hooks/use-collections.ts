@@ -122,13 +122,13 @@ export function useUpdateCollectionPermission() {
   return useMutationWithToast({
     mutationFn: ({
       collectionId,
-      permissionId,
+      userId,
       data,
     }: {
       collectionId: string;
-      permissionId: string;
+      userId: string;
       data: UpdatePermissionRequest;
-    }) => updateCollectionPermission(collectionId, permissionId, data),
+    }) => updateCollectionPermission(collectionId, userId, data),
     invalidateKeys: [
       (vars) => ["collection-permissions", vars.collectionId],
     ],
@@ -143,11 +143,11 @@ export function useDeleteCollectionPermission() {
   return useMutationWithToast({
     mutationFn: ({
       collectionId,
-      permissionId,
+      userId,
     }: {
       collectionId: string;
-      permissionId: string;
-    }) => deleteCollectionPermission(collectionId, permissionId),
+      userId: string;
+    }) => deleteCollectionPermission(collectionId, userId),
     invalidateKeys: [
       (vars) => ["collection-permissions", vars.collectionId],
     ],

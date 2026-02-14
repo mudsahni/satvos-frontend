@@ -294,6 +294,7 @@ export default function DocumentsPage() {
                   <TableHead className="text-sm normal-case tracking-normal">Parsing</TableHead>
                   <TableHead className="text-sm normal-case tracking-normal">Validation</TableHead>
                   <TableHead className="text-sm normal-case tracking-normal">Review</TableHead>
+                  <TableHead className="hidden lg:table-cell text-sm normal-case tracking-normal">Assigned To</TableHead>
                   <TableHead className="hidden lg:table-cell text-sm normal-case tracking-normal">Created</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
@@ -339,6 +340,9 @@ export default function DocumentsPage() {
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={doc.review_status} type="review" />
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground">
+                        {doc.assigned_to ? <UserName id={doc.assigned_to} /> : "-"}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
                         <div>
