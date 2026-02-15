@@ -19,7 +19,7 @@ import { DocumentsTable } from "@/components/documents/documents-table";
 import { BulkActionsBar } from "@/components/documents/bulk-actions-bar";
 import { BulkAssignDialog } from "@/components/documents/bulk-assign-dialog";
 import { useQuery } from "@tanstack/react-query";
-import { useCollection, useExportCollectionCsv } from "@/lib/hooks/use-collections";
+import { useCollection, useExportCollectionCsv, useExportCollectionTally } from "@/lib/hooks/use-collections";
 import {
   useReviewDocument,
   useDeleteDocument,
@@ -86,6 +86,7 @@ export default function CollectionDetailPage({
   const deleteDocument = useDeleteDocument();
   const assignDocument = useAssignDocument();
   const exportCsv = useExportCollectionCsv();
+  const exportTally = useExportCollectionTally();
   const [showAssignDialog, setShowAssignDialog] = useState(false);
 
   const {
@@ -270,6 +271,8 @@ export default function CollectionDetailPage({
         documentCount={documents.length}
         onExportCsv={() => exportCsv.mutate({ id, name: collection?.name })}
         isExportingCsv={exportCsv.isPending}
+        onExportTally={(companyName) => exportTally.mutate({ id, name: collection?.name, companyName })}
+        isExportingTally={exportTally.isPending}
       />
 
       {/* Filters */}

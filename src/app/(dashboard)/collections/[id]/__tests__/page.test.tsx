@@ -14,6 +14,7 @@ const mockMutationResult = {
 vi.mock("@/lib/hooks/use-collections", () => ({
   useCollection: vi.fn(),
   useExportCollectionCsv: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  useExportCollectionTally: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
 vi.mock("@/lib/hooks/use-documents", () => ({

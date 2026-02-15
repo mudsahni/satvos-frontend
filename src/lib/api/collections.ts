@@ -158,3 +158,31 @@ export async function exportCollectionCsv(
     window.URL.revokeObjectURL(url);
   }
 }
+
+// Tally XML Export
+export async function exportCollectionTally(
+  collectionId: string,
+  collectionName?: string,
+  companyName?: string
+): Promise<void> {
+  const params: Record<string, string> = {};
+  if (companyName) params.company_name = companyName;
+
+  const response = await apiClient.get(
+    `/collections/${collectionId}/export/tally`,
+    { responseType: "blob", params }
+  );
+
+  const blob = new Blob([response.data], { type: "application/xml" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  try {
+    a.href = url;
+    a.download = `${collectionName || collectionId}.xml`;
+    document.body.appendChild(a);
+    a.click();
+  } finally {
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
+}

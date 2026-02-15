@@ -21,7 +21,7 @@ import {
   CollectionCard,
   CollectionCardSkeleton,
 } from "@/components/collections/collection-card";
-import { useCollections, useDeleteCollection, useExportCollectionCsv } from "@/lib/hooks/use-collections";
+import { useCollections, useDeleteCollection, useExportCollectionCsv, useExportCollectionTally } from "@/lib/hooks/use-collections";
 import { useAuthStore } from "@/store/auth-store";
 import { canCreateCollections } from "@/lib/constants";
 import { Collection } from "@/types/collection";
@@ -72,6 +72,7 @@ export default function CollectionsPage() {
 
   const deleteCollection = useDeleteCollection();
   const exportCsv = useExportCollectionCsv();
+  const exportTally = useExportCollectionTally();
 
   const handleDelete = async () => {
     if (deleteId) {
@@ -168,6 +169,8 @@ export default function CollectionsPage() {
                 onDelete={setDeleteId}
                 onExportCsv={(id, name) => exportCsv.mutate({ id, name })}
                 isExportingCsv={exportCsv.isPending}
+                onExportTally={(id, name, companyName) => exportTally.mutate({ id, name, companyName })}
+                isExportingTally={exportTally.isPending}
                 canDelete={canDelete(collection)}
               />
             ))}
