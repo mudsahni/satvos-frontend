@@ -34,18 +34,29 @@ import { useAuthStore } from "@/store/auth-store";
 import { Role, isFreeUser } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-const navItems: Array<{
+type NavItem = {
   label: string;
   href: string;
   icon: typeof Home;
   roles: Role[];
-}> = [
+};
+
+const primaryItems: NavItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: Home,
     roles: ["admin", "manager", "member", "viewer", "free"],
   },
+  {
+    label: "Upload",
+    href: "/upload",
+    icon: Upload,
+    roles: ["admin", "manager", "member", "viewer", "free"],
+  },
+];
+
+const documentItems: NavItem[] = [
   {
     label: "Collections",
     href: "/collections",
@@ -70,26 +81,18 @@ const navItems: Array<{
     icon: ClipboardCheck,
     roles: ["admin", "manager", "member", "viewer", "free"],
   },
+];
+
+const insightItems: NavItem[] = [
   {
     label: "Reports",
     href: "/reports",
     icon: BarChart3,
     roles: ["admin", "manager", "member", "viewer", "free"],
   },
-  {
-    label: "Upload",
-    href: "/upload",
-    icon: Upload,
-    roles: ["admin", "manager", "member", "viewer", "free"],
-  },
 ];
 
-const settingsItems: Array<{
-  label: string;
-  href: string;
-  icon: typeof Home;
-  roles: Role[];
-}> = [
+const settingsItems: NavItem[] = [
   {
     label: "Team",
     href: "/users",
@@ -104,19 +107,50 @@ const settingsItems: Array<{
   },
 ];
 
+function filterByRole(items: NavItem[], role?: Role) {
+  if (!role) return [];
+  return items.filter((item) => item.roles.includes(role));
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
 
-  const filteredNavItems = navItems.filter((item) => {
-    if (!user) return false;
-    return item.roles.includes(user.role);
-  });
+  const role = user?.role;
+  const filteredPrimary = filterByRole(primaryItems, role);
+  const filteredDocuments = filterByRole(documentItems, role);
+  const filteredInsights = filterByRole(insightItems, role);
+  const filteredSettings = filterByRole(settingsItems, role);
 
-  const filteredSettingsItems = settingsItems.filter((item) => {
-    if (!user) return false;
-    return item.roles.includes(user.role);
-  });
+  function renderItems(items: NavItem[]) {
+    return items.map((item) => {
+      const isActive =
+        pathname === item.href ||
+        pathname.startsWith(item.href + "/");
+      return (
+        <SidebarMenuItem key={item.href}>
+          <SidebarMenuButton
+            asChild
+            isActive={isActive}
+            tooltip={item.label}
+            className={cn(
+              "transition-all duration-200 rounded-lg",
+              isActive
+                ? "data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-primary/15 hover:text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <Link href={item.href}>
+              <item.icon className="transition-colors" />
+              <span className="font-medium">
+                {item.label}
+              </span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    });
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -140,40 +174,46 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        {/* Primary: Dashboard + Upload */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {filteredNavItems.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  pathname.startsWith(item.href + "/");
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.label}
-                      className={cn(
-                        "transition-all duration-200 rounded-lg",
-                        isActive
-                          ? "data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-primary/15 hover:text-primary"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="transition-colors" />
-                        <span className="font-medium">
-                          {item.label}
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {renderItems(filteredPrimary)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Documents group */}
+        {filteredDocuments.length > 0 && (
+          <SidebarGroup>
+            <SidebarSeparator className="mb-2" />
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
+              Documents
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {renderItems(filteredDocuments)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Insights group */}
+        {filteredInsights.length > 0 && (
+          <SidebarGroup>
+            <SidebarSeparator className="mb-2" />
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
+              Insights
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {renderItems(filteredInsights)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Settings group — pushed to bottom */}
         <SidebarGroup className="mt-auto">
           <SidebarSeparator className="mb-2" />
           <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
@@ -181,31 +221,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {filteredSettingsItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.label}
-                      className={cn(
-                        "transition-all duration-200 rounded-lg",
-                        isActive
-                          ? "data-[active=true]:bg-primary/10 data-[active=true]:text-primary hover:bg-primary/15 hover:text-primary"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="transition-colors" />
-                        <span className="font-medium">
-                          {item.label}
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {renderItems(filteredSettings)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
