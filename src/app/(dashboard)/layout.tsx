@@ -10,6 +10,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { GlobalSearch } from "@/components/search/global-search";
 import { needsEmailVerification } from "@/lib/constants";
 import { getUser } from "@/lib/api/users";
+import { clearAuthCookie } from "@/lib/utils/cookies";
 
 export default function DashboardLayout({
   children,
@@ -53,7 +54,7 @@ export default function DashboardLayout({
       // on the next page navigation. Actual routing is handled by the
       // component that triggered the logout (e.g. handleLogout in TopNav)
       // or by handleSessionExpired in the API client.
-      document.cookie = "satvos-auth-state=; path=/; max-age=0";
+      clearAuthCookie();
     }
   }, [isAuthenticated, isHydrated]);
 

@@ -112,7 +112,7 @@ export function DateRangePicker({
             className
           )}
         >
-          <CalendarDays className="mr-2 h-4 w-4" />
+          <CalendarDays />
           {displayLabel}
         </Button>
       </PopoverTrigger>

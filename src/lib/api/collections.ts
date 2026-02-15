@@ -42,10 +42,7 @@ export async function getCollection(id: string): Promise<Collection> {
     ApiResponse<{ collection: Collection; current_user_permission?: PermissionLevel }>
   >(`/collections/${id}`);
   const { collection, current_user_permission } = response.data.data;
-  return {
-    ...collection,
-    user_permission: collection.user_permission ?? current_user_permission,
-  };
+  return mapCollectionPermission({ ...collection, current_user_permission });
 }
 
 export async function createCollection(
@@ -151,10 +148,13 @@ export async function exportCollectionCsv(
   const blob = new Blob([response.data], { type: "text/csv" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = `${collectionName || collectionId}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
+  try {
+    a.href = url;
+    a.download = `${collectionName || collectionId}.csv`;
+    document.body.appendChild(a);
+    a.click();
+  } finally {
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
 }

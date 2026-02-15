@@ -115,7 +115,7 @@ export function PartyLedgerTab({
           )}
         </div>
         <Button onClick={handleSearch} disabled={!isValidGstin}>
-          <Search className="mr-2 h-4 w-4" />
+          <Search />
           Search
         </Button>
       </div>
@@ -182,7 +182,7 @@ export function PartyLedgerTab({
                   onClick={() => exportToCsv(data?.items ?? [], csvColumns, `party-ledger-${gstin}`)}
                   disabled={!data?.items?.length}
                 >
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download />
                   Export CSV
                 </Button>
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import Link from "next/link";
 import { Search, FileText, MoreHorizontal, Trash2, Loader2 } from "lucide-react";
 
@@ -71,8 +72,10 @@ export default function DocumentsPage() {
   const { data: collectionsData } = useCollections({ limit: 100 });
   const collections = collectionsData?.items || [];
 
+  const debouncedSearch = useDebouncedValue(search);
+
   // API doesn't support search/status filters — only collection_id, offset, limit
-  const hasSearch = !!search;
+  const hasSearch = !!debouncedSearch;
   const collectionId = collectionFilter !== "all" ? collectionFilter : undefined;
 
   // Normal paginated query — used when NOT searching
@@ -106,8 +109,8 @@ export default function DocumentsPage() {
   // Client-side search + status filtering
   const filtered = useMemo(() => {
     let result = hasSearch ? (allDocsQuery.data || []) : (paginatedQuery.data?.items || []);
-    if (search) {
-      const q = search.toLowerCase();
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
       result = result.filter((doc) => doc.name.toLowerCase().includes(q));
     }
     if (parsingFilter !== "all") {
@@ -119,10 +122,10 @@ export default function DocumentsPage() {
     if (reviewFilter !== "all") {
       result = result.filter((doc) => doc.review_status === reviewFilter);
     }
-    // Sort by created_at desc to match server default
-    result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    // Sort by created_at desc to match server default (copy to avoid mutating cached data)
+    result = [...result].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return result;
-  }, [hasSearch, allDocsQuery.data, paginatedQuery.data, search, parsingFilter, validationFilter, reviewFilter]);
+  }, [hasSearch, allDocsQuery.data, paginatedQuery.data, debouncedSearch, parsingFilter, validationFilter, reviewFilter]);
 
   // Pagination: client-side when searching, server-side otherwise
   const total = hasSearch ? filtered.length : (paginatedQuery.data?.total ?? 0);

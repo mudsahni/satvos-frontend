@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useMemo, useCallback } from "react";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import Link from "next/link";
 import { FolderOpen, Upload, FileText } from "lucide-react";
 
@@ -24,6 +25,7 @@ import {
   useDeleteDocument,
   useAssignDocument,
 } from "@/lib/hooks/use-documents";
+import { useBulkActions } from "@/lib/hooks/use-bulk-actions";
 import { getDocuments } from "@/lib/api/documents";
 import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { toast } from "@/lib/hooks/use-toast";
@@ -39,11 +41,10 @@ export default function CollectionDetailPage({
 
   // Filter state
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [validationStatus, setValidationStatus] =
     useState<ValidationStatusFilter>("all");
   const [reviewStatus, setReviewStatus] = useState<ReviewStatusFilter>("all");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   // Sort state
   type SortField = "name" | "created_at" | "validation_status" | "review_status";
   type SortOrder = "asc" | "desc";
@@ -85,90 +86,48 @@ export default function CollectionDetailPage({
   const deleteDocument = useDeleteDocument();
   const assignDocument = useAssignDocument();
   const exportCsv = useExportCollectionCsv();
-  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
 
-  const handleBulkApprove = async (ids: string[]) => {
-    setIsBulkProcessing(true);
-    let succeeded = 0;
-    let failed = 0;
-    try {
-      const results = await Promise.allSettled(
-        ids.map((docId) =>
-          reviewDocument.mutateAsync({ id: docId, data: { status: "approved" } })
-        )
-      );
-      succeeded = results.filter((r) => r.status === "fulfilled").length;
-      failed = results.filter((r) => r.status === "rejected").length;
-      if (succeeded > 0) setSelectedIds([]);
-    } finally {
-      setIsBulkProcessing(false);
-    }
-    return { succeeded, failed };
-  };
+  const {
+    selectedIds,
+    setSelectedIds,
+    isBulkProcessing,
+    clearSelection,
+    createBulkHandler,
+  } = useBulkActions({ resetDeps: [debouncedSearch, validationStatus, reviewStatus, page] });
 
-  const handleBulkReject = async (ids: string[]) => {
-    setIsBulkProcessing(true);
-    let succeeded = 0;
-    let failed = 0;
-    try {
-      const results = await Promise.allSettled(
-        ids.map((docId) =>
-          reviewDocument.mutateAsync({ id: docId, data: { status: "rejected" } })
-        )
-      );
-      succeeded = results.filter((r) => r.status === "fulfilled").length;
-      failed = results.filter((r) => r.status === "rejected").length;
-      if (succeeded > 0) setSelectedIds([]);
-    } finally {
-      setIsBulkProcessing(false);
-    }
-    return { succeeded, failed };
-  };
+  const handleBulkApprove = useMemo(
+    () => createBulkHandler((docId) =>
+      reviewDocument.mutateAsync({ id: docId, data: { status: "approved" } })
+    ),
+    [createBulkHandler, reviewDocument]
+  );
 
-  const handleBulkDelete = async (ids: string[]) => {
-    setIsBulkProcessing(true);
-    let succeeded = 0;
-    let failed = 0;
-    try {
-      const results = await Promise.allSettled(
-        ids.map((docId) => deleteDocument.mutateAsync(docId))
-      );
-      succeeded = results.filter((r) => r.status === "fulfilled").length;
-      failed = results.filter((r) => r.status === "rejected").length;
-      if (succeeded > 0) setSelectedIds([]);
-    } finally {
-      setIsBulkProcessing(false);
-    }
-    return { succeeded, failed };
-  };
+  const handleBulkReject = useMemo(
+    () => createBulkHandler((docId) =>
+      reviewDocument.mutateAsync({ id: docId, data: { status: "rejected" } })
+    ),
+    [createBulkHandler, reviewDocument]
+  );
+
+  const handleBulkDelete = useMemo(
+    () => createBulkHandler((docId) => deleteDocument.mutateAsync(docId)),
+    [createBulkHandler, deleteDocument]
+  );
 
   const handleBulkAssign = async (userId: string) => {
-    setIsBulkProcessing(true);
     setShowAssignDialog(false);
-    try {
-      const results = await Promise.allSettled(
-        selectedIds.map((docId) =>
-          assignDocument.mutateAsync({
-            id: docId,
-            data: { assignee_id: userId },
-          })
-        )
-      );
-      const succeeded = results.filter((r) => r.status === "fulfilled").length;
-      const failed = results.filter((r) => r.status === "rejected").length;
-      if (succeeded > 0) setSelectedIds([]);
-      toast({
-        title: failed === 0 ? "Reviewer assigned" : "Some assignments failed",
-        description:
-          failed === 0
-            ? `All ${succeeded} document${succeeded !== 1 ? "s" : ""} assigned successfully.`
-            : `${succeeded} assigned, ${failed} failed.`,
-        variant: failed > 0 ? "destructive" : undefined,
-      });
-    } finally {
-      setIsBulkProcessing(false);
-    }
+    const { succeeded, failed } = await createBulkHandler((docId) =>
+      assignDocument.mutateAsync({ id: docId, data: { assignee_id: userId } })
+    )(selectedIds);
+    toast({
+      title: failed === 0 ? "Reviewer assigned" : "Some assignments failed",
+      description:
+        failed === 0
+          ? `All ${succeeded} document${succeeded !== 1 ? "s" : ""} assigned successfully.`
+          : `${succeeded} assigned, ${failed} failed.`,
+      variant: failed > 0 ? "destructive" : undefined,
+    });
   };
 
   const handleSort = (field: SortField, order: SortOrder) => {
@@ -181,8 +140,8 @@ export default function CollectionDetailPage({
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
       // Search filter
-      if (search) {
-        const searchLower = search.toLowerCase();
+      if (debouncedSearch) {
+        const searchLower = debouncedSearch.toLowerCase();
         const matchesName = doc.name.toLowerCase().includes(searchLower);
         const matchesVendor = doc.parsed_data?.seller?.name?.value
           ?.toLowerCase()
@@ -200,7 +159,7 @@ export default function CollectionDetailPage({
 
 
     });
-  }, [documents, search, validationStatus, reviewStatus]);
+  }, [documents, debouncedSearch, validationStatus, reviewStatus]);
 
   // Sort filtered documents
   const sortedDocuments = useMemo(() => {
@@ -233,11 +192,16 @@ export default function CollectionDetailPage({
     return sortedDocuments.slice(start, start + pageSize);
   }, [sortedDocuments, page, pageSize]);
 
+  // Stable lookup map — only rebuilt when documents change (not on every selection)
+  const docMap = useMemo(
+    () => new Map(documents.map((d) => [d.id, d])),
+    [documents]
+  );
+
   // Compute review status counts for selected documents
   const reviewStatusCounts = useMemo(() => {
     if (selectedIds.length === 0) return undefined;
     const counts = { approved: 0, rejected: 0, pending: 0 };
-    const docMap = new Map(documents.map((d) => [d.id, d]));
     for (const docId of selectedIds) {
       const doc = docMap.get(docId);
       if (doc?.review_status === "approved") counts.approved++;
@@ -245,7 +209,7 @@ export default function CollectionDetailPage({
       else counts.pending++;
     }
     return counts;
-  }, [selectedIds, documents]);
+  }, [selectedIds, docMap]);
 
   // "Select all across pages" logic
   const pageFullySelected =
@@ -324,7 +288,7 @@ export default function CollectionDetailPage({
       {canManage && selectedIds.length > 0 && (
         <BulkActionsBar
           selectedIds={selectedIds}
-          onDeselect={() => setSelectedIds([])}
+          onDeselect={clearSelection}
           onApprove={handleBulkApprove}
           onReject={handleBulkReject}
           onDelete={handleBulkDelete}

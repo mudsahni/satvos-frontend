@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -90,8 +91,10 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
+  const debouncedSearch = useDebouncedValue(search);
+
   const { data, isLoading, isError, refetch } = useUsers({
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     limit: pageSize,
     offset: (page - 1) * pageSize,
   });
