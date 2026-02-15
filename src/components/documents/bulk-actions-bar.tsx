@@ -30,14 +30,21 @@ interface BulkActionResult {
   failed: number;
 }
 
+interface ReviewStatusCounts {
+  approved: number;
+  rejected: number;
+  pending: number;
+}
+
 interface BulkActionsBarProps {
   selectedIds: string[];
   onDeselect: () => void;
   onApprove: (ids: string[]) => Promise<BulkActionResult>;
   onReject: (ids: string[]) => Promise<BulkActionResult>;
-  onDelete: (ids: string[]) => Promise<BulkActionResult>;
+  onDelete?: (ids: string[]) => Promise<BulkActionResult>;
   onAssign?: () => void;
   isProcessing?: boolean;
+  reviewStatusCounts?: ReviewStatusCounts;
 }
 
 interface ResultsBanner {
@@ -87,6 +94,38 @@ const actionLabels: Record<BulkAction, string> = {
   assign: "assigned",
 };
 
+function getConfirmDescription(
+  action: "approve" | "reject" | "delete",
+  counts?: ReviewStatusCounts
+): string {
+  // Delete action or no counts — use the static description
+  if (action === "delete" || !counts) {
+    return confirmConfig[action].description;
+  }
+
+  const total = counts.approved + counts.rejected + counts.pending;
+  const allPending = counts.approved === 0 && counts.rejected === 0;
+
+  // All pending — keep simple message
+  if (allPending) {
+    return confirmConfig[action].description;
+  }
+
+  const parts: string[] = [];
+  if (counts.approved > 0) {
+    parts.push(`${counts.approved} already approved`);
+  }
+  if (counts.rejected > 0) {
+    parts.push(`${counts.rejected} currently rejected`);
+  }
+  if (counts.pending > 0) {
+    parts.push(`${counts.pending} pending review`);
+  }
+
+  const targetLabel = action === "approve" ? "approved" : "rejected";
+  return `Of the ${total} selected document${total !== 1 ? "s" : ""}, ${parts.join(" and ")}. All ${total} will be marked as ${targetLabel}.`;
+}
+
 function getResultMessage(results: ResultsBanner): string {
   const total = results.succeeded + results.failed;
   const label = actionLabels[results.action];
@@ -114,6 +153,7 @@ export function BulkActionsBar({
   onDelete,
   onAssign,
   isProcessing = false,
+  reviewStatusCounts,
 }: BulkActionsBarProps) {
   const [confirmAction, setConfirmAction] = useState<
     "approve" | "reject" | "delete" | null
@@ -141,8 +181,10 @@ export function BulkActionsBar({
       result = await onApprove(selectedIds);
     } else if (action === "reject") {
       result = await onReject(selectedIds);
-    } else {
+    } else if (onDelete) {
       result = await onDelete(selectedIds);
+    } else {
+      return;
     }
 
     setResults({
@@ -234,16 +276,18 @@ export function BulkActionsBar({
               <XCircle />
               Reject
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
-              onClick={() => setConfirmAction("delete")}
-              disabled={isProcessing}
-            >
-              <Trash2 />
-              Delete
-            </Button>
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-destructive/30 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                onClick={() => setConfirmAction("delete")}
+                disabled={isProcessing}
+              >
+                <Trash2 />
+                Delete
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -256,7 +300,7 @@ export function BulkActionsBar({
           <AlertDialogHeader>
             <AlertDialogTitle>{config?.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              {config?.description}
+              {confirmAction ? getConfirmDescription(confirmAction, reviewStatusCounts) : config?.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

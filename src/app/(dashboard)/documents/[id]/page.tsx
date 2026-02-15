@@ -90,7 +90,7 @@ export default function DocumentDetailPage({
 
   // Keyboard shortcuts
   useEffect(() => {
-    if (!document || document.parsing_status !== "completed" || document.review_status !== "pending") {
+    if (!document || document.parsing_status !== "completed") {
       return;
     }
 
@@ -282,33 +282,7 @@ export default function DocumentDetailPage({
             {/* Review Actions */}
             {document.parsing_status === "completed" && (
               <>
-                {document.review_status === "pending" ? (
-                  <>
-                    <span className="text-xs text-muted-foreground mr-1 hidden lg:inline">
-                      A to approve, R to reject
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setConfirmAction("approved")}
-                      className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
-                      aria-label="Approve document"
-                    >
-                      <CheckCircle className={"md:mr-2 h-4 w-4"} />
-                      <span className="hidden md:inline">Approve</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setConfirmAction("rejected")}
-                      className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
-                      aria-label="Reject document"
-                    >
-                      <XCircle className={"md:mr-2 h-4 w-4"} />
-                      <span className="hidden md:inline">Reject</span>
-                    </Button>
-                  </>
-                ) : (
+                {document.review_status !== "pending" && (
                   <Badge
                     variant={document.review_status === "approved" ? "success" : "error"}
                     className="py-1"
@@ -321,6 +295,29 @@ export default function DocumentDetailPage({
                     {document.review_status === "approved" ? "Approved" : "Rejected"}
                   </Badge>
                 )}
+                <span className="text-xs text-muted-foreground mr-1 hidden lg:inline">
+                  A to approve, R to reject
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setConfirmAction("approved")}
+                  className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
+                  aria-label="Approve document"
+                >
+                  <CheckCircle className={"md:mr-2 h-4 w-4"} />
+                  <span className="hidden md:inline">Approve</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setConfirmAction("rejected")}
+                  className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
+                  aria-label="Reject document"
+                >
+                  <XCircle className={"md:mr-2 h-4 w-4"} />
+                  <span className="hidden md:inline">Reject</span>
+                </Button>
               </>
             )}
 
@@ -445,9 +442,15 @@ export default function DocumentDetailPage({
               {confirmAction === "approved" ? "Approve Document" : "Reject Document"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmAction === "approved"
-                ? "Are you sure you want to approve this document? This indicates the document has been reviewed and verified."
-                : "Are you sure you want to reject this document? You may want to add a note explaining the reason."}
+              {document && document.review_status !== "pending" ? (
+                confirmAction === document.review_status
+                  ? <>This document is already <strong>{document.review_status}</strong>. Are you sure you want to re-{confirmAction === "approved" ? "approve" : "reject"} it?</>
+                  : <>This document is currently <strong>{document.review_status}</strong>. Are you sure you want to change its status to <strong>{confirmAction}</strong>?</>
+              ) : (
+                confirmAction === "approved"
+                  ? "Are you sure you want to approve this document? This indicates the document has been reviewed and verified."
+                  : "Are you sure you want to reject this document? You may want to add a note explaining the reason."
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">

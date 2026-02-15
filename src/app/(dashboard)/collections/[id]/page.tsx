@@ -17,13 +17,15 @@ import {
 import { DocumentsTable } from "@/components/documents/documents-table";
 import { BulkActionsBar } from "@/components/documents/bulk-actions-bar";
 import { BulkAssignDialog } from "@/components/documents/bulk-assign-dialog";
+import { useQuery } from "@tanstack/react-query";
 import { useCollection, useExportCollectionCsv } from "@/lib/hooks/use-collections";
 import {
-  useDocuments,
   useReviewDocument,
   useDeleteDocument,
   useAssignDocument,
 } from "@/lib/hooks/use-documents";
+import { getDocuments } from "@/lib/api/documents";
+import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { toast } from "@/lib/hooks/use-toast";
 
 interface CollectionDetailPageProps {
@@ -58,9 +60,25 @@ export default function CollectionDetailPage({
   }, []);
 
   const { data: collection, isPending: collectionLoading } = useCollection(id);
-  const { data: documentsData, isLoading: documentsLoading } = useDocuments({
-    collection_id: id,
-    limit: 100,
+  const {
+    data: documents = [],
+    isLoading: documentsLoading,
+  } = useQuery({
+    queryKey: ["documents", "collection-all", id],
+    queryFn: () =>
+      fetchAllPaginated(({ limit, offset }) =>
+        getDocuments({ limit, offset, collection_id: id })
+      ),
+    refetchInterval: (query) => {
+      const items = query.state.data;
+      if (!items) return false;
+      const hasActiveProcessing = items.some(
+        (doc) =>
+          doc.parsing_status === "pending" ||
+          doc.parsing_status === "processing"
+      );
+      return hasActiveProcessing ? 3000 : false;
+    },
   });
 
   const reviewDocument = useReviewDocument();
@@ -69,8 +87,6 @@ export default function CollectionDetailPage({
   const exportCsv = useExportCollectionCsv();
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
-
-  const documents = useMemo(() => documentsData?.items || [], [documentsData]);
 
   const handleBulkApprove = async (ids: string[]) => {
     setIsBulkProcessing(true);
@@ -211,12 +227,41 @@ export default function CollectionDetailPage({
   }, [filteredDocuments, sortField, sortOrder]);
 
   // Paginate sorted documents
-  const totalItems = documentsData?.total ?? sortedDocuments.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const totalPages = Math.ceil(sortedDocuments.length / pageSize);
   const paginatedDocuments = useMemo(() => {
     const start = (page - 1) * pageSize;
     return sortedDocuments.slice(start, start + pageSize);
   }, [sortedDocuments, page, pageSize]);
+
+  // Compute review status counts for selected documents
+  const reviewStatusCounts = useMemo(() => {
+    if (selectedIds.length === 0) return undefined;
+    const counts = { approved: 0, rejected: 0, pending: 0 };
+    const docMap = new Map(documents.map((d) => [d.id, d]));
+    for (const docId of selectedIds) {
+      const doc = docMap.get(docId);
+      if (doc?.review_status === "approved") counts.approved++;
+      else if (doc?.review_status === "rejected") counts.rejected++;
+      else counts.pending++;
+    }
+    return counts;
+  }, [selectedIds, documents]);
+
+  // "Select all across pages" logic
+  const pageFullySelected =
+    paginatedDocuments.length > 0 &&
+    paginatedDocuments.every((d) => selectedIds.includes(d.id));
+  const allFilteredIds = useMemo(
+    () => sortedDocuments.map((d) => d.id),
+    [sortedDocuments]
+  );
+  const allFilteredSelected =
+    allFilteredIds.length > 0 &&
+    allFilteredIds.length === selectedIds.length &&
+    allFilteredIds.every((id) => selectedIds.includes(id));
+  const showSelectAllBanner =
+    pageFullySelected &&
+    sortedDocuments.length > paginatedDocuments.length;
 
 
   if (collectionLoading) {
@@ -258,7 +303,7 @@ export default function CollectionDetailPage({
         collection={collection}
         isLoading={collectionLoading}
         canUpload={canManage}
-        documentCount={documentsData?.total ?? documents.length}
+        documentCount={documents.length}
         onExportCsv={() => exportCsv.mutate({ id, name: collection?.name })}
         isExportingCsv={exportCsv.isPending}
       />
@@ -272,7 +317,7 @@ export default function CollectionDetailPage({
         reviewStatus={reviewStatus}
         onReviewStatusChange={(v) => { setReviewStatus(v); setPage(1); }}
         totalFiltered={filteredDocuments.length}
-        total={documentsData?.total ?? documents.length}
+        total={documents.length}
       />
 
       {/* Bulk Actions — only for editors/owners */}
@@ -285,6 +330,7 @@ export default function CollectionDetailPage({
           onDelete={handleBulkDelete}
           onAssign={() => setShowAssignDialog(true)}
           isProcessing={isBulkProcessing}
+          reviewStatusCounts={reviewStatusCounts}
         />
       )}
 
@@ -327,6 +373,31 @@ export default function CollectionDetailPage({
             </div>
           ) : (
             <>
+              {canManage && showSelectAllBanner && (
+                <div className="flex items-center justify-center gap-1 rounded-md bg-muted/50 py-2 text-sm text-muted-foreground">
+                  {allFilteredSelected ? (
+                    <>
+                      All {allFilteredIds.length} documents selected.
+                      <button
+                        className="font-medium text-primary hover:underline"
+                        onClick={() => setSelectedIds([])}
+                      >
+                        Clear selection
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      All {paginatedDocuments.length} on this page selected.
+                      <button
+                        className="font-medium text-primary hover:underline"
+                        onClick={() => setSelectedIds(allFilteredIds)}
+                      >
+                        Select all {allFilteredIds.length} documents
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
               <DocumentsTable
                 documents={paginatedDocuments}
                 selectedIds={canManage ? selectedIds : []}
@@ -338,7 +409,7 @@ export default function CollectionDetailPage({
               <Pagination
                 page={page}
                 totalPages={totalPages}
-                total={totalItems}
+                total={sortedDocuments.length}
                 pageSize={pageSize}
                 onPageChange={setPage}
                 onPageSizeChange={handlePageSizeChange}
