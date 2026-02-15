@@ -233,7 +233,8 @@ describe("GlobalSearch", () => {
       setup();
       await waitFor(() => {
         expect(mockGetCollections).toHaveBeenCalledWith({
-          limit: 1000,
+          limit: 100,
+          offset: 0,
         });
       });
     });
