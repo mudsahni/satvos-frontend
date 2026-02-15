@@ -115,10 +115,10 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   // Fetch all collections when dialog is open
   const { data: allCollections, isLoading: collectionsLoading } = useQuery({
     queryKey: ["collections", "global-search"],
-    queryFn: async () => {
-      const result = await getCollections({ limit: 1000 });
-      return result.items;
-    },
+    queryFn: () =>
+      fetchAllPaginated(({ limit, offset }) =>
+        getCollections({ limit, offset })
+      ),
     enabled: open,
     staleTime: 2 * 60 * 1000,
   });

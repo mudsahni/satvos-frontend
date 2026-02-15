@@ -7,6 +7,7 @@ import { SubmitChannels } from "@/components/landing/submit-channels";
 import { ProblemSection } from "@/components/landing/problem-section";
 import { Features } from "@/components/landing/features";
 import { HowItWorks } from "@/components/landing/how-it-works";
+import { ReportsShowcase } from "@/components/landing/reports-showcase";
 import { ProductShowcase } from "@/components/landing/product-showcase";
 import { SocialProof } from "@/components/landing/social-proof";
 import { Pricing } from "@/components/landing/pricing";
@@ -24,6 +25,7 @@ export default function LandingPage() {
       <ProblemSection />
       <ProductShowcase />
       <HowItWorks />
+      <ReportsShowcase />
       <Features />
       <SocialProof />
       <Pricing />
