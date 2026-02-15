@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   AreaChart,
   Area,
@@ -16,10 +16,13 @@ import {
   FileText,
   Calculator,
   FolderOpen,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
+import { Pagination } from "@/components/ui/pagination";
 import { ReportKpiCard } from "./report-kpi-card";
 import { ChartCard } from "./chart-card";
 import { useFinancialSummary, useCollectionsOverview } from "@/lib/hooks/use-reports";
@@ -110,6 +113,35 @@ export function OverviewTab({ timeSeriesParams, baseParams }: OverviewTabProps) 
       tax: row.cgst + row.sgst + row.igst + row.cess,
     }));
   }, [financialData]);
+
+  // Collection health search + pagination
+  const [colSearch, setColSearch] = useState("");
+  const [colPage, setColPage] = useState(1);
+  const [colPageSize, setColPageSize] = useState(10);
+  const handleColPageSizeChange = useCallback((size: number) => {
+    setColPageSize(size);
+    setColPage(1);
+  }, []);
+  const handleColSearchChange = useCallback((value: string) => {
+    setColSearch(value);
+    setColPage(1);
+  }, []);
+
+  const filteredCollections = useMemo(() => {
+    if (!collectionsData) return [];
+    if (!colSearch) return collectionsData;
+    const q = colSearch.toLowerCase();
+    return collectionsData.filter((c) =>
+      c.collection_name.toLowerCase().includes(q)
+    );
+  }, [collectionsData, colSearch]);
+
+  const colTotal = filteredCollections.length;
+  const colTotalPages = Math.ceil(colTotal / colPageSize);
+  const paginatedCollections = useMemo(() => {
+    const start = (colPage - 1) * colPageSize;
+    return filteredCollections.slice(start, start + colPageSize);
+  }, [filteredCollections, colPage, colPageSize]);
 
   const loading = financialPending;
 
@@ -215,9 +247,18 @@ export function OverviewTab({ timeSeriesParams, baseParams }: OverviewTabProps) 
 
       {/* Collections Health */}
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <FolderOpen className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-base font-semibold">Collection Health</h3>
+        <div className="flex items-center gap-3 mb-4">
+          <FolderOpen className="h-5 w-5 text-muted-foreground shrink-0" />
+          <h3 className="text-base font-semibold shrink-0">Collection Health</h3>
+          <div className="relative ml-auto max-w-xs w-full">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search collections..."
+              value={colSearch}
+              onChange={(e) => handleColSearchChange(e.target.value)}
+              className="pl-8 h-8 text-sm"
+            />
+          </div>
         </div>
         {collectionsError ? (
           <ErrorState
@@ -228,49 +269,61 @@ export function OverviewTab({ timeSeriesParams, baseParams }: OverviewTabProps) 
           <CollectionHealthSkeleton />
         ) : !collectionsData?.length ? (
           <p className="text-sm text-muted-foreground">No collections found.</p>
+        ) : filteredCollections.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No collections matching &ldquo;{colSearch}&rdquo;.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {collectionsData.map((col) => (
-              <Card key={col.collection_id}>
-                <CardHeader className="pb-2 p-4">
-                  <CardTitle className="text-sm font-medium truncate">
-                    {col.collection_name}
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    {formatNumber(col.document_count)} documents &middot;{" "}
-                    {formatCurrency(col.total_amount)}
-                  </p>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-2">
-                  <ProgressRow
-                    label="Validation Valid"
-                    value={col.validation_valid_pct}
-                    colorClass="bg-success"
-                  />
-                  <ProgressRow
-                    label="Validation Warning"
-                    value={col.validation_warning_pct}
-                    colorClass="bg-warning"
-                  />
-                  <ProgressRow
-                    label="Validation Invalid"
-                    value={col.validation_invalid_pct}
-                    colorClass="bg-destructive"
-                  />
-                  <ProgressRow
-                    label="Review Approved"
-                    value={col.review_approved_pct}
-                    colorClass="bg-primary"
-                  />
-                  <ProgressRow
-                    label="Review Pending"
-                    value={col.review_pending_pct}
-                    colorClass="bg-muted-foreground/40"
-                  />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginatedCollections.map((col) => (
+                <Card key={col.collection_id}>
+                  <CardHeader className="pb-2 p-4">
+                    <CardTitle className="text-sm font-medium truncate">
+                      {col.collection_name}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                      {formatNumber(col.document_count)} documents &middot;{" "}
+                      {formatCurrency(col.total_amount)}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 space-y-2">
+                    <ProgressRow
+                      label="Validation Valid"
+                      value={col.validation_valid_pct}
+                      colorClass="bg-success"
+                    />
+                    <ProgressRow
+                      label="Validation Warning"
+                      value={col.validation_warning_pct}
+                      colorClass="bg-warning"
+                    />
+                    <ProgressRow
+                      label="Validation Invalid"
+                      value={col.validation_invalid_pct}
+                      colorClass="bg-destructive"
+                    />
+                    <ProgressRow
+                      label="Review Approved"
+                      value={col.review_approved_pct}
+                      colorClass="bg-primary"
+                    />
+                    <ProgressRow
+                      label="Review Pending"
+                      value={col.review_pending_pct}
+                      colorClass="bg-muted-foreground/40"
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <Pagination
+              page={colPage}
+              totalPages={colTotalPages}
+              total={colTotal}
+              pageSize={colPageSize}
+              onPageChange={setColPage}
+              onPageSizeChange={handleColPageSizeChange}
+            />
+          </>
         )}
       </div>
     </div>

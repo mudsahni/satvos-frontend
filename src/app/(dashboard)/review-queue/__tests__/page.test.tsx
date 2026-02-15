@@ -7,6 +7,7 @@ const mockRefetch = vi.fn();
 
 vi.mock("@/lib/hooks/use-documents", () => ({
   useReviewQueue: vi.fn(),
+  useReviewDocument: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }));
 
 vi.mock("@/lib/hooks/use-collections", () => ({

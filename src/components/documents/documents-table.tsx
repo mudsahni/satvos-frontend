@@ -56,15 +56,21 @@ export function DocumentsTable({
   sortOrder,
 }: DocumentsTableProps) {
   const allSelected =
-    documents.length > 0 && selectedIds.length === documents.length;
-  const someSelected = selectedIds.length > 0 && !allSelected;
+    documents.length > 0 && documents.every((d) => selectedIds.includes(d.id));
+  const someSelected =
+    !allSelected && documents.some((d) => selectedIds.includes(d.id));
 
   const toggleSelectAll = () => {
     if (onSelectionChange) {
       if (allSelected) {
-        onSelectionChange([]);
+        // Deselect current page items, keep selections from other pages
+        const pageIds = new Set(documents.map((d) => d.id));
+        onSelectionChange(selectedIds.filter((id) => !pageIds.has(id)));
       } else {
-        onSelectionChange(documents.map((d) => d.id));
+        // Add current page items to existing selections
+        const existing = new Set(selectedIds);
+        const merged = [...selectedIds, ...documents.filter((d) => !existing.has(d.id)).map((d) => d.id)];
+        onSelectionChange(merged);
       }
     }
   };
