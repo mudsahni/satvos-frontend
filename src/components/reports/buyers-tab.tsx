@@ -14,7 +14,8 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ChartCard } from "./chart-card";
 import { PartyTable } from "./party-table";
 import { useBuyersReport } from "@/lib/hooks/use-reports";
-import { formatCurrency } from "@/lib/utils/format";
+import { formatCurrency, formatCompactCurrency } from "@/lib/utils/format";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
 import type { ReportBaseParams } from "@/types/report";
 
 interface BuyersTabProps {
@@ -39,6 +40,7 @@ function ChartTooltip({ active, payload, label }: {
 }
 
 export function BuyersTab({ baseParams, onDrillDown }: BuyersTabProps) {
+  const isMobile = useIsMobile();
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
@@ -75,8 +77,8 @@ export function BuyersTab({ baseParams, onDrillDown }: BuyersTabProps) {
         loading={isPending}
         empty={top10.length === 0}
       >
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={top10} layout="vertical" margin={{ left: 20 }}>
+        <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+          <BarChart data={top10} layout="vertical" margin={isMobile ? { left: -10, right: 5 } : { left: 20 }}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="hsl(var(--border))"
@@ -84,16 +86,16 @@ export function BuyersTab({ baseParams, onDrillDown }: BuyersTabProps) {
             />
             <XAxis
               type="number"
-              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: isMobile ? 10 : 12, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) => formatCurrency(v).replace(/\.00$/, "")}
+              tickFormatter={(v) => isMobile ? formatCompactCurrency(v) : formatCurrency(v).replace(/\.00$/, "")}
             />
             <YAxis
               type="category"
               dataKey="name"
-              width={140}
-              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              width={isMobile ? 80 : 140}
+              tick={{ fontSize: isMobile ? 10 : 12, fill: "hsl(var(--muted-foreground))" }}
               axisLine={false}
               tickLine={false}
             />

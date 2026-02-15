@@ -10,6 +10,14 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { ReportFilterBar } from "@/components/reports/report-filter-bar";
 import { OverviewTab } from "@/components/reports/overview-tab";
 import { SellersTab } from "@/components/reports/sellers-tab";
@@ -18,9 +26,18 @@ import { TaxAnalysisTab } from "@/components/reports/tax-analysis-tab";
 import { PartyLedgerTab } from "@/components/reports/party-ledger-tab";
 import type { Granularity, ReportTab, ReportBaseParams, ReportTimeSeriesParams } from "@/types/report";
 
+const TABS = [
+  { value: "overview" as const, label: "Overview", icon: BarChart3 },
+  { value: "sellers" as const, label: "Sellers", icon: Building2 },
+  { value: "buyers" as const, label: "Buyers", icon: Users },
+  { value: "tax" as const, label: "Tax Analysis", icon: Receipt },
+  { value: "ledger" as const, label: "Party Ledger", icon: BookOpen },
+];
+
 function ReportsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const initialTab = (searchParams.get("tab") as ReportTab) || "overview";
 
@@ -123,28 +140,33 @@ function ReportsContent() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="overview">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="sellers">
-            <Building2 className="mr-2 h-4 w-4" />
-            Sellers
-          </TabsTrigger>
-          <TabsTrigger value="buyers">
-            <Users className="mr-2 h-4 w-4" />
-            Buyers
-          </TabsTrigger>
-          <TabsTrigger value="tax">
-            <Receipt className="mr-2 h-4 w-4" />
-            Tax Analysis
-          </TabsTrigger>
-          <TabsTrigger value="ledger">
-            <BookOpen className="mr-2 h-4 w-4" />
-            Party Ledger
-          </TabsTrigger>
-        </TabsList>
+        {/* Mobile: Select dropdown */}
+        {isMobile ? (
+          <Select value={activeTab} onValueChange={handleTabChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TABS.map((tab) => (
+                <SelectItem key={tab.value} value={tab.value}>
+                  <span className="flex items-center gap-2">
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <TabsList>
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                <tab.icon className="mr-2 h-4 w-4" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        )}
 
         <TabsContent value="overview">
           <OverviewTab
