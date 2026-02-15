@@ -44,7 +44,7 @@ vi.mock("@/lib/utils/fetch-all-paginated", () => ({
 }));
 
 vi.mock("@/lib/utils/format", () => ({
-  formatRelativeTime: vi.fn((date: string) => "2 days ago"),
+  formatRelativeTime: vi.fn(() => "2 days ago"),
 }));
 
 vi.mock("next/link", () => ({
