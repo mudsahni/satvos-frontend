@@ -200,6 +200,32 @@ describe("CollectionCard", () => {
       expect(onExportCsv).toHaveBeenCalledWith("col-99", "Tax Docs");
     });
   });
+
+  describe("export Tally XML action", () => {
+    it("shows Export Tally XML menu item when onExportTally is provided", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection();
+      renderWithProviders(
+        <CollectionCard collection={collection} onExportTally={() => {}} />
+      );
+
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      expect(screen.getByText("Export Tally XML")).toBeInTheDocument();
+    });
+
+    it("does not show Export Tally XML when onExportTally is not provided", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection();
+      renderWithProviders(<CollectionCard collection={collection} />);
+
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      expect(screen.queryByText("Export Tally XML")).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe("CollectionCardSkeleton", () => {

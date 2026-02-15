@@ -8,6 +8,7 @@ import {
   updateCollection,
   deleteCollection,
   exportCollectionCsv,
+  exportCollectionTally,
   getCollectionPermissions,
   addCollectionPermission,
   updateCollectionPermission,
@@ -85,6 +86,26 @@ export function useExportCollectionCsv() {
     successMessage: {
       title: "CSV exported",
       description: "Your CSV file has been downloaded.",
+    },
+    errorTitle: "Export failed",
+  });
+}
+
+// Tally XML Export
+export function useExportCollectionTally() {
+  return useMutationWithToast({
+    mutationFn: ({
+      id,
+      name,
+      companyName,
+    }: {
+      id: string;
+      name?: string;
+      companyName?: string;
+    }) => exportCollectionTally(id, name, companyName),
+    successMessage: {
+      title: "Tally XML exported",
+      description: "Your Tally XML file has been downloaded.",
     },
     errorTitle: "Export failed",
   });

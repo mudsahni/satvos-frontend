@@ -97,31 +97,42 @@ describe("CollectionHeader", () => {
     expect(screen.queryByText(/Created/)).not.toBeInTheDocument();
   });
 
-  describe("export CSV button", () => {
-    it("shows Export CSV button when onExportCsv is provided", () => {
+  describe("export dropdown", () => {
+    it("shows Export dropdown when onExportCsv is provided", () => {
       renderWithProviders(
         <CollectionHeader collection={baseCollection} onExportCsv={() => {}} />
       );
-      expect(screen.getByRole("button", { name: /export csv/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /export/i })).toBeInTheDocument();
     });
 
-    it("does not show Export CSV button when onExportCsv is not provided", () => {
+    it("does not show Export dropdown when no export handlers are provided", () => {
       renderWithProviders(<CollectionHeader collection={baseCollection} />);
-      expect(screen.queryByRole("button", { name: /export csv/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /export/i })).not.toBeInTheDocument();
     });
 
-    it("calls onExportCsv when clicked", async () => {
+    it("shows Export CSV option in dropdown", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(
+        <CollectionHeader collection={baseCollection} onExportCsv={() => {}} />
+      );
+
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      expect(screen.getByText("Export CSV")).toBeInTheDocument();
+    });
+
+    it("calls onExportCsv when Export CSV is clicked", async () => {
       const user = userEvent.setup();
       const onExportCsv = vi.fn();
       renderWithProviders(
         <CollectionHeader collection={baseCollection} onExportCsv={onExportCsv} />
       );
 
-      await user.click(screen.getByRole("button", { name: /export csv/i }));
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      await user.click(screen.getByText("Export CSV"));
       expect(onExportCsv).toHaveBeenCalledTimes(1);
     });
 
-    it("disables Export CSV button when isExportingCsv is true", () => {
+    it("disables Export dropdown when isExportingCsv is true", () => {
       renderWithProviders(
         <CollectionHeader
           collection={baseCollection}
@@ -129,7 +140,35 @@ describe("CollectionHeader", () => {
           isExportingCsv
         />
       );
-      expect(screen.getByRole("button", { name: /export csv/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /export/i })).toBeDisabled();
+    });
+
+    it("shows Export Tally XML option when onExportTally is provided", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(
+        <CollectionHeader
+          collection={baseCollection}
+          onExportTally={() => {}}
+        />
+      );
+
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      expect(screen.getByText("Export Tally XML")).toBeInTheDocument();
+    });
+
+    it("shows both export options when both handlers are provided", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(
+        <CollectionHeader
+          collection={baseCollection}
+          onExportCsv={() => {}}
+          onExportTally={() => {}}
+        />
+      );
+
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      expect(screen.getByText("Export CSV")).toBeInTheDocument();
+      expect(screen.getByText("Export Tally XML")).toBeInTheDocument();
     });
   });
 });

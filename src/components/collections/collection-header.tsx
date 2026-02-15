@@ -1,12 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Settings, Upload, FileText, FolderOpen, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Settings, Upload, FileText, FolderOpen, Download, Loader2, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { TallyExportDialog } from "@/components/collections/tally-export-dialog";
 import { Collection, getCollectionDocumentCount } from "@/types/collection";
 import { formatDate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
@@ -19,6 +27,8 @@ interface CollectionHeaderProps {
   documentCount?: number;
   onExportCsv?: () => void;
   isExportingCsv?: boolean;
+  onExportTally?: (companyName?: string) => void;
+  isExportingTally?: boolean;
 }
 
 export function CollectionHeader({
@@ -28,8 +38,11 @@ export function CollectionHeader({
   documentCount,
   onExportCsv,
   isExportingCsv,
+  onExportTally,
+  isExportingTally,
 }: CollectionHeaderProps) {
   const router = useRouter();
+  const [tallyDialogOpen, setTallyDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -46,6 +59,8 @@ export function CollectionHeader({
   if (!collection) return null;
 
   const isOwner = collection.user_permission === "owner";
+  const hasExport = !!onExportCsv || !!onExportTally;
+  const isExporting = isExportingCsv || isExportingTally;
 
   return (
     <div className="space-y-3">
@@ -100,15 +115,34 @@ export function CollectionHeader({
           </div>
         </div>
         <div className="flex gap-2 ml-12 sm:ml-0 shrink-0 justify-end sm:justify-start">
-          {onExportCsv && (
-            <Button
-              variant="outline"
-              onClick={onExportCsv}
-              disabled={isExportingCsv}
-            >
-              {isExportingCsv ? <Loader2 className="animate-spin" /> : <Download />}
-              <span className="hidden sm:inline">Export CSV</span>
-            </Button>
+          {hasExport && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={isExporting}>
+                  {isExporting ? <Loader2 className="animate-spin" /> : <Download />}
+                  <span className="hidden sm:inline">Export</span>
+                  <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onExportCsv && (
+                  <DropdownMenuItem
+                    onClick={onExportCsv}
+                    disabled={isExportingCsv}
+                  >
+                    Export CSV
+                  </DropdownMenuItem>
+                )}
+                {onExportTally && (
+                  <DropdownMenuItem
+                    onClick={() => setTallyDialogOpen(true)}
+                    disabled={isExportingTally}
+                  >
+                    Export Tally XML
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {canUpload && (
             <Button asChild>
@@ -128,6 +162,20 @@ export function CollectionHeader({
           )}
         </div>
       </div>
+
+      {/* Tally export dialog */}
+      {onExportTally && (
+        <TallyExportDialog
+          open={tallyDialogOpen}
+          onOpenChange={setTallyDialogOpen}
+          collectionName={collection.name}
+          onExport={(companyName) => {
+            onExportTally(companyName);
+            setTallyDialogOpen(false);
+          }}
+          isExporting={isExportingTally}
+        />
+      )}
     </div>
   );
 }
