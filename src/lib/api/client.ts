@@ -2,19 +2,16 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { API_URL } from "@/lib/constants";
 import { getAuthState, useAuthStore } from "@/store/auth-store";
 import { ApiResponse } from "@/types/api";
+import { setAuthCookie, clearAuthCookie } from "@/lib/utils/cookies";
 
 // Renew the middleware auth cookie (called on login and token refresh)
 function renewAuthCookie() {
-  if (typeof document !== "undefined") {
-    document.cookie = "satvos-auth-state=authenticated; path=/; max-age=86400";
-  }
+  setAuthCookie();
 }
 
 // Clear the middleware auth cookie and redirect to login with context
 function handleSessionExpired() {
-  if (typeof document !== "undefined") {
-    document.cookie = "satvos-auth-state=; path=/; max-age=0";
-  }
+  clearAuthCookie();
   if (typeof window !== "undefined") {
     const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
     window.location.href = `/login?session_expired=true&returnUrl=${returnUrl}`;

@@ -111,12 +111,12 @@ export function DocumentsTable({
         {children}
         {isActive ? (
           sortOrder === "asc" ? (
-            <ArrowUp className="ml-2 h-4 w-4" />
+            <ArrowUp />
           ) : (
-            <ArrowDown className="ml-2 h-4 w-4" />
+            <ArrowDown />
           )
         ) : (
-          <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+          <ArrowUpDown className="opacity-50" />
         )}
       </Button>
     );

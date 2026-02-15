@@ -336,7 +336,7 @@ export function TaxAnalysisTab({ timeSeriesParams, baseParams }: TaxAnalysisTabP
             onClick={() => exportToCsv(hsnData?.items ?? [], hsnColumns, "hsn-summary")}
             disabled={!hsnData?.items?.length}
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download />
             Export CSV
           </Button>
         </div>

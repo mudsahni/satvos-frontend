@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import Link from "next/link";
 import {
   ClipboardCheck,
@@ -19,6 +20,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { ErrorState } from "@/components/ui/error-state";
 import { UserName } from "@/components/ui/user-name";
 import { useReviewQueue, useReviewDocument } from "@/lib/hooks/use-documents";
+import { useBulkActions } from "@/lib/hooks/use-bulk-actions";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { formatRelativeTime } from "@/lib/utils/format";
 
@@ -26,10 +28,17 @@ const DEFAULT_PAGE_SIZE = 20;
 
 export default function ReviewQueuePage() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const {
+    selectedIds,
+    setSelectedIds,
+    selectedSet,
+    isBulkProcessing,
+    clearSelection,
+    createBulkHandler,
+  } = useBulkActions({ resetDeps: [debouncedSearch, page] });
 
   const {
     data,
@@ -51,17 +60,17 @@ export default function ReviewQueuePage() {
 
   const documents = useMemo(() => {
     const items = data?.items || [];
-    if (!search) return items;
-    const q = search.toLowerCase();
+    if (!debouncedSearch) return items;
+    const q = debouncedSearch.toLowerCase();
     return items.filter((doc) => doc.name.toLowerCase().includes(q));
-  }, [data, search]);
+  }, [data, debouncedSearch]);
 
   const allSelected = documents.length > 0 && selectedIds.length === documents.length;
   const someSelected = selectedIds.length > 0 && selectedIds.length < documents.length;
 
   const toggleSelectAll = () => {
     if (allSelected) {
-      setSelectedIds([]);
+      clearSelection();
     } else {
       setSelectedIds(documents.map((d) => d.id));
     }
@@ -73,43 +82,19 @@ export default function ReviewQueuePage() {
     );
   };
 
-  const handleBulkApprove = async (ids: string[]) => {
-    setIsBulkProcessing(true);
-    let succeeded = 0;
-    let failed = 0;
-    try {
-      const results = await Promise.allSettled(
-        ids.map((docId) =>
-          reviewDocument.mutateAsync({ id: docId, data: { status: "approved" } })
-        )
-      );
-      succeeded = results.filter((r) => r.status === "fulfilled").length;
-      failed = results.filter((r) => r.status === "rejected").length;
-      if (succeeded > 0) setSelectedIds([]);
-    } finally {
-      setIsBulkProcessing(false);
-    }
-    return { succeeded, failed };
-  };
+  const handleBulkApprove = useMemo(
+    () => createBulkHandler((docId) =>
+      reviewDocument.mutateAsync({ id: docId, data: { status: "approved" } })
+    ),
+    [createBulkHandler, reviewDocument]
+  );
 
-  const handleBulkReject = async (ids: string[]) => {
-    setIsBulkProcessing(true);
-    let succeeded = 0;
-    let failed = 0;
-    try {
-      const results = await Promise.allSettled(
-        ids.map((docId) =>
-          reviewDocument.mutateAsync({ id: docId, data: { status: "rejected" } })
-        )
-      );
-      succeeded = results.filter((r) => r.status === "fulfilled").length;
-      failed = results.filter((r) => r.status === "rejected").length;
-      if (succeeded > 0) setSelectedIds([]);
-    } finally {
-      setIsBulkProcessing(false);
-    }
-    return { succeeded, failed };
-  };
+  const handleBulkReject = useMemo(
+    () => createBulkHandler((docId) =>
+      reviewDocument.mutateAsync({ id: docId, data: { status: "rejected" } })
+    ),
+    [createBulkHandler, reviewDocument]
+  );
 
   const total = search ? documents.length : (data?.total ?? 0);
   const totalPages = search
@@ -175,7 +160,7 @@ export default function ReviewQueuePage() {
           {selectedIds.length > 0 && (
             <BulkActionsBar
               selectedIds={selectedIds}
-              onDeselect={() => setSelectedIds([])}
+              onDeselect={clearSelection}
               onApprove={handleBulkApprove}
               onReject={handleBulkReject}
               isProcessing={isBulkProcessing}
@@ -201,7 +186,7 @@ export default function ReviewQueuePage() {
                 const collectionName = doc.collection_id
                   ? collectionsMap.get(doc.collection_id)
                   : null;
-                const isSelected = selectedIds.includes(doc.id);
+                const isSelected = selectedSet.has(doc.id);
                 return (
                   <div
                     key={doc.id}

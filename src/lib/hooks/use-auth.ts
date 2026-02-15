@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth-store";
 import { logout as logoutApi } from "@/lib/api/auth";
+import { clearAuthCookie } from "@/lib/utils/cookies";
 
 export function useAuth() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export function useAuth() {
     } finally {
       queryClient.clear();
       logoutStore();
-      document.cookie = "satvos-auth-state=; path=/; max-age=0";
+      clearAuthCookie();
       router.push("/");
     }
   };

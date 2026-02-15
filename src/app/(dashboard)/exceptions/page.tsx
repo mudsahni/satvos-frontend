@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, Suspense } from "react";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -49,6 +50,7 @@ function NeedsAttentionContent() {
 
   const [filterStatus, setFilterStatus] = useState<AttentionFilter>(initialFilter);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
@@ -83,8 +85,8 @@ function NeedsAttentionContent() {
     let docs = allDocuments.filter((doc) => matchesFilter(doc, filterStatus));
 
     // Apply search
-    if (search) {
-      const q = search.toLowerCase();
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
       docs = docs.filter((doc) => doc.name.toLowerCase().includes(q));
     }
 
@@ -92,7 +94,7 @@ function NeedsAttentionContent() {
     docs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return docs;
-  }, [allDocuments, filterStatus, search]);
+  }, [allDocuments, filterStatus, debouncedSearch]);
 
   // Pagination
   const totalDocuments = documents.length;

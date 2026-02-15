@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import Link from "next/link";
 import { Plus, Search, FolderOpen, Upload, Loader2 } from "lucide-react";
 
@@ -36,8 +37,10 @@ export default function CollectionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
+  const debouncedSearch = useDebouncedValue(search);
+
   // API doesn't support search — fetch all when searching, paginated otherwise
-  const hasSearch = !!search;
+  const hasSearch = !!debouncedSearch;
   const { data, isLoading, isError, refetch } = useCollections({
     limit: hasSearch ? 1000 : pageSize,
     offset: hasSearch ? 0 : (page - 1) * pageSize,
@@ -46,14 +49,14 @@ export default function CollectionsPage() {
   // Client-side search filtering
   const filtered = useMemo(() => {
     const items = data?.items || [];
-    if (!search) return items;
-    const q = search.toLowerCase();
+    if (!debouncedSearch) return items;
+    const q = debouncedSearch.toLowerCase();
     return items.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.description?.toLowerCase().includes(q)
     );
-  }, [data, search]);
+  }, [data, debouncedSearch]);
 
   // Client-side pagination when searching
   const total = hasSearch ? filtered.length : (data?.total ?? 0);

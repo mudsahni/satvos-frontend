@@ -197,6 +197,16 @@ describe("BulkActionsBar", () => {
     });
   });
 
+  it("does not render delete button when onDelete is not provided", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { onDelete, ...propsWithoutDelete } = defaultProps;
+    renderWithProviders(<BulkActionsBar {...propsWithoutDelete} />);
+
+    expect(screen.getByRole("button", { name: /approve/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reject/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
+  });
+
   it("shows all-failed results banner", async () => {
     vi.useRealTimers();
     const user = userEvent.setup();

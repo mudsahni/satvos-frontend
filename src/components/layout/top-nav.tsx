@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthStore } from "@/store/auth-store";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { clearAuthCookie } from "@/lib/utils/cookies";
 
 interface TopNavProps {
   onSearchClick?: () => void;
@@ -36,7 +37,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
   const handleLogout = () => {
     queryClient.clear();
     logout();
-    document.cookie = "satvos-auth-state=; path=/; max-age=0";
+    clearAuthCookie();
     router.push("/");
   };
 
@@ -63,7 +64,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
           className="w-full justify-start text-muted-foreground h-10 px-4 bg-muted/60 rounded-lg border-0 hover:bg-muted"
           onClick={onSearchClick}
         >
-          <Search className="h-4 w-4 mr-2" />
+          <Search />
           <span className="hidden sm:inline-block">Search documents...</span>
           <span className="sm:hidden">Search...</span>
           <kbd className="ml-auto pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md bg-background border px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
