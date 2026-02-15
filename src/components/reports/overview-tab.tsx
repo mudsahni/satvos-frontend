@@ -23,7 +23,8 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ReportKpiCard } from "./report-kpi-card";
 import { ChartCard } from "./chart-card";
 import { useFinancialSummary, useCollectionsOverview } from "@/lib/hooks/use-reports";
-import { formatCurrency, formatNumber } from "@/lib/utils/format";
+import { formatCurrency, formatCompactCurrency, formatNumber } from "@/lib/utils/format";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
 import type { ReportTimeSeriesParams, ReportBaseParams } from "@/types/report";
 
 interface OverviewTabProps {
@@ -67,6 +68,8 @@ function CollectionHealthSkeleton() {
 }
 
 export function OverviewTab({ timeSeriesParams, baseParams }: OverviewTabProps) {
+  const isMobile = useIsMobile();
+
   const {
     data: financialData,
     isPending: financialPending,
@@ -157,8 +160,8 @@ export function OverviewTab({ timeSeriesParams, baseParams }: OverviewTabProps) 
           loading={loading}
           empty={chartData.length === 0}
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={chartData}>
+          <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
+            <AreaChart data={chartData} margin={isMobile ? { left: -10, right: 5 } : undefined}>
               <defs>
                 <linearGradient id="gradientSubtotal" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.2} />
@@ -176,16 +179,17 @@ export function OverviewTab({ timeSeriesParams, baseParams }: OverviewTabProps) 
               />
               <XAxis
                 dataKey="period"
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: isMobile ? 10 : 12, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
+                interval={isMobile ? "preserveStartEnd" : undefined}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: isMobile ? 10 : 12, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => formatCurrency(v).replace(/\.00$/, "")}
-                width={80}
+                tickFormatter={(v) => isMobile ? formatCompactCurrency(v) : formatCurrency(v).replace(/\.00$/, "")}
+                width={isMobile ? 50 : 80}
               />
               <Tooltip content={<ChartTooltip />} />
               <Area

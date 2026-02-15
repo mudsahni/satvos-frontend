@@ -30,7 +30,8 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ReportKpiCard } from "./report-kpi-card";
 import { ChartCard } from "./chart-card";
 import { useTaxSummary, useHsnSummary } from "@/lib/hooks/use-reports";
-import { formatCurrency, formatNumber } from "@/lib/utils/format";
+import { formatCurrency, formatCompactCurrency, formatNumber } from "@/lib/utils/format";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { exportToCsv, type CsvColumn } from "@/lib/utils/csv-export";
 import type { ReportTimeSeriesParams, ReportBaseParams, HsnSummaryRow } from "@/types/report";
 
@@ -80,6 +81,7 @@ function PieLabel(props: any) {
 }
 
 export function TaxAnalysisTab({ timeSeriesParams, baseParams }: TaxAnalysisTabProps) {
+  const isMobile = useIsMobile();
   const [hsnPage, setHsnPage] = useState(1);
   const hsnPageSize = 20;
 
@@ -201,8 +203,8 @@ export function TaxAnalysisTab({ timeSeriesParams, baseParams }: TaxAnalysisTabP
           loading={loading}
           empty={stackedData.length === 0}
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={stackedData}>
+          <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
+            <BarChart data={stackedData} margin={isMobile ? { left: -10, right: 5 } : undefined}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="hsl(var(--border))"
@@ -210,16 +212,17 @@ export function TaxAnalysisTab({ timeSeriesParams, baseParams }: TaxAnalysisTabP
               />
               <XAxis
                 dataKey="period"
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: isMobile ? 10 : 12, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
+                interval={isMobile ? "preserveStartEnd" : undefined}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: isMobile ? 10 : 12, fill: "hsl(var(--muted-foreground))" }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v) => formatCurrency(v).replace(/\.00$/, "")}
-                width={80}
+                tickFormatter={(v) => isMobile ? formatCompactCurrency(v) : formatCurrency(v).replace(/\.00$/, "")}
+                width={isMobile ? 50 : 80}
               />
               <Tooltip content={<TaxChartTooltip />} />
               <Bar
@@ -248,14 +251,14 @@ export function TaxAnalysisTab({ timeSeriesParams, baseParams }: TaxAnalysisTabP
           loading={loading}
           empty={tradeSplitData.length === 0}
         >
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
             <PieChart>
               <Pie
                 data={tradeSplitData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={90}
+                innerRadius={isMobile ? 40 : 60}
+                outerRadius={isMobile ? 65 : 90}
                 dataKey="value"
                 labelLine={false}
                 label={PieLabel}
@@ -286,14 +289,14 @@ export function TaxAnalysisTab({ timeSeriesParams, baseParams }: TaxAnalysisTabP
           loading={loading}
           empty={taxSplitData.length === 0}
         >
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
             <PieChart>
               <Pie
                 data={taxSplitData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={90}
+                innerRadius={isMobile ? 40 : 60}
+                outerRadius={isMobile ? 65 : 90}
                 dataKey="value"
                 labelLine={false}
                 label={PieLabel}

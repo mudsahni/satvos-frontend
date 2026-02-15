@@ -40,10 +40,10 @@ export function ChartCard({
       <CardContent>
         {loading ? (
           <div className="space-y-3">
-            <Skeleton className="h-[280px] w-full" />
+            <Skeleton className="h-[200px] sm:h-[280px] w-full" />
           </div>
         ) : empty ? (
-          <div className="flex h-[280px] items-center justify-center">
+          <div className="flex h-[200px] sm:h-[280px] items-center justify-center">
             <p className="text-sm text-muted-foreground">{emptyMessage}</p>
           </div>
         ) : (
