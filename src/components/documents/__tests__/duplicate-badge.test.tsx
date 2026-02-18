@@ -182,7 +182,7 @@ describe("DuplicateBadge", () => {
 
   describe("compact mode", () => {
     it("renders badge without Copy icon in compact mode", () => {
-      const { container } = renderWithProviders(
+      const {  } = renderWithProviders(
         <DuplicateBadge
           validationResults={[makeDuplicateResult()]}
           compact
