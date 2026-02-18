@@ -164,7 +164,7 @@ export function AppSidebar() {
     return items.map((item) => {
       const isActive =
         pathname === item.href ||
-        pathname.startsWith(item.href + "/");
+        (item.href !== "/admin" && pathname.startsWith(item.href + "/"));
       return (
         <SidebarMenuItem key={item.href}>
           <SidebarMenuButton

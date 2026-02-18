@@ -17,11 +17,23 @@ import {
 export async function getServiceAccounts(
   params?: ServiceAccountListParams
 ): Promise<PaginatedResponse<ServiceAccount>> {
-  const response = await apiClient.get<ApiPaginatedResponse<ServiceAccount>>(
-    "/service-accounts",
-    { params }
-  );
-  return transformPagination(response.data.data, response.data.meta);
+  try {
+    const response = await apiClient.get<ApiPaginatedResponse<ServiceAccount>>(
+      "/service-accounts",
+      { params }
+    );
+    return transformPagination(response.data.data, response.data.meta);
+  } catch (error) {
+    // Backend may return 404 when no service accounts exist yet
+    if (
+      error instanceof Error &&
+      "response" in error &&
+      (error as { response?: { status?: number } }).response?.status === 404
+    ) {
+      return transformPagination([], undefined);
+    }
+    throw error;
+  }
 }
 
 export async function getServiceAccount(id: string): Promise<ServiceAccount> {

@@ -121,6 +121,33 @@ describe("AppSidebar", () => {
     expect(hrefs).toContain("/documents");
   });
 
+  it("does NOT highlight Admin Overview when on an admin sub-page", async () => {
+    const navigation = await import("next/navigation");
+    vi.mocked(navigation.usePathname).mockReturnValue("/admin/users");
+
+    vi.mocked(useAuthStore).mockReturnValue({
+      user: {
+        id: "user-1",
+        tenant_id: "t-1",
+        email: "admin@test.com",
+        full_name: "Admin User",
+        role: "admin",
+        is_active: true,
+        email_verified: true,
+        email_verified_at: "2024-01-01T00:00:00Z",
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      },
+    } as unknown as ReturnType<typeof useAuthStore>);
+
+    renderSidebar();
+
+    // Overview (/admin) should NOT be active when on /admin/users
+    const overviewLink = screen.getByText("Overview").closest("a");
+    const overviewButton = overviewLink?.parentElement;
+    expect(overviewButton).not.toHaveAttribute("data-active", "true");
+  });
+
   it("does NOT show admin nav items for viewer users", () => {
     vi.mocked(useAuthStore).mockReturnValue({
       user: {
