@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -51,25 +51,10 @@ export default function DashboardLayout({
 
   const handleDismissBanner = useCallback(() => setBannerDismissed(true), []);
 
-  // Track whether the user was ever authenticated in this tab.
-  // Only clear the middleware cookie on a true logout transition
-  // (was authenticated → became unauthenticated), not when a new tab
-  // opens with empty sessionStorage and was never authenticated.
-  const wasAuthenticatedRef = useRef(false);
-
+  // When the user becomes unauthenticated (logout or session expiry),
+  // clear the middleware cookie so the next page navigation redirects.
   useEffect(() => {
-    if (!isHydrated) return;
-
-    if (isAuthenticated) {
-      wasAuthenticatedRef.current = true;
-    } else if (wasAuthenticatedRef.current) {
-      // Real logout/session expiry — clear cookie so the middleware
-      // redirect kicks in on the next page navigation.
-      clearAuthCookie();
-    } else {
-      // New tab with empty sessionStorage — no tokens available.
-      // Redirect to login so the user can re-authenticate, preserving
-      // the intended destination as returnUrl.
+    if (isHydrated && !isAuthenticated) {
       clearAuthCookie();
       router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
     }
