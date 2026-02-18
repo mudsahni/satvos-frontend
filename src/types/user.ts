@@ -9,6 +9,7 @@ export interface User {
   is_active: boolean;
   email_verified: boolean;
   email_verified_at: string | null;
+  auth_provider?: "email" | "google" | "api_key";
   created_at: string;
   updated_at: string;
   monthly_document_limit?: number;

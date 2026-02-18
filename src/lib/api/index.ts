@@ -6,4 +6,6 @@ export * from "./users";
 export * from "./stats";
 export * from "./reports";
 export * from "./audit";
+export * from "./admin";
+export * from "./service-accounts";
 export { default as apiClient, getErrorMessage, isApiError, isEmailNotVerifiedError, renewAuthCookie } from "./client";

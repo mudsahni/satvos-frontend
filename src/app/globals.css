@@ -95,6 +95,31 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 239 84% 67%;
 
+    /* Role colors */
+    --role-admin: 270 60% 50%;
+    --role-admin-bg: 270 40% 96%;
+    --role-admin-border: 270 30% 88%;
+
+    --role-manager: 221 83% 53%;
+    --role-manager-bg: 221 40% 96%;
+    --role-manager-border: 221 30% 88%;
+
+    --role-member: 173 58% 39%;
+    --role-member-bg: 173 35% 95%;
+    --role-member-border: 173 28% 86%;
+
+    --role-viewer: 215 16% 47%;
+    --role-viewer-bg: 220 14% 96%;
+    --role-viewer-border: 220 13% 91%;
+
+    --role-free: 152 56% 28%;
+    --role-free-bg: 148 40% 93%;
+    --role-free-border: 148 30% 85%;
+
+    --role-service: 25 65% 42%;
+    --role-service-bg: 30 55% 94%;
+    --role-service-border: 30 40% 86%;
+
     /* Radius */
     --radius: 0.625rem;
   }
@@ -187,6 +212,31 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 20% 12%;
     --sidebar-ring: 239 84% 67%;
+
+    /* Role colors (dark mode) */
+    --role-admin: 270 80% 72%;
+    --role-admin-bg: 270 30% 14%;
+    --role-admin-border: 270 30% 24%;
+
+    --role-manager: 221 90% 72%;
+    --role-manager-bg: 221 30% 14%;
+    --role-manager-border: 221 30% 24%;
+
+    --role-member: 173 55% 55%;
+    --role-member-bg: 173 28% 13%;
+    --role-member-border: 173 28% 23%;
+
+    --role-viewer: 215 20% 65%;
+    --role-viewer-bg: 220 20% 13%;
+    --role-viewer-border: 220 20% 20%;
+
+    --role-free: 152 45% 55%;
+    --role-free-bg: 152 30% 13%;
+    --role-free-border: 152 30% 22%;
+
+    --role-service: 25 60% 58%;
+    --role-service-bg: 25 35% 14%;
+    --role-service-border: 25 35% 24%;
   }
 }
 
