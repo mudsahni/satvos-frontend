@@ -119,7 +119,9 @@ export function DuplicateBadge({
 }
 
 function DuplicateMatchRow({ match }: { match: DuplicateMatchInfo }) {
-  const searchUrl = `/documents?search=${encodeURIComponent(match.documentName)}`;
+  const href = match.documentId
+    ? `/documents/${match.documentId}`
+    : `/documents?search=${encodeURIComponent(match.documentName)}`;
 
   return (
     <div className="flex items-start gap-3 rounded-lg border p-3">
@@ -127,7 +129,7 @@ function DuplicateMatchRow({ match }: { match: DuplicateMatchInfo }) {
       <div className="min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
           <Link
-            href={searchUrl}
+            href={href}
             className="font-medium text-sm hover:text-primary hover:underline transition-colors"
           >
             {match.documentName}
