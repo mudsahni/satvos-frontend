@@ -1,8 +1,8 @@
 import { useAuthStore } from "../auth-store";
 import type { User, TokenPair } from "@/types/auth";
 
-const REMEMBER_ME_KEY = "satvos-remember-me";
 const AUTH_STORAGE_KEY = "satvos-auth";
+const SESSION_MARKER_KEY = "satvos-session-active";
 
 const mockUser: User = {
   id: "user-1",
@@ -35,64 +35,30 @@ const initialState = {
 
 describe("useAuthStore remember me", () => {
   beforeEach(() => {
-    // Clear storage first so getBackingStorage returns sessionStorage
     localStorage.clear();
     sessionStorage.clear();
-    // Reset store state
     useAuthStore.setState(initialState);
   });
 
   describe("login with rememberMe", () => {
-    it("login with rememberMe=true sets localStorage flag", () => {
-      const { login } = useAuthStore.getState();
-
-      login(mockTokens, mockUser, "test-tenant", true);
-
-      expect(localStorage.getItem(REMEMBER_ME_KEY)).toBe("true");
-      expect(useAuthStore.getState().rememberMe).toBe(true);
-    });
-
-    it("login with rememberMe=false does not set localStorage flag", () => {
+    it("login with rememberMe=false sets session marker in sessionStorage", () => {
       const { login } = useAuthStore.getState();
 
       login(mockTokens, mockUser, "test-tenant", false);
 
-      expect(localStorage.getItem(REMEMBER_ME_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBe("true");
       expect(useAuthStore.getState().rememberMe).toBe(false);
     });
 
-    it("login with rememberMe=true calls removeItem on stale sessionStorage", () => {
-      const removeItemSpy = vi.spyOn(
-        Storage.prototype,
-        "removeItem"
-      );
+    it("login with rememberMe=true removes session marker", () => {
+      // Pre-set a session marker
+      sessionStorage.setItem(SESSION_MARKER_KEY, "true");
 
       const { login } = useAuthStore.getState();
       login(mockTokens, mockUser, "test-tenant", true);
 
-      // The login method should remove the stale auth key from sessionStorage
-      // (the non-remember-me storage). It also removes the remember-me key
-      // from localStorage if rememberMe=false, but here rememberMe=true
-      // so it removes the stale key from sessionStorage.
-      const sessionStorageRemoveCalls = removeItemSpy.mock.calls.filter(
-        ([key]) => key === AUTH_STORAGE_KEY
-      );
-      expect(sessionStorageRemoveCalls.length).toBeGreaterThanOrEqual(1);
-
-      removeItemSpy.mockRestore();
-    });
-
-    it("login with rememberMe=false clears stale localStorage auth data", () => {
-      // Simulate stale data in localStorage
-      localStorage.setItem(AUTH_STORAGE_KEY, "stale-data");
-
-      const { login } = useAuthStore.getState();
-      login(mockTokens, mockUser, "test-tenant", false);
-
-      // When rememberMe=false, stale storage is localStorage
-      // The login method removes the auth key from localStorage.
-      // Note: persist middleware may re-write to sessionStorage (the active store).
-      expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBeNull();
+      expect(useAuthStore.getState().rememberMe).toBe(true);
     });
 
     it("login defaults rememberMe to false when not provided", () => {
@@ -100,8 +66,31 @@ describe("useAuthStore remember me", () => {
 
       login(mockTokens, mockUser, "test-tenant");
 
-      expect(localStorage.getItem(REMEMBER_ME_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBe("true");
       expect(useAuthStore.getState().rememberMe).toBe(false);
+    });
+
+    it("login always stores auth data in localStorage", () => {
+      const { login } = useAuthStore.getState();
+
+      login(mockTokens, mockUser, "test-tenant", false);
+
+      // Auth data should be in localStorage regardless of rememberMe
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      expect(stored).not.toBeNull();
+      const parsed = JSON.parse(stored!);
+      expect(parsed.state.accessToken).toBe("access-token-123");
+    });
+
+    it("login with rememberMe=true also stores in localStorage", () => {
+      const { login } = useAuthStore.getState();
+
+      login(mockTokens, mockUser, "test-tenant", true);
+
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      expect(stored).not.toBeNull();
+      const parsed = JSON.parse(stored!);
+      expect(parsed.state.isAuthenticated).toBe(true);
     });
 
     it("login with rememberMe=true sets isAuthenticated to true", () => {
@@ -119,43 +108,33 @@ describe("useAuthStore remember me", () => {
   });
 
   describe("logout clears storage", () => {
-    it("logout clears localStorage remember-me flag", () => {
+    it("logout removes session marker from sessionStorage", () => {
       const { login } = useAuthStore.getState();
-      login(mockTokens, mockUser, "test-tenant", true);
+      login(mockTokens, mockUser, "test-tenant", false);
 
-      // Verify flag was set
-      expect(localStorage.getItem(REMEMBER_ME_KEY)).toBe("true");
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBe("true");
 
       const { logout } = useAuthStore.getState();
       logout();
 
-      expect(localStorage.getItem(REMEMBER_ME_KEY)).toBeNull();
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBeNull();
     });
 
-    it("logout calls removeItem on both localStorage and sessionStorage for auth data", () => {
+    it("logout clears auth data in localStorage", () => {
       const { login } = useAuthStore.getState();
       login(mockTokens, mockUser, "test-tenant", true);
-
-      const removeItemSpy = vi.spyOn(
-        Storage.prototype,
-        "removeItem"
-      );
 
       const { logout } = useAuthStore.getState();
       logout();
 
-      // logout should call removeItem for both AUTH_STORAGE_KEY and REMEMBER_ME_KEY
-      const removedKeys = removeItemSpy.mock.calls.map(([key]) => key);
-      expect(removedKeys).toContain(REMEMBER_ME_KEY);
-      expect(removedKeys).toContain(AUTH_STORAGE_KEY);
-
-      // Should be called at least twice for AUTH_STORAGE_KEY (localStorage + sessionStorage)
-      const authKeyRemovals = removedKeys.filter(
-        (key) => key === AUTH_STORAGE_KEY
-      );
-      expect(authKeyRemovals.length).toBeGreaterThanOrEqual(2);
-
-      removeItemSpy.mockRestore();
+      // Zustand persist middleware re-writes the (now empty) state, so
+      // localStorage won't be null — but the stored data is logged-out.
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        expect(parsed.state.isAuthenticated).toBe(false);
+        expect(parsed.state.accessToken).toBeNull();
+      }
     });
 
     it("logout resets rememberMe state to false", () => {
@@ -184,6 +163,36 @@ describe("useAuthStore remember me", () => {
       expect(state.tenantSlug).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.rememberMe).toBe(false);
+    });
+  });
+
+  describe("session marker and rehydration", () => {
+    it("session marker is absent after browser restart simulation (sessionStorage cleared)", () => {
+      const { login } = useAuthStore.getState();
+      login(mockTokens, mockUser, "test-tenant", false);
+
+      // Verify marker was set
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBe("true");
+
+      // Simulate browser restart: sessionStorage is cleared
+      sessionStorage.clear();
+
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBeNull();
+    });
+
+    it("session marker persists within the same session", () => {
+      const { login } = useAuthStore.getState();
+      login(mockTokens, mockUser, "test-tenant", false);
+
+      // Within the same session, marker should persist
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBe("true");
+    });
+
+    it("rememberMe=true does not set session marker", () => {
+      const { login } = useAuthStore.getState();
+      login(mockTokens, mockUser, "test-tenant", true);
+
+      expect(sessionStorage.getItem(SESSION_MARKER_KEY)).toBeNull();
     });
   });
 });

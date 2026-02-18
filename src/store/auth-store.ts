@@ -2,25 +2,15 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { User, TokenPair } from "@/types/auth";
 
-const REMEMBER_ME_KEY = "satvos-remember-me";
 const AUTH_STORAGE_KEY = "satvos-auth";
+const SESSION_MARKER_KEY = "satvos-session-active";
 
 /**
- * Check whether the user previously selected "Remember me".
- * Safe to call during SSR (returns false).
- */
-function isRememberMeEnabled(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(REMEMBER_ME_KEY) === "true";
-}
-
-/**
- * Return the appropriate backing storage based on the remember-me flag.
+ * Always use localStorage so auth state is shared across tabs.
  * Falls back to a no-op store during SSR.
  */
 function getBackingStorage(): Storage {
   if (typeof window === "undefined") {
-    // SSR no-op storage
     return {
       length: 0,
       clear: () => {},
@@ -30,7 +20,7 @@ function getBackingStorage(): Storage {
       key: () => null,
     };
   }
-  return isRememberMeEnabled() ? localStorage : sessionStorage;
+  return localStorage;
 }
 
 interface AuthState {
@@ -61,16 +51,14 @@ export const useAuthStore = create<AuthState>()(
 
       login: (tokens, user, tenantSlug, rememberMe = false) => {
         if (typeof window !== "undefined") {
-          if (rememberMe) {
-            localStorage.setItem(REMEMBER_ME_KEY, "true");
+          if (!rememberMe) {
+            // Set a session marker so we can detect browser-close on next visit.
+            // sessionStorage is scoped to the tab lifetime but new tabs opened
+            // via link/ctrl-click inherit it, so all tabs in the session see it.
+            sessionStorage.setItem(SESSION_MARKER_KEY, "true");
           } else {
-            localStorage.removeItem(REMEMBER_ME_KEY);
+            sessionStorage.removeItem(SESSION_MARKER_KEY);
           }
-
-          // When switching storage mode, clear the old storage so stale data
-          // doesn't linger in the storage we are moving away from.
-          const staleStorage = rememberMe ? sessionStorage : localStorage;
-          staleStorage.removeItem(AUTH_STORAGE_KEY);
         }
 
         set({
@@ -85,10 +73,8 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         if (typeof window !== "undefined") {
-          // Clear remember-me flag and auth data from both storages
-          localStorage.removeItem(REMEMBER_ME_KEY);
           localStorage.removeItem(AUTH_STORAGE_KEY);
-          sessionStorage.removeItem(AUTH_STORAGE_KEY);
+          sessionStorage.removeItem(SESSION_MARKER_KEY);
         }
 
         set({
@@ -132,6 +118,31 @@ export const useAuthStore = create<AuthState>()(
         if (error) {
           console.error("Auth store hydration error:", error);
         }
+
+        // If the user logged in without "Remember me", we placed a session
+        // marker in sessionStorage. When the browser is fully closed and
+        // reopened, sessionStorage is empty — the marker is gone — so we
+        // know the session has ended and should clear auth data.
+        if (
+          typeof window !== "undefined" &&
+          state?.isAuthenticated &&
+          !state.rememberMe &&
+          !sessionStorage.getItem(SESSION_MARKER_KEY)
+        ) {
+          // Session expired (browser was closed). Clear persisted data.
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          useAuthStore.setState({
+            accessToken: null,
+            refreshToken: null,
+            user: null,
+            tenantSlug: null,
+            isAuthenticated: false,
+            rememberMe: false,
+            isHydrated: true,
+          });
+          return;
+        }
+
         // Always set hydrated to true, even on error.
         // If state is undefined (corrupt storage), fall back to direct setState.
         if (state) {
