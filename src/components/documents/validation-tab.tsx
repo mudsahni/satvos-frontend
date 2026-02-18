@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   CheckCircle,
   XCircle,
@@ -29,6 +30,8 @@ import {
   getRuleType,
 } from "@/types/validation";
 import { cn } from "@/lib/utils";
+import { DuplicateInvoiceAlert } from "@/components/documents/duplicate-invoice-alert";
+import { parseDuplicateResult, getMatchTypeLabel } from "@/lib/utils/duplicate-detection";
 
 interface ValidationTabProps {
   validationResults: ValidationResult[];
@@ -69,20 +72,24 @@ function isDuplicateResult(result: ValidationResult): boolean {
   );
 }
 
-// Parse quoted document names from duplicate detection message
-// e.g. '..."Invoice-ABC.pdf" (uploaded 2025-01-10), "Invoice-DEF.pdf" (uploaded 2025-01-08)'
-function parseDuplicateDocuments(
-  message: string
-): { name: string; date: string }[] {
-  const matches = [...message.matchAll(/"([^"]+)"\s*\(uploaded\s+([^)]+)\)/g)];
-  return matches.map((m) => ({ name: m[1], date: m[2] }));
-}
-
 function DuplicateDetails({ result }: { result: ValidationResult }) {
-  const docs = parseDuplicateDocuments(result.message);
+  const parsed = parseDuplicateResult([result]);
 
-  if (docs.length === 0) {
-    // Fallback to raw message if parsing fails
+  if (parsed.unavailable) {
+    return (
+      <div className="space-y-1.5">
+        <p className="text-sm text-muted-foreground">
+          The duplicate check could not run because the seller GSTIN or invoice
+          number is missing from the parsed data.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Ensure these fields are present and re-validate to check for duplicates.
+        </p>
+      </div>
+    );
+  }
+
+  if (!parsed.found || parsed.matches.length === 0) {
     return <p className="text-sm text-muted-foreground">{result.message}</p>;
   }
 
@@ -92,13 +99,29 @@ function DuplicateDetails({ result }: { result: ValidationResult }) {
         {result.actual_value || "Duplicate invoices found"} — matching documents:
       </p>
       <ul className="space-y-1.5">
-        {docs.map((doc) => (
-          <li key={doc.name} className="flex items-center gap-2 text-sm">
-            <FileText className="h-3.5 w-3.5 text-warning shrink-0" />
-            <span className="font-medium">{doc.name}</span>
-            <span className="text-xs text-muted-foreground">
-              uploaded {doc.date}
-            </span>
+        {parsed.matches.map((match) => (
+          <li key={match.documentName} className="flex items-start gap-2 text-sm">
+            <FileText className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" />
+            <div>
+              <Link
+                href={`/documents?search=${encodeURIComponent(match.documentName)}`}
+                className="font-medium text-foreground hover:text-primary hover:underline transition-colors"
+              >
+                {match.documentName}
+              </Link>
+              <Badge
+                variant={match.matchType === "weak" ? "warning" : "error"}
+                className="ml-2 text-[10px] px-1.5 py-0 align-middle"
+              >
+                {match.matchType === "exact_irn" ? "Exact IRN" : match.matchType === "strong" ? "Strong" : "Weak"}
+              </Badge>
+              <span className="ml-2 text-xs text-muted-foreground">
+                uploaded {match.uploadDate}
+              </span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {getMatchTypeLabel(match.matchType)}
+              </p>
+            </div>
           </li>
         ))}
       </ul>
@@ -323,6 +346,9 @@ export function ValidationTab({
           </CardContent>
         </Card>
       </div>
+
+      {/* Duplicate invoice alert — shown prominently before other results */}
+      <DuplicateInvoiceAlert validationResults={validationResults} />
 
       {/* Reconciliation status */}
       {summary.reconciliation_critical_total > 0 && (

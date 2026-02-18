@@ -105,6 +105,17 @@ export function useDocument(id: string) {
 
 **TanStack Query v5 — `isPending` vs `isLoading`**: For queries with `enabled: false`, `isLoading` is **false** but `isPending` is true. Use `isPending` for loading/skeleton UI on dependent queries.
 
+### Duplicate Invoice Detection
+- Backend returns a validation result with `rule_name: "Logical: Duplicate Invoice Detection"`
+- The rule's `severity` is always `"warning"` (DB-registered); the *effective* severity is in `actual_value` brackets: `[error]` or `[warning]`
+- Match types: `exact_irn` (confirmed), `strong` (same FY), `weak` (different FY)
+- Three states: `found` (duplicates detected), `unavailable` (check skipped — missing GSTIN/invoice number), `not-found`
+- Parsing utility: `src/lib/utils/duplicate-detection.ts` — extracts matches from message string via regex
+- UI components:
+  - `DuplicateBadge` — clickable badge that opens a Dialog with match details; supports `compact` prop for table rows
+  - `DuplicateInvoiceAlert` — alert banner used in validation tab
+- Badge appears: document detail header, documents table name cells, collection documents table
+
 ### Form Handling
 ```typescript
 const form = useForm<FormData>({
@@ -125,6 +136,9 @@ const form = useForm<FormData>({
 | `src/types/auth.ts` | Auth types, TokenPair, `decodeJwtPayload()` |
 | `src/components/ui/` | Reusable UI components |
 | `src/lib/utils/structured-data.ts` | Utilities for editing structured invoice data |
+| `src/lib/utils/duplicate-detection.ts` | Duplicate invoice detection parsing utility |
+| `src/components/documents/duplicate-badge.tsx` | Clickable duplicate badge with dialog |
+| `src/components/documents/duplicate-invoice-alert.tsx` | Duplicate alert banner for validation tab |
 | `src/test/test-utils.tsx` | `renderWithProviders` for component tests |
 
 ## Layout Structure

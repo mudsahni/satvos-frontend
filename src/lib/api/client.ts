@@ -45,12 +45,29 @@ const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Request interceptor - attach auth token
+// Public auth endpoints that use their own authentication (credentials,
+// Google ID tokens, reset tokens, etc.) — never attach Bearer tokens.
+const PUBLIC_AUTH_PATHS = [
+  "/auth/login",
+  "/auth/refresh",
+  "/auth/register",
+  "/auth/social-login",
+  "/auth/verify-email",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+];
+
+// Request interceptor - attach auth token (skip public auth endpoints)
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const { accessToken } = getAuthState();
-    if (accessToken && config.headers) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    const isPublicAuth = PUBLIC_AUTH_PATHS.some((path) =>
+      config.url?.includes(path)
+    );
+    if (!isPublicAuth) {
+      const { accessToken } = getAuthState();
+      if (accessToken && config.headers) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
     }
     return config;
   },
@@ -86,19 +103,8 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Skip refresh for public auth endpoints — they use their own
-    // authentication mechanisms (credentials, reset tokens, etc.),
-    // not Bearer tokens, so a 401 here is a real error, not a stale token.
-    const publicAuthPaths = [
-      "/auth/login",
-      "/auth/refresh",
-      "/auth/register",
-      "/auth/social-login",
-      "/auth/verify-email",
-      "/auth/forgot-password",
-      "/auth/reset-password",
-    ];
-    if (publicAuthPaths.some((path) => originalRequest.url?.includes(path))) {
+    // Skip refresh for public auth endpoints — a 401 here is a real error.
+    if (PUBLIC_AUTH_PATHS.some((path) => originalRequest.url?.includes(path))) {
       return Promise.reject(error);
     }
 

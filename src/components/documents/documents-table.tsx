@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/documents/status-badge";
+import { DuplicateBadge } from "@/components/documents/duplicate-badge";
 import { Document } from "@/types/document";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
@@ -215,12 +216,15 @@ export function DocumentsTable({
                   </TableCell>
                 )}
                 <TableCell>
-                  <Link
-                    href={`/documents/${doc.id}`}
-                    className="font-medium hover:text-primary transition-colors line-clamp-1"
-                  >
-                    {doc.name}
-                  </Link>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Link
+                      href={`/documents/${doc.id}`}
+                      className="font-medium hover:text-primary transition-colors truncate"
+                    >
+                      {doc.name}
+                    </Link>
+                    <DuplicateBadge validationResults={doc.validation_results ?? []} compact />
+                  </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground max-w-[200px] truncate">
                   {vendorName}
