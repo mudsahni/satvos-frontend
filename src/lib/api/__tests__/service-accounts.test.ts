@@ -116,6 +116,29 @@ describe("service-accounts API", () => {
 
       expect(result.page).toBe(2);
     });
+
+    it("returns empty list when backend returns 404", async () => {
+      const error = new Error("Not found") as Error & {
+        response: { status: number };
+      };
+      error.response = { status: 404 };
+      mockGet.mockRejectedValue(error);
+
+      const result = await getServiceAccounts();
+
+      expect(result.items).toHaveLength(0);
+      expect(result.total).toBe(0);
+    });
+
+    it("propagates non-404 errors", async () => {
+      const error = new Error("Server error") as Error & {
+        response: { status: number };
+      };
+      error.response = { status: 500 };
+      mockGet.mockRejectedValue(error);
+
+      await expect(getServiceAccounts()).rejects.toThrow("Server error");
+    });
   });
 
   describe("getServiceAccount", () => {
