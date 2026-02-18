@@ -68,15 +68,18 @@ describe("DuplicateBadge", () => {
     renderWithProviders(
       <DuplicateBadge validationResults={[makeDuplicateResult()]} />
     );
-    expect(screen.getByText("Duplicate")).toBeInTheDocument();
+    const badge = screen.getByRole("button");
+    expect(badge).toHaveTextContent("Duplicate");
   });
 
-  it("badge is clickable with role=button", () => {
+  it("badge is clickable with role=button and has chevron", () => {
     renderWithProviders(
       <DuplicateBadge validationResults={[makeDuplicateResult()]} />
     );
     const badge = screen.getByRole("button");
     expect(badge).toHaveTextContent("Duplicate");
+    // Chevron icon should be present (rendered as svg)
+    expect(badge.querySelector("svg:last-child")).toBeInTheDocument();
   });
 
   it("opens dialog when badge is clicked", async () => {
@@ -152,6 +155,20 @@ describe("DuplicateBadge", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows match count on badge when multiple matches", () => {
+    const multiResult = makeDuplicateResult({
+      message:
+        'Matching documents: "Invoice-A.pdf" [exact_irn] (uploaded 2025-08-01), "Invoice-B.pdf" [weak] (uploaded 2024-03-15)',
+      actual_value: "2 duplicate(s) found [error]",
+    });
+    renderWithProviders(
+      <DuplicateBadge validationResults={[multiResult]} />
+    );
+
+    const badge = screen.getByRole("button");
+    expect(badge).toHaveTextContent("Duplicate (2)");
+  });
+
   it("shows multiple matches in dialog", async () => {
     const user = userEvent.setup();
     const multiResult = makeDuplicateResult({
@@ -181,19 +198,20 @@ describe("DuplicateBadge", () => {
   });
 
   describe("compact mode", () => {
-    it("renders badge without Copy icon in compact mode", () => {
-      const {  } = renderWithProviders(
+    it("renders badge without Copy icon but with chevron in compact mode", () => {
+      renderWithProviders(
         <DuplicateBadge
           validationResults={[makeDuplicateResult()]}
           compact
         />
       );
-      expect(screen.getByText("Duplicate")).toBeInTheDocument();
-      // Compact mode should not render the Copy icon (only non-compact does)
-      // The badge text should still be present
       const badge = screen.getByRole("button");
+      expect(badge).toHaveTextContent("Duplicate");
       // In compact mode, the badge has smaller text classes
       expect(badge).toHaveClass("text-[10px]");
+      // Should have only the chevron SVG (no Copy icon)
+      const svgs = badge.querySelectorAll("svg");
+      expect(svgs).toHaveLength(1);
     });
 
     it("still opens dialog when clicked in compact mode", async () => {

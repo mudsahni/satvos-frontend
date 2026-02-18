@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Copy, FileText, AlertTriangle, XCircle } from "lucide-react";
+import { Copy, ChevronRight, FileText, AlertTriangle, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -62,7 +62,7 @@ export function DuplicateBadge({
       <Badge
         variant={variant}
         className={cn(
-          "cursor-pointer shrink-0",
+          "cursor-pointer shrink-0 transition-all hover:brightness-90 dark:hover:brightness-110",
           compact ? "text-[10px] px-1.5 py-0 gap-1" : "gap-1.5",
           className
         )}
@@ -82,7 +82,8 @@ export function DuplicateBadge({
         }}
       >
         {!compact && <Copy className="h-3 w-3" />}
-        Duplicate
+        Duplicate{parsed.matchCount > 1 ? ` (${parsed.matchCount})` : ""}
+        <ChevronRight className={cn(compact ? "h-2.5 w-2.5" : "h-3 w-3", "-ml-0.5")} />
       </Badge>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
