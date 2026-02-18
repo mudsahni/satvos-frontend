@@ -56,7 +56,7 @@ export const createUserSchema = z.object({
   email: z.string().email("Invalid email address"),
   full_name: z.string().min(1, "Full name is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["admin", "manager", "member", "viewer", "free"]),
+  role: z.enum(["admin", "manager", "member", "viewer", "free", "service"]),
 });
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>;
@@ -69,7 +69,7 @@ export const updateUserSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .optional()
     .or(z.literal("")),
-  role: z.enum(["admin", "manager", "member", "viewer", "free"]).optional(),
+  role: z.enum(["admin", "manager", "member", "viewer", "free", "service"]).optional(),
   is_active: z.boolean().optional(),
 });
 
@@ -115,6 +115,37 @@ export const reviewDocumentSchema = z.object({
 });
 
 export type ReviewDocumentFormData = z.infer<typeof reviewDocumentSchema>;
+
+// --- Admin schemas ---
+
+export const updateTenantSchema = z.object({
+  name: z.string().min(1, "Name is required").max(255, "Name is too long").optional(),
+  slug: z
+    .string()
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Slug must be lowercase alphanumeric with hyphens"
+    )
+    .optional(),
+  is_active: z.boolean().optional(),
+});
+
+export type UpdateTenantFormData = z.infer<typeof updateTenantSchema>;
+
+export const createServiceAccountSchema = z.object({
+  name: z.string().min(1, "Name is required").max(255, "Name is too long"),
+  description: z.string().max(1000, "Description is too long").optional(),
+  expires_at: z.string().optional(),
+});
+
+export type CreateServiceAccountFormData = z.infer<typeof createServiceAccountSchema>;
+
+export const grantServiceAccountPermissionSchema = z.object({
+  collection_id: z.string().uuid("Invalid collection ID"),
+  permission: z.enum(["owner", "editor", "viewer"]),
+});
+
+export type GrantServiceAccountPermissionFormData = z.infer<typeof grantServiceAccountPermissionSchema>;
 
 /**
  * Validates that a redirect URL is safe (relative path only).

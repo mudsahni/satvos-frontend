@@ -13,6 +13,10 @@ import {
   AlertTriangle,
   ClipboardCheck,
   BarChart3,
+  LayoutDashboard,
+  Building2,
+  Key,
+  Shield,
 } from "lucide-react";
 
 import {
@@ -92,6 +96,39 @@ const insightItems: NavItem[] = [
   },
 ];
 
+const adminItems: NavItem[] = [
+  {
+    label: "Overview",
+    href: "/admin",
+    icon: LayoutDashboard,
+    roles: ["admin"],
+  },
+  {
+    label: "Tenant Settings",
+    href: "/admin/settings",
+    icon: Building2,
+    roles: ["admin"],
+  },
+  {
+    label: "Users",
+    href: "/admin/users",
+    icon: Users,
+    roles: ["admin"],
+  },
+  {
+    label: "Service Accounts",
+    href: "/admin/service-accounts",
+    icon: Key,
+    roles: ["admin"],
+  },
+  {
+    label: "Permissions",
+    href: "/admin/permissions",
+    icon: Shield,
+    roles: ["admin"],
+  },
+];
+
 const settingsItems: NavItem[] = [
   {
     label: "Team",
@@ -120,6 +157,7 @@ export function AppSidebar() {
   const filteredPrimary = filterByRole(primaryItems, role);
   const filteredDocuments = filterByRole(documentItems, role);
   const filteredInsights = filterByRole(insightItems, role);
+  const filteredAdmin = filterByRole(adminItems, role);
   const filteredSettings = filterByRole(settingsItems, role);
 
   function renderItems(items: NavItem[]) {
@@ -208,6 +246,21 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {renderItems(filteredInsights)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Admin group — visible only to admins */}
+        {filteredAdmin.length > 0 && (
+          <SidebarGroup>
+            <SidebarSeparator className="mb-2" />
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-3">
+              Admin
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {renderItems(filteredAdmin)}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
