@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { Info, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 const roleData = [
@@ -49,39 +57,37 @@ export function RoleInfoPanel({ className }: { className?: string }) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="flex items-center gap-2 text-sm font-medium">
-          <Info className="h-4 w-4 text-muted-foreground" />
+          <Info className="text-muted-foreground" />
           Role Hierarchy Reference
         </span>
         {isOpen ? (
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="text-muted-foreground" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="text-muted-foreground" />
         )}
       </Button>
       {isOpen && (
         <div className="border-t px-4 py-3">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left">
-                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Role</th>
-                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Level</th>
-                  <th className="pb-2 pr-4 font-medium text-muted-foreground">Implicit Collection Access</th>
-                  <th className="pb-2 font-medium text-muted-foreground">Key Capabilities</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roleData.map((row) => (
-                  <tr key={row.role} className="border-b last:border-0">
-                    <td className="py-2 pr-4 font-medium capitalize">{row.role}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{row.level}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{row.access}</td>
-                    <td className="py-2 text-muted-foreground">{row.capabilities}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-sm normal-case tracking-normal">Role</TableHead>
+                <TableHead className="text-sm normal-case tracking-normal">Level</TableHead>
+                <TableHead className="text-sm normal-case tracking-normal">Implicit Collection Access</TableHead>
+                <TableHead className="text-sm normal-case tracking-normal">Key Capabilities</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {roleData.map((row) => (
+                <TableRow key={row.role}>
+                  <TableCell className="font-medium capitalize">{row.role}</TableCell>
+                  <TableCell className="text-muted-foreground">{row.level}</TableCell>
+                  <TableCell className="text-muted-foreground">{row.access}</TableCell>
+                  <TableCell className="text-muted-foreground">{row.capabilities}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

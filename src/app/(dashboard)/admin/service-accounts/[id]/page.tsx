@@ -75,8 +75,11 @@ export default function ServiceAccountDetailPage({
     isError,
     refetch,
   } = useServiceAccount(id);
-  const { data: permissions, isLoading: permLoading } =
-    useServiceAccountPermissions(id);
+  const {
+    data: permissions,
+    isLoading: permLoading,
+    isError: permError,
+  } = useServiceAccountPermissions(id);
   const { data: collections } = useCollections({ limit: 100 });
 
   const rotateSA = useRotateServiceAccountKey();
@@ -258,6 +261,10 @@ export default function ServiceAccountDetailPage({
         <CardContent>
           {permLoading ? (
             <Skeleton className="h-24 w-full" />
+          ) : permError ? (
+            <p className="text-sm text-destructive py-4 text-center">
+              Failed to load permissions. Please try refreshing the page.
+            </p>
           ) : !permissions || permissions.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               No collection access granted. Add a collection to enable API access.

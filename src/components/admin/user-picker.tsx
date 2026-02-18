@@ -68,7 +68,7 @@ export function UserPicker({
             className="h-8"
           />
         </div>
-        <div className="max-h-60 overflow-y-auto">
+        <div className="max-h-60 overflow-y-auto" role="listbox">
           {users.length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">
               No users found.
@@ -77,6 +77,9 @@ export function UserPicker({
             users.map((user) => (
               <button
                 key={user.id}
+                type="button"
+                role="option"
+                aria-selected={value === user.id}
                 className={cn(
                   "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted",
                   value === user.id && "bg-muted"

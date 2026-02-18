@@ -62,7 +62,7 @@ export function CollectionPicker({
             className="h-8"
           />
         </div>
-        <div className="max-h-60 overflow-y-auto">
+        <div className="max-h-60 overflow-y-auto" role="listbox">
           {collections.length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">
               No collections found.
@@ -71,6 +71,9 @@ export function CollectionPicker({
             collections.map((col) => (
               <button
                 key={col.id}
+                type="button"
+                role="option"
+                aria-selected={value === col.id}
                 className={cn(
                   "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted",
                   value === col.id && "bg-muted"

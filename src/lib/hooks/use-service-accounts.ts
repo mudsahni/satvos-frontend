@@ -23,6 +23,7 @@ export function useServiceAccounts(params?: ServiceAccountListParams) {
   return useQuery({
     queryKey: ["service-accounts", params],
     queryFn: () => getServiceAccounts(params),
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -31,6 +32,7 @@ export function useServiceAccount(id: string) {
     queryKey: ["service-account", id],
     queryFn: () => getServiceAccount(id),
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -90,6 +92,7 @@ export function useServiceAccountPermissions(id: string) {
     queryKey: ["service-account-permissions", id],
     queryFn: () => getServiceAccountPermissions(id),
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

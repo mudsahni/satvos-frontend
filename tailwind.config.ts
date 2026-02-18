@@ -76,6 +76,39 @@ export default {
           bg: "hsl(var(--error-bg))",
           border: "hsl(var(--error-border))",
         },
+        // Role colors
+        role: {
+          admin: {
+            DEFAULT: "hsl(var(--role-admin))",
+            bg: "hsl(var(--role-admin-bg))",
+            border: "hsl(var(--role-admin-border))",
+          },
+          manager: {
+            DEFAULT: "hsl(var(--role-manager))",
+            bg: "hsl(var(--role-manager-bg))",
+            border: "hsl(var(--role-manager-border))",
+          },
+          member: {
+            DEFAULT: "hsl(var(--role-member))",
+            bg: "hsl(var(--role-member-bg))",
+            border: "hsl(var(--role-member-border))",
+          },
+          viewer: {
+            DEFAULT: "hsl(var(--role-viewer))",
+            bg: "hsl(var(--role-viewer-bg))",
+            border: "hsl(var(--role-viewer-border))",
+          },
+          free: {
+            DEFAULT: "hsl(var(--role-free))",
+            bg: "hsl(var(--role-free-bg))",
+            border: "hsl(var(--role-free-border))",
+          },
+          service: {
+            DEFAULT: "hsl(var(--role-service))",
+            bg: "hsl(var(--role-service-bg))",
+            border: "hsl(var(--role-service-border))",
+          },
+        },
         border: {
           DEFAULT: "hsl(var(--border))",
           hover: "hsl(var(--border-hover))",

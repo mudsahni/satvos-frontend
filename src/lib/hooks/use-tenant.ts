@@ -9,6 +9,7 @@ export function useTenant() {
   return useQuery({
     queryKey: ["tenant"],
     queryFn: getTenant,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
