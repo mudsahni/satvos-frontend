@@ -54,6 +54,7 @@ import { StructuredInvoiceData } from "@/types/document";
 import { useFileUrl } from "@/lib/hooks/use-files";
 import { useCollection } from "@/lib/hooks/use-collections";
 import { StatusBadge } from "@/components/documents/status-badge";
+import { DuplicateBadge } from "@/components/documents/duplicate-badge";
 import { AssignReviewer } from "@/components/documents/assign-reviewer";
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
@@ -262,6 +263,7 @@ export default function DocumentDetailPage({
               <StatusBadge status={document.parsing_status} type="parsing" showType />
               <StatusBadge status={document.validation_status} type="validation" showType />
               <StatusBadge status={document.review_status} type="review" showType />
+              <DuplicateBadge validationResults={document.validation_results ?? []} />
             </div>
           </div>
 

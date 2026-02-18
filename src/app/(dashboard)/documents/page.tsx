@@ -53,6 +53,7 @@ import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/documents/status-badge";
+import { DuplicateBadge } from "@/components/documents/duplicate-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { ErrorState } from "@/components/ui/error-state";
 import { UserName } from "@/components/ui/user-name";
@@ -310,12 +311,15 @@ export default function DocumentsPage() {
                   return (
                     <TableRow key={doc.id}>
                       <TableCell>
-                        <Link
-                          href={`/documents/${doc.id}`}
-                          className="font-medium hover:underline"
-                        >
-                          {doc.name}
-                        </Link>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Link
+                            href={`/documents/${doc.id}`}
+                            className="font-medium hover:underline truncate"
+                          >
+                            {doc.name}
+                          </Link>
+                          <DuplicateBadge validationResults={doc.validation_results ?? []} compact />
+                        </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
                         {collection ? (
