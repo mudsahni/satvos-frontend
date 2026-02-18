@@ -14,6 +14,7 @@ export interface ValidationResult {
   rule_type?: ValidationRuleType;
   severity?: ValidationSeverity;
   created_at?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export type ValidationRuleType =

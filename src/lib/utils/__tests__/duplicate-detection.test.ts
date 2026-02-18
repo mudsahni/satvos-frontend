@@ -249,6 +249,93 @@ describe("parseDuplicateResult", () => {
   });
 });
 
+describe("parseDuplicateResult with metadata", () => {
+  it("extracts matches from metadata.duplicates with document IDs", () => {
+    const results = [
+      makeValidationResult({
+        rule_name: "Logical: Duplicate Invoice Detection",
+        passed: false,
+        actual_value: "2 duplicate(s) found [error]",
+        message:
+          'Logical: Duplicate Invoice Detection: invoice INV-001 from seller 29ABCDE1234F1Z5 already exists in: "Invoice-A.pdf" [exact_irn] (uploaded 2025-08-01), "Invoice-B.pdf" [weak] (uploaded 2024-03-15)',
+        metadata: {
+          duplicates: [
+            {
+              document_id: "550e8400-e29b-41d4-a716-446655440000",
+              document_name: "Invoice-A.pdf",
+              match_type: "exact_irn",
+              created_at: "2025-08-01T00:00:00Z",
+            },
+            {
+              document_id: "660e8400-e29b-41d4-a716-446655440001",
+              document_name: "Invoice-B.pdf",
+              match_type: "weak",
+              created_at: "2024-03-15T00:00:00Z",
+            },
+          ],
+        },
+      }),
+    ];
+
+    const result = parseDuplicateResult(results);
+
+    expect(result.found).toBe(true);
+    if (!result.found) return;
+    expect(result.matches).toHaveLength(2);
+    expect(result.matches[0]).toEqual({
+      documentId: "550e8400-e29b-41d4-a716-446655440000",
+      documentName: "Invoice-A.pdf",
+      matchType: "exact_irn",
+      uploadDate: "2025-08-01",
+    });
+    expect(result.matches[1]).toEqual({
+      documentId: "660e8400-e29b-41d4-a716-446655440001",
+      documentName: "Invoice-B.pdf",
+      matchType: "weak",
+      uploadDate: "2024-03-15",
+    });
+  });
+
+  it("falls back to message regex when metadata is missing", () => {
+    const results = [
+      makeValidationResult({
+        rule_name: "Logical: Duplicate Invoice Detection",
+        passed: false,
+        actual_value: "1 duplicate(s) found [error]",
+        message:
+          'Logical: Duplicate Invoice Detection: invoice INV-001 from seller 29ABCDE1234F1Z5 already exists in: "Invoice-A.pdf" [strong] (uploaded 2025-08-01)',
+      }),
+    ];
+
+    const result = parseDuplicateResult(results);
+
+    expect(result.found).toBe(true);
+    if (!result.found) return;
+    expect(result.matches[0].documentId).toBeUndefined();
+    expect(result.matches[0].documentName).toBe("Invoice-A.pdf");
+  });
+
+  it("falls back to message regex when metadata.duplicates is empty", () => {
+    const results = [
+      makeValidationResult({
+        rule_name: "Logical: Duplicate Invoice Detection",
+        passed: false,
+        actual_value: "1 duplicate(s) found [warning]",
+        message:
+          'Logical: Duplicate Invoice Detection: invoice INV-002 from seller 07XYZAB5678C1D2 already exists in: "Old-Invoice.pdf" [weak] (uploaded 2023-11-20)',
+        metadata: { duplicates: [] },
+      }),
+    ];
+
+    const result = parseDuplicateResult(results);
+
+    expect(result.found).toBe(true);
+    if (!result.found) return;
+    expect(result.matches[0].documentId).toBeUndefined();
+    expect(result.matches[0].documentName).toBe("Old-Invoice.pdf");
+  });
+});
+
 describe("getMatchTypeLabel", () => {
   it("returns correct label for exact_irn", () => {
     expect(getMatchTypeLabel("exact_irn")).toContain("confirmed duplicate");
