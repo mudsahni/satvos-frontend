@@ -213,7 +213,7 @@ export default function ServiceAccountDetailPage({
           </dl>
 
           {sa.is_active && (
-            <div className="flex gap-2 mt-6 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row gap-2 mt-6 pt-4 border-t">
               <Button
                 variant="outline"
                 size="sm"

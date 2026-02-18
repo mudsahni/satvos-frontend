@@ -59,7 +59,7 @@ export function UserPicker({
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[90vw] sm:w-[400px] p-0" align="start">
         <div className="p-2">
           <Input
             placeholder="Search by name or email..."
