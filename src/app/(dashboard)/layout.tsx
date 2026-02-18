@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopNav } from "@/components/layout/top-nav";
@@ -17,6 +18,8 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, isHydrated, user } = useAuthStore();
   const setUser = useAuthStore((s) => s.setUser);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -63,8 +66,14 @@ export default function DashboardLayout({
       // Real logout/session expiry — clear cookie so the middleware
       // redirect kicks in on the next page navigation.
       clearAuthCookie();
+    } else {
+      // New tab with empty sessionStorage — no tokens available.
+      // Redirect to login so the user can re-authenticate, preserving
+      // the intended destination as returnUrl.
+      clearAuthCookie();
+      router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
     }
-  }, [isAuthenticated, isHydrated]);
+  }, [isAuthenticated, isHydrated, router, pathname]);
 
   // Keyboard shortcut for search
   useEffect(() => {
@@ -79,7 +88,7 @@ export default function DashboardLayout({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Show loading state while hydrating or redirecting to login
+  // Show loading state while hydrating or while redirect to login is in progress
   if (!isHydrated || !isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center">
