@@ -14,100 +14,67 @@ import {
   getSafeRedirectUrl,
 } from "../validation";
 
+// ---------------------------------------------------------------------------
+// Shared test data
+// ---------------------------------------------------------------------------
+
+/** Omit a key from an object (avoids unused-var lint errors from destructuring). */
+function omit<T extends Record<string, unknown>>(obj: T, key: keyof T): Omit<T, typeof key> {
+  const copy = { ...obj };
+  delete copy[key];
+  return copy;
+}
+
+const VALID_UUID = "550e8400-e29b-41d4-a716-446655440000";
+const VALID_UUID_2 = "660e8400-e29b-41d4-a716-446655440000";
+
+// ---------------------------------------------------------------------------
+// loginSchema
+// ---------------------------------------------------------------------------
+
 describe("loginSchema", () => {
+  const valid = {
+    tenant_slug: "my-company",
+    email: "user@example.com",
+    password: "secret123",
+  };
+
   it("validates correct login data", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "my-company",
-      email: "user@example.com",
-      password: "secret123",
-    });
-    expect(result.success).toBe(true);
+    expect(loginSchema.safeParse(valid).success).toBe(true);
   });
 
-  it("rejects missing tenant_slug", () => {
-    const result = loginSchema.safeParse({
-      email: "user@example.com",
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty tenant_slug", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "",
-      email: "user@example.com",
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects tenant_slug with uppercase letters", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "MyCompany",
-      email: "user@example.com",
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects tenant_slug with spaces", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "my company",
-      email: "user@example.com",
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
+  it.each([
+    ["missing", undefined],
+    ["empty", ""],
+    ["uppercase letters", "MyCompany"],
+    ["spaces", "my company"],
+  ])("rejects tenant_slug with %s", (_label, slug) => {
+    const data = slug === undefined ? { email: valid.email, password: valid.password } : { ...valid, tenant_slug: slug };
+    expect(loginSchema.safeParse(data).success).toBe(false);
   });
 
   it("accepts tenant_slug with numbers and hyphens", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "company-123",
-      email: "user@example.com",
-      password: "pass",
-    });
-    expect(result.success).toBe(true);
+    expect(loginSchema.safeParse({ ...valid, tenant_slug: "company-123" }).success).toBe(true);
   });
 
   it("rejects invalid email", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "my-company",
-      email: "not-an-email",
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
+    expect(loginSchema.safeParse({ ...valid, email: "not-an-email" }).success).toBe(false);
   });
 
   it("rejects missing email", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "my-company",
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
+    expect(loginSchema.safeParse({ tenant_slug: valid.tenant_slug, password: valid.password }).success).toBe(false);
   });
 
   it("rejects missing password", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "my-company",
-      email: "user@example.com",
-    });
-    expect(result.success).toBe(false);
+    expect(loginSchema.safeParse({ tenant_slug: valid.tenant_slug, email: valid.email }).success).toBe(false);
   });
 
   it("rejects empty password", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "my-company",
-      email: "user@example.com",
-      password: "",
-    });
-    expect(result.success).toBe(false);
+    expect(loginSchema.safeParse({ ...valid, password: "" }).success).toBe(false);
   });
 
-  it("provides appropriate error messages", () => {
-    const result = loginSchema.safeParse({
-      tenant_slug: "INVALID SLUG",
-      email: "bad",
-      password: "",
-    });
+  it("provides field-level error messages for all invalid fields", () => {
+    const result = loginSchema.safeParse({ tenant_slug: "INVALID SLUG", email: "bad", password: "" });
     expect(result.success).toBe(false);
     if (!result.success) {
       const errors = result.error.flatten().fieldErrors;
@@ -118,20 +85,19 @@ describe("loginSchema", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// freeLoginSchema
+// ---------------------------------------------------------------------------
+
 describe("freeLoginSchema", () => {
+  const valid = { email: "user@example.com", password: "secret123" };
+
   it("validates correct free login data", () => {
-    const result = freeLoginSchema.safeParse({
-      email: "user@example.com",
-      password: "secret123",
-    });
-    expect(result.success).toBe(true);
+    expect(freeLoginSchema.safeParse(valid).success).toBe(true);
   });
 
-  it("does not require tenant_slug", () => {
-    const result = freeLoginSchema.safeParse({
-      email: "user@example.com",
-      password: "secret123",
-    });
+  it("does not include tenant_slug in parsed output", () => {
+    const result = freeLoginSchema.safeParse(valid);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data).not.toHaveProperty("tenant_slug");
@@ -139,51 +105,25 @@ describe("freeLoginSchema", () => {
   });
 
   it("rejects invalid email", () => {
-    const result = freeLoginSchema.safeParse({
-      email: "not-an-email",
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
+    expect(freeLoginSchema.safeParse({ ...valid, email: "not-an-email" }).success).toBe(false);
   });
 
   it("rejects missing email", () => {
-    const result = freeLoginSchema.safeParse({
-      password: "secret123",
-    });
-    expect(result.success).toBe(false);
+    expect(freeLoginSchema.safeParse({ password: valid.password }).success).toBe(false);
   });
 
-  it("rejects missing password", () => {
-    const result = freeLoginSchema.safeParse({
-      email: "user@example.com",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty password", () => {
-    const result = freeLoginSchema.safeParse({
-      email: "user@example.com",
-      password: "",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("provides appropriate error messages", () => {
-    const result = freeLoginSchema.safeParse({
-      email: "bad",
-      password: "",
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.email).toBeDefined();
-      expect(errors.password).toBeDefined();
-    }
+  it("rejects missing or empty password", () => {
+    expect(freeLoginSchema.safeParse({ email: valid.email }).success).toBe(false);
+    expect(freeLoginSchema.safeParse({ ...valid, password: "" }).success).toBe(false);
   });
 });
 
+// ---------------------------------------------------------------------------
+// registerSchema — primary schema for password validation rules
+// ---------------------------------------------------------------------------
+
 describe("registerSchema", () => {
-  const validData = {
+  const valid = {
     full_name: "Test User",
     email: "test@example.com",
     password: "password123",
@@ -191,286 +131,153 @@ describe("registerSchema", () => {
   };
 
   it("validates correct registration data", () => {
-    const result = registerSchema.safeParse(validData);
-    expect(result.success).toBe(true);
+    expect(registerSchema.safeParse(valid).success).toBe(true);
   });
 
   it("rejects empty full_name", () => {
-    const result = registerSchema.safeParse({
-      ...validData,
-      full_name: "",
-    });
+    const result = registerSchema.safeParse({ ...valid, full_name: "" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.full_name).toBeDefined();
+      expect(result.error.flatten().fieldErrors.full_name).toBeDefined();
     }
   });
 
   it("rejects missing full_name", () => {
-    const result = registerSchema.safeParse({
-      email: validData.email,
-      password: validData.password,
-      confirm_password: validData.confirm_password,
-    });
-    expect(result.success).toBe(false);
+    expect(registerSchema.safeParse(omit(valid, "full_name")).success).toBe(false);
   });
 
   it("rejects invalid email", () => {
-    const result = registerSchema.safeParse({
-      ...validData,
-      email: "not-an-email",
-    });
+    const result = registerSchema.safeParse({ ...valid, email: "not-an-email" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.email).toBeDefined();
-    }
-  });
-
-  it("rejects password shorter than 8 characters", () => {
-    const result = registerSchema.safeParse({
-      ...validData,
-      password: "short",
-      confirm_password: "short",
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.password).toBeDefined();
-      expect(errors.password?.[0]).toContain("8 characters");
-    }
-  });
-
-  it("rejects mismatched passwords", () => {
-    const result = registerSchema.safeParse({
-      ...validData,
-      password: "password123",
-      confirm_password: "different456",
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.confirm_password).toBeDefined();
-      expect(errors.confirm_password?.[0]).toContain("do not match");
+      expect(result.error.flatten().fieldErrors.email).toBeDefined();
     }
   });
 
   it("rejects missing email", () => {
-    const result = registerSchema.safeParse({
-      full_name: validData.full_name,
-      password: validData.password,
-      confirm_password: validData.confirm_password,
-    });
-    expect(result.success).toBe(false);
+    expect(registerSchema.safeParse(omit(valid, "email")).success).toBe(false);
   });
 
-  it("rejects missing password", () => {
-    const result = registerSchema.safeParse({
-      full_name: validData.full_name,
-      email: validData.email,
-      confirm_password: validData.confirm_password,
-    });
+  // Password validation rules — tested here once, shared by resetPasswordSchema and createUserSchema
+  it("rejects password shorter than 8 characters", () => {
+    const result = registerSchema.safeParse({ ...valid, password: "short", confirm_password: "short" });
     expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.password?.[0]).toContain("8 characters");
+    }
   });
 
   it("accepts password at exactly 8 characters", () => {
-    const result = registerSchema.safeParse({
-      ...validData,
-      password: "12345678",
-      confirm_password: "12345678",
-    });
-    expect(result.success).toBe(true);
+    expect(registerSchema.safeParse({ ...valid, password: "12345678", confirm_password: "12345678" }).success).toBe(true);
+  });
+
+  it("rejects missing password", () => {
+    expect(registerSchema.safeParse(omit(valid, "password")).success).toBe(false);
+  });
+
+  it("rejects mismatched passwords", () => {
+    const result = registerSchema.safeParse({ ...valid, confirm_password: "different456" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.confirm_password?.[0]).toContain("do not match");
+    }
   });
 });
 
+// ---------------------------------------------------------------------------
+// forgotPasswordSchema
+// ---------------------------------------------------------------------------
+
 describe("forgotPasswordSchema", () => {
   it("validates correct email", () => {
-    const result = forgotPasswordSchema.safeParse({
-      email: "user@example.com",
-    });
-    expect(result.success).toBe(true);
+    expect(forgotPasswordSchema.safeParse({ email: "user@example.com" }).success).toBe(true);
   });
 
-  it("rejects invalid email", () => {
-    const result = forgotPasswordSchema.safeParse({
-      email: "not-an-email",
-    });
+  it("rejects invalid email with message", () => {
+    const result = forgotPasswordSchema.safeParse({ email: "not-an-email" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.email).toBeDefined();
-      expect(errors.email?.[0]).toContain("Invalid email");
+      expect(result.error.flatten().fieldErrors.email?.[0]).toContain("Invalid email");
     }
   });
 
   it("rejects empty email", () => {
-    const result = forgotPasswordSchema.safeParse({
-      email: "",
-    });
-    expect(result.success).toBe(false);
+    expect(forgotPasswordSchema.safeParse({ email: "" }).success).toBe(false);
   });
 
   it("rejects missing email", () => {
-    const result = forgotPasswordSchema.safeParse({});
-    expect(result.success).toBe(false);
+    expect(forgotPasswordSchema.safeParse({}).success).toBe(false);
   });
 });
 
+// ---------------------------------------------------------------------------
+// resetPasswordSchema — only schema-specific behavior (password confirm with
+// new_password field name), since min-8 rule is covered by registerSchema
+// ---------------------------------------------------------------------------
+
 describe("resetPasswordSchema", () => {
-  const validData = {
-    new_password: "password123",
-    confirm_password: "password123",
-  };
+  const valid = { new_password: "password123", confirm_password: "password123" };
 
   it("validates correct data", () => {
-    const result = resetPasswordSchema.safeParse(validData);
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects password shorter than 8 characters", () => {
-    const result = resetPasswordSchema.safeParse({
-      new_password: "short",
-      confirm_password: "short",
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.new_password).toBeDefined();
-      expect(errors.new_password?.[0]).toContain("8 characters");
-    }
+    expect(resetPasswordSchema.safeParse(valid).success).toBe(true);
   });
 
   it("rejects mismatched passwords", () => {
-    const result = resetPasswordSchema.safeParse({
-      new_password: "password123",
-      confirm_password: "different456",
-    });
+    const result = resetPasswordSchema.safeParse({ ...valid, confirm_password: "different456" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.confirm_password).toBeDefined();
-      expect(errors.confirm_password?.[0]).toContain("do not match");
+      expect(result.error.flatten().fieldErrors.confirm_password?.[0]).toContain("do not match");
     }
-  });
-
-  it("accepts password at exactly 8 characters", () => {
-    const result = resetPasswordSchema.safeParse({
-      new_password: "12345678",
-      confirm_password: "12345678",
-    });
-    expect(result.success).toBe(true);
   });
 
   it("rejects missing new_password", () => {
-    const result = resetPasswordSchema.safeParse({
-      confirm_password: "password123",
-    });
-    expect(result.success).toBe(false);
+    expect(resetPasswordSchema.safeParse({ confirm_password: "password123" }).success).toBe(false);
   });
 
   it("rejects missing confirm_password", () => {
-    const result = resetPasswordSchema.safeParse({
-      new_password: "password123",
-    });
-    expect(result.success).toBe(false);
+    expect(resetPasswordSchema.safeParse({ new_password: "password123" }).success).toBe(false);
   });
 
   it("rejects empty passwords", () => {
-    const result = resetPasswordSchema.safeParse({
-      new_password: "",
-      confirm_password: "",
-    });
-    expect(result.success).toBe(false);
+    expect(resetPasswordSchema.safeParse({ new_password: "", confirm_password: "" }).success).toBe(false);
   });
 });
 
+// ---------------------------------------------------------------------------
+// createUserSchema — only schema-specific behavior (role enum), since
+// password min-8 and email validation are covered by registerSchema
+// ---------------------------------------------------------------------------
+
 describe("createUserSchema", () => {
+  const valid = {
+    email: "newuser@example.com",
+    full_name: "John Doe",
+    password: "password123",
+    role: "member",
+  };
+
   it("validates correct user data", () => {
-    const result = createUserSchema.safeParse({
-      email: "newuser@example.com",
-      full_name: "John Doe",
-      password: "password123",
-      role: "member",
-    });
-    expect(result.success).toBe(true);
+    expect(createUserSchema.safeParse(valid).success).toBe(true);
   });
 
-  it("rejects short password (less than 8 characters)", () => {
-    const result = createUserSchema.safeParse({
-      email: "newuser@example.com",
-      full_name: "John Doe",
-      password: "short",
-      role: "member",
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.password?.[0]).toContain("8 characters");
-    }
-  });
-
-  it("rejects invalid email", () => {
-    const result = createUserSchema.safeParse({
-      email: "notanemail",
-      full_name: "John Doe",
-      password: "password123",
-      role: "member",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing full_name", () => {
-    const result = createUserSchema.safeParse({
-      email: "user@example.com",
-      password: "password123",
-      role: "admin",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty full_name", () => {
-    const result = createUserSchema.safeParse({
-      email: "user@example.com",
-      full_name: "",
-      password: "password123",
-      role: "admin",
-    });
-    expect(result.success).toBe(false);
+  it("rejects missing or empty full_name", () => {
+    expect(createUserSchema.safeParse({ ...valid, full_name: "" }).success).toBe(false);
+    expect(createUserSchema.safeParse(omit(valid, "full_name")).success).toBe(false);
   });
 
   it("rejects missing role", () => {
-    const result = createUserSchema.safeParse({
-      email: "user@example.com",
-      full_name: "John Doe",
-      password: "password123",
-    });
-    expect(result.success).toBe(false);
+    expect(createUserSchema.safeParse(omit(valid, "role")).success).toBe(false);
   });
 
   it("rejects invalid role", () => {
-    const result = createUserSchema.safeParse({
-      email: "user@example.com",
-      full_name: "John Doe",
-      password: "password123",
-      role: "superadmin",
-    });
-    expect(result.success).toBe(false);
+    expect(createUserSchema.safeParse({ ...valid, role: "superadmin" }).success).toBe(false);
   });
 
-  it("accepts all valid roles", () => {
-    for (const role of ["admin", "manager", "member", "viewer"]) {
-      const result = createUserSchema.safeParse({
-        email: "user@example.com",
-        full_name: "John Doe",
-        password: "password123",
-        role,
-      });
-      expect(result.success).toBe(true);
-    }
+  it.each(["admin", "manager", "member", "viewer"])("accepts role '%s'", (role) => {
+    expect(createUserSchema.safeParse({ ...valid, role }).success).toBe(true);
   });
 
-  it("rejects missing fields entirely", () => {
+  it("rejects empty object (requires all fields)", () => {
     const result = createUserSchema.safeParse({});
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -479,462 +286,275 @@ describe("createUserSchema", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// updateUserSchema
+// ---------------------------------------------------------------------------
+
 describe("updateUserSchema", () => {
-  it("validates partial updates (email only)", () => {
-    const result = updateUserSchema.safeParse({
-      email: "updated@example.com",
-    });
-    expect(result.success).toBe(true);
+  it("accepts empty object (all fields optional)", () => {
+    expect(updateUserSchema.safeParse({}).success).toBe(true);
   });
 
-  it("validates partial updates (full_name only)", () => {
-    const result = updateUserSchema.safeParse({
-      full_name: "Jane Doe",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates partial updates (role only)", () => {
-    const result = updateUserSchema.safeParse({
-      role: "admin",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates partial updates (is_active only)", () => {
-    const result = updateUserSchema.safeParse({
-      is_active: false,
-    });
-    expect(result.success).toBe(true);
+  it.each([
+    ["email only", { email: "updated@example.com" }],
+    ["full_name only", { full_name: "Jane Doe" }],
+    ["role only", { role: "admin" }],
+    ["is_active only", { is_active: false }],
+    ["all fields", { email: "new@example.com", full_name: "Updated Name", password: "longpassword", role: "manager", is_active: true }],
+  ])("validates partial update with %s", (_label, data) => {
+    expect(updateUserSchema.safeParse(data).success).toBe(true);
   });
 
   it("allows empty password (for clearing the field)", () => {
-    const result = updateUserSchema.safeParse({
-      password: "",
-    });
-    expect(result.success).toBe(true);
+    expect(updateUserSchema.safeParse({ password: "" }).success).toBe(true);
   });
 
   it("allows valid password of 8 or more characters", () => {
-    const result = updateUserSchema.safeParse({
-      password: "newpassword123",
-    });
-    expect(result.success).toBe(true);
+    expect(updateUserSchema.safeParse({ password: "newpassword123" }).success).toBe(true);
   });
 
   it("rejects password shorter than 8 characters (non-empty)", () => {
-    const result = updateUserSchema.safeParse({
-      password: "short",
-    });
-    expect(result.success).toBe(false);
+    expect(updateUserSchema.safeParse({ password: "short" }).success).toBe(false);
   });
 
   it("rejects invalid email when provided", () => {
-    const result = updateUserSchema.safeParse({
-      email: "not-valid",
-    });
-    expect(result.success).toBe(false);
+    expect(updateUserSchema.safeParse({ email: "not-valid" }).success).toBe(false);
   });
 
   it("rejects invalid role when provided", () => {
-    const result = updateUserSchema.safeParse({
-      role: "superadmin",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts empty object (all fields optional)", () => {
-    const result = updateUserSchema.safeParse({});
-    expect(result.success).toBe(true);
-  });
-
-  it("validates full update with all fields", () => {
-    const result = updateUserSchema.safeParse({
-      email: "new@example.com",
-      full_name: "Updated Name",
-      password: "longpassword",
-      role: "manager",
-      is_active: true,
-    });
-    expect(result.success).toBe(true);
+    expect(updateUserSchema.safeParse({ role: "superadmin" }).success).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// createCollectionSchema
+// ---------------------------------------------------------------------------
 
 describe("createCollectionSchema", () => {
   it("validates correct data", () => {
-    const result = createCollectionSchema.safeParse({
-      name: "My Collection",
-    });
-    expect(result.success).toBe(true);
+    expect(createCollectionSchema.safeParse({ name: "My Collection" }).success).toBe(true);
   });
 
   it("validates with optional description", () => {
-    const result = createCollectionSchema.safeParse({
-      name: "My Collection",
-      description: "A useful description",
-    });
-    expect(result.success).toBe(true);
+    expect(createCollectionSchema.safeParse({ name: "My Collection", description: "A useful description" }).success).toBe(true);
   });
 
   it("rejects empty name", () => {
-    const result = createCollectionSchema.safeParse({
-      name: "",
-    });
-    expect(result.success).toBe(false);
+    expect(createCollectionSchema.safeParse({ name: "" }).success).toBe(false);
   });
 
   it("rejects missing name", () => {
-    const result = createCollectionSchema.safeParse({});
-    expect(result.success).toBe(false);
+    expect(createCollectionSchema.safeParse({}).success).toBe(false);
   });
 
-  it("rejects name that is too long (over 255 characters)", () => {
-    const result = createCollectionSchema.safeParse({
-      name: "x".repeat(256),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts name at maximum length (255 characters)", () => {
-    const result = createCollectionSchema.safeParse({
-      name: "x".repeat(255),
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects description that is too long (over 1000 characters)", () => {
-    const result = createCollectionSchema.safeParse({
-      name: "My Collection",
-      description: "x".repeat(1001),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts description at maximum length (1000 characters)", () => {
-    const result = createCollectionSchema.safeParse({
-      name: "My Collection",
-      description: "x".repeat(1000),
-    });
-    expect(result.success).toBe(true);
+  it.each([
+    ["name at 255 chars", { name: "x".repeat(255) }, true],
+    ["name over 255 chars", { name: "x".repeat(256) }, false],
+    ["description at 1000 chars", { name: "OK", description: "x".repeat(1000) }, true],
+    ["description over 1000 chars", { name: "OK", description: "x".repeat(1001) }, false],
+  ])("boundary: %s", (_label, data, expected) => {
+    expect(createCollectionSchema.safeParse(data).success).toBe(expected);
   });
 });
 
+// ---------------------------------------------------------------------------
+// updateCollectionSchema
+// ---------------------------------------------------------------------------
+
 describe("updateCollectionSchema", () => {
-  it("validates partial update with name only", () => {
-    const result = updateCollectionSchema.safeParse({
-      name: "Updated Name",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates partial update with description only", () => {
-    const result = updateCollectionSchema.safeParse({
-      description: "Updated description",
-    });
-    expect(result.success).toBe(true);
-  });
-
   it("accepts empty object (all fields optional)", () => {
-    const result = updateCollectionSchema.safeParse({});
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects empty name when provided", () => {
-    const result = updateCollectionSchema.safeParse({
-      name: "",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects name too long when provided", () => {
-    const result = updateCollectionSchema.safeParse({
-      name: "x".repeat(256),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects description too long when provided", () => {
-    const result = updateCollectionSchema.safeParse({
-      description: "x".repeat(1001),
-    });
-    expect(result.success).toBe(false);
+    expect(updateCollectionSchema.safeParse({}).success).toBe(true);
   });
 
   it("validates full update", () => {
-    const result = updateCollectionSchema.safeParse({
-      name: "Updated Name",
-      description: "Updated description",
-    });
-    expect(result.success).toBe(true);
+    expect(updateCollectionSchema.safeParse({ name: "Updated Name", description: "Updated description" }).success).toBe(true);
+  });
+
+  it.each([
+    ["name only", { name: "Updated Name" }],
+    ["description only", { description: "Updated description" }],
+  ])("validates partial update with %s", (_label, data) => {
+    expect(updateCollectionSchema.safeParse(data).success).toBe(true);
+  });
+
+  it("rejects empty name when provided", () => {
+    expect(updateCollectionSchema.safeParse({ name: "" }).success).toBe(false);
+  });
+
+  it("rejects name too long when provided", () => {
+    expect(updateCollectionSchema.safeParse({ name: "x".repeat(256) }).success).toBe(false);
+  });
+
+  it("rejects description too long when provided", () => {
+    expect(updateCollectionSchema.safeParse({ description: "x".repeat(1001) }).success).toBe(false);
   });
 });
 
+// ---------------------------------------------------------------------------
+// addPermissionSchema
+// ---------------------------------------------------------------------------
+
 describe("addPermissionSchema", () => {
+  const valid = { user_id: VALID_UUID, permission_level: "editor" };
+
   it("validates correct data", () => {
-    const result = addPermissionSchema.safeParse({
-      user_id: "550e8400-e29b-41d4-a716-446655440000",
-      permission_level: "editor",
-    });
-    expect(result.success).toBe(true);
+    expect(addPermissionSchema.safeParse(valid).success).toBe(true);
   });
 
   it("rejects invalid UUID for user_id", () => {
-    const result = addPermissionSchema.safeParse({
-      user_id: "not-a-uuid",
-      permission_level: "editor",
-    });
+    const result = addPermissionSchema.safeParse({ ...valid, user_id: "not-a-uuid" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.user_id).toBeDefined();
+      expect(result.error.flatten().fieldErrors.user_id).toBeDefined();
     }
-  });
-
-  it("rejects missing user_id", () => {
-    const result = addPermissionSchema.safeParse({
-      permission_level: "editor",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid permission level", () => {
-    const result = addPermissionSchema.safeParse({
-      user_id: "550e8400-e29b-41d4-a716-446655440000",
-      permission_level: "admin",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts all valid permission levels", () => {
-    for (const level of ["owner", "editor", "viewer"]) {
-      const result = addPermissionSchema.safeParse({
-        user_id: "550e8400-e29b-41d4-a716-446655440000",
-        permission_level: level,
-      });
-      expect(result.success).toBe(true);
-    }
-  });
-
-  it("rejects missing permission_level", () => {
-    const result = addPermissionSchema.safeParse({
-      user_id: "550e8400-e29b-41d4-a716-446655440000",
-    });
-    expect(result.success).toBe(false);
   });
 
   it("rejects empty string for user_id", () => {
-    const result = addPermissionSchema.safeParse({
-      user_id: "",
-      permission_level: "editor",
-    });
-    expect(result.success).toBe(false);
+    expect(addPermissionSchema.safeParse({ ...valid, user_id: "" }).success).toBe(false);
+  });
+
+  it("rejects missing user_id", () => {
+    expect(addPermissionSchema.safeParse({ permission_level: "editor" }).success).toBe(false);
+  });
+
+  it("rejects invalid permission level", () => {
+    expect(addPermissionSchema.safeParse({ ...valid, permission_level: "admin" }).success).toBe(false);
+  });
+
+  it("rejects missing permission_level", () => {
+    expect(addPermissionSchema.safeParse({ user_id: VALID_UUID }).success).toBe(false);
+  });
+
+  it.each(["owner", "editor", "viewer"])("accepts permission level '%s'", (level) => {
+    expect(addPermissionSchema.safeParse({ user_id: VALID_UUID, permission_level: level }).success).toBe(true);
   });
 });
 
+// ---------------------------------------------------------------------------
+// createDocumentSchema
+// ---------------------------------------------------------------------------
+
 describe("createDocumentSchema", () => {
-  const validData = {
-    file_id: "550e8400-e29b-41d4-a716-446655440000",
-    collection_id: "660e8400-e29b-41d4-a716-446655440000",
+  const valid = {
+    file_id: VALID_UUID,
+    collection_id: VALID_UUID_2,
     name: "Invoice-001.pdf",
   };
 
   it("validates correct data with default parse_mode", () => {
-    const result = createDocumentSchema.safeParse(validData);
+    const result = createDocumentSchema.safeParse(valid);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.parse_mode).toBe("single");
     }
   });
 
-  it("validates with explicit parse_mode 'single'", () => {
-    const result = createDocumentSchema.safeParse({
-      ...validData,
-      parse_mode: "single",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates with parse_mode 'dual'", () => {
-    const result = createDocumentSchema.safeParse({
-      ...validData,
-      parse_mode: "dual",
-    });
+  it.each(["single", "dual"] as const)("validates with parse_mode '%s'", (mode) => {
+    const result = createDocumentSchema.safeParse({ ...valid, parse_mode: mode });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.parse_mode).toBe("dual");
+      expect(result.data.parse_mode).toBe(mode);
     }
   });
 
-  it("rejects invalid file_id (not a UUID)", () => {
-    const result = createDocumentSchema.safeParse({
-      ...validData,
-      file_id: "not-a-uuid",
-    });
-    expect(result.success).toBe(false);
+  it("rejects invalid parse_mode", () => {
+    expect(createDocumentSchema.safeParse({ ...valid, parse_mode: "triple" }).success).toBe(false);
   });
 
-  it("rejects invalid collection_id (not a UUID)", () => {
-    const result = createDocumentSchema.safeParse({
-      ...validData,
-      collection_id: "bad-id",
-    });
-    expect(result.success).toBe(false);
+  it.each([
+    ["file_id", { ...{ collection_id: VALID_UUID_2, name: "Invoice.pdf" } }],
+    ["collection_id", { ...{ file_id: VALID_UUID, name: "Invoice.pdf" } }],
+    ["name", { ...{ file_id: VALID_UUID, collection_id: VALID_UUID_2 } }],
+  ])("rejects missing %s", (_field, data) => {
+    expect(createDocumentSchema.safeParse(data).success).toBe(false);
   });
 
-  it("rejects missing name", () => {
-    const result = createDocumentSchema.safeParse({
-      file_id: "550e8400-e29b-41d4-a716-446655440000",
-      collection_id: "660e8400-e29b-41d4-a716-446655440000",
-    });
-    expect(result.success).toBe(false);
+  it("rejects invalid UUIDs", () => {
+    expect(createDocumentSchema.safeParse({ ...valid, file_id: "not-a-uuid" }).success).toBe(false);
+    expect(createDocumentSchema.safeParse({ ...valid, collection_id: "bad-id" }).success).toBe(false);
   });
 
   it("rejects empty name", () => {
-    const result = createDocumentSchema.safeParse({
-      ...validData,
-      name: "",
-    });
-    expect(result.success).toBe(false);
+    expect(createDocumentSchema.safeParse({ ...valid, name: "" }).success).toBe(false);
   });
 
-  it("rejects name that is too long (over 255 characters)", () => {
-    const result = createDocumentSchema.safeParse({
-      ...validData,
-      name: "x".repeat(256),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid parse_mode", () => {
-    const result = createDocumentSchema.safeParse({
-      ...validData,
-      parse_mode: "triple",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing file_id", () => {
-    const result = createDocumentSchema.safeParse({
-      collection_id: "660e8400-e29b-41d4-a716-446655440000",
-      name: "Invoice.pdf",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing collection_id", () => {
-    const result = createDocumentSchema.safeParse({
-      file_id: "550e8400-e29b-41d4-a716-446655440000",
-      name: "Invoice.pdf",
-    });
-    expect(result.success).toBe(false);
+  it("rejects name over 255 characters", () => {
+    expect(createDocumentSchema.safeParse({ ...valid, name: "x".repeat(256) }).success).toBe(false);
   });
 });
 
+// ---------------------------------------------------------------------------
+// reviewDocumentSchema
+// ---------------------------------------------------------------------------
+
 describe("reviewDocumentSchema", () => {
   it("validates approved status", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "approved",
-    });
-    expect(result.success).toBe(true);
+    expect(reviewDocumentSchema.safeParse({ status: "approved" }).success).toBe(true);
   });
 
   it("validates rejected status", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "rejected",
-    });
-    expect(result.success).toBe(true);
+    expect(reviewDocumentSchema.safeParse({ status: "rejected" }).success).toBe(true);
   });
 
   it("validates with optional notes", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "approved",
-      notes: "Looks good to me",
-    });
-    expect(result.success).toBe(true);
+    expect(reviewDocumentSchema.safeParse({ status: "approved", notes: "Looks good to me" }).success).toBe(true);
   });
 
   it("rejects invalid status", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "pending",
-    });
-    expect(result.success).toBe(false);
+    expect(reviewDocumentSchema.safeParse({ status: "pending" }).success).toBe(false);
   });
 
   it("rejects missing status", () => {
-    const result = reviewDocumentSchema.safeParse({});
-    expect(result.success).toBe(false);
+    expect(reviewDocumentSchema.safeParse({}).success).toBe(false);
   });
 
-  it("rejects notes that are too long (over 1000 characters)", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "rejected",
-      notes: "x".repeat(1001),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts notes at maximum length (1000 characters)", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "rejected",
-      notes: "x".repeat(1000),
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts empty notes", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "approved",
-      notes: "",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts status without notes (notes is optional)", () => {
-    const result = reviewDocumentSchema.safeParse({
-      status: "rejected",
-    });
+  it("accepts empty notes and status without notes", () => {
+    expect(reviewDocumentSchema.safeParse({ status: "approved", notes: "" }).success).toBe(true);
+    const result = reviewDocumentSchema.safeParse({ status: "rejected" });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.notes).toBeUndefined();
     }
   });
+
+  it.each([
+    ["notes at 1000 chars", { status: "rejected", notes: "x".repeat(1000) }, true],
+    ["notes over 1000 chars", { status: "rejected", notes: "x".repeat(1001) }, false],
+  ])("boundary: %s", (_label, data, expected) => {
+    expect(reviewDocumentSchema.safeParse(data).success).toBe(expected);
+  });
 });
 
+// ---------------------------------------------------------------------------
+// getSafeRedirectUrl
+// ---------------------------------------------------------------------------
+
 describe("getSafeRedirectUrl", () => {
-  it("allows valid relative paths", () => {
-    expect(getSafeRedirectUrl("/")).toBe("/");
-    expect(getSafeRedirectUrl("/documents")).toBe("/documents");
-    expect(getSafeRedirectUrl("/documents/abc-123")).toBe("/documents/abc-123");
-    expect(getSafeRedirectUrl("/collections?page=2")).toBe("/collections?page=2");
-    expect(getSafeRedirectUrl("/login?returnUrl=%2Fdocs")).toBe("/login?returnUrl=%2Fdocs");
+  it.each([
+    ["/", "/"],
+    ["/documents", "/documents"],
+    ["/documents/abc-123", "/documents/abc-123"],
+    ["/collections?page=2", "/collections?page=2"],
+    ["/login?returnUrl=%2Fdocs", "/login?returnUrl=%2Fdocs"],
+  ])("allows valid relative path: %s", (input, expected) => {
+    expect(getSafeRedirectUrl(input)).toBe(expected);
   });
 
-  it("rejects absolute URLs (open redirect)", () => {
-    expect(getSafeRedirectUrl("https://evil.com")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("http://evil.com/phishing")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("https://evil.com/login")).toBe("/dashboard");
-  });
-
-  it("rejects protocol-relative URLs", () => {
-    expect(getSafeRedirectUrl("//evil.com")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("//evil.com/path")).toBe("/dashboard");
-  });
-
-  it("rejects javascript: and data: protocols", () => {
-    expect(getSafeRedirectUrl("javascript:alert(1)")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("data:text/html,<script>alert(1)</script>")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("JAVASCRIPT:alert(1)")).toBe("/dashboard");
-  });
-
-  it("rejects backslash-based bypasses", () => {
-    expect(getSafeRedirectUrl("/\\evil.com")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("\\evil.com")).toBe("/dashboard");
-  });
-
-  it("rejects paths not starting with /", () => {
-    expect(getSafeRedirectUrl("evil.com")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("documents")).toBe("/dashboard");
-    expect(getSafeRedirectUrl("")).toBe("/dashboard");
+  it.each([
+    ["absolute URL", "https://evil.com"],
+    ["absolute URL with path", "http://evil.com/phishing"],
+    ["protocol-relative URL", "//evil.com"],
+    ["protocol-relative with path", "//evil.com/path"],
+    ["javascript: protocol", "javascript:alert(1)"],
+    ["JAVASCRIPT: protocol (case)", "JAVASCRIPT:alert(1)"],
+    ["data: protocol", "data:text/html,<script>alert(1)</script>"],
+    ["backslash in path", "/\\evil.com"],
+    ["backslash prefix", "\\evil.com"],
+    ["no leading slash", "evil.com"],
+    ["relative path (no /)", "documents"],
+    ["empty string", ""],
+  ])("rejects unsafe input: %s", (_label, input) => {
+    expect(getSafeRedirectUrl(input)).toBe("/dashboard");
   });
 
   it("returns /dashboard for null input", () => {

@@ -5,227 +5,114 @@ import {
 } from "../validation";
 
 describe("updateTenantSchema", () => {
-  it("validates with name only", () => {
-    const result = updateTenantSchema.safeParse({ name: "Acme Corp" });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates with slug only", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme-corp" });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates with is_active only", () => {
-    const result = updateTenantSchema.safeParse({ is_active: false });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates with all fields", () => {
-    const result = updateTenantSchema.safeParse({
-      name: "Acme Corp",
-      slug: "acme-corp",
-      is_active: true,
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts empty object (all fields optional)", () => {
-    const result = updateTenantSchema.safeParse({});
-    expect(result.success).toBe(true);
+  it("accepts any combination of optional fields", () => {
+    expect(updateTenantSchema.safeParse({}).success).toBe(true);
+    expect(updateTenantSchema.safeParse({ name: "Acme Corp" }).success).toBe(true);
+    expect(updateTenantSchema.safeParse({ slug: "acme-corp" }).success).toBe(true);
+    expect(updateTenantSchema.safeParse({ is_active: false }).success).toBe(true);
+    expect(
+      updateTenantSchema.safeParse({ name: "Acme Corp", slug: "acme-corp", is_active: true })
+        .success,
+    ).toBe(true);
   });
 
   it("rejects empty name when provided", () => {
     const result = updateTenantSchema.safeParse({ name: "" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.name).toBeDefined();
+      expect(result.error.flatten().fieldErrors.name).toBeDefined();
     }
   });
 
-  it("rejects name over 255 characters", () => {
-    const result = updateTenantSchema.safeParse({ name: "x".repeat(256) });
-    expect(result.success).toBe(false);
+  it("enforces name max length of 255", () => {
+    expect(updateTenantSchema.safeParse({ name: "x".repeat(255) }).success).toBe(true);
+    expect(updateTenantSchema.safeParse({ name: "x".repeat(256) }).success).toBe(false);
   });
 
-  it("accepts name at exactly 255 characters", () => {
-    const result = updateTenantSchema.safeParse({ name: "x".repeat(255) });
-    expect(result.success).toBe(true);
+  it.each([
+    ["uppercase letters", "AcmeCorp"],
+    ["spaces", "acme corp"],
+    ["underscores", "acme_corp"],
+    ["leading hyphen", "-acme"],
+    ["trailing hyphen", "acme-"],
+    ["consecutive hyphens", "acme--corp"],
+  ])("rejects slug with %s", (_label, slug) => {
+    expect(updateTenantSchema.safeParse({ slug }).success).toBe(false);
   });
 
-  it("rejects slug with uppercase letters", () => {
-    const result = updateTenantSchema.safeParse({ slug: "AcmeCorp" });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.slug).toBeDefined();
-    }
-  });
+  it.each(["acme", "acme123", "acme-123-corp"])(
+    "accepts valid slug %s",
+    (slug) => {
+      expect(updateTenantSchema.safeParse({ slug }).success).toBe(true);
+    },
+  );
 
-  it("rejects slug with spaces", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme corp" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects slug with underscores", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme_corp" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects slug starting with a hyphen", () => {
-    const result = updateTenantSchema.safeParse({ slug: "-acme" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects slug ending with a hyphen", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme-" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects slug with consecutive hyphens", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme--corp" });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts slug with numbers", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme123" });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts slug with numbers and hyphens", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme-123-corp" });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts single-word slug", () => {
-    const result = updateTenantSchema.safeParse({ slug: "acme" });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects is_active as a non-boolean", () => {
-    const result = updateTenantSchema.safeParse({ is_active: "yes" });
-    expect(result.success).toBe(false);
+  it("rejects non-boolean is_active", () => {
+    expect(updateTenantSchema.safeParse({ is_active: "yes" }).success).toBe(false);
   });
 });
 
 describe("createServiceAccountSchema", () => {
-  it("validates with name only (minimum required)", () => {
-    const result = createServiceAccountSchema.safeParse({ name: "CI Bot" });
-    expect(result.success).toBe(true);
+  it("validates with valid field combinations", () => {
+    expect(createServiceAccountSchema.safeParse({ name: "CI Bot" }).success).toBe(true);
+    expect(
+      createServiceAccountSchema.safeParse({ name: "CI Bot", description: "For CI/CD" }).success,
+    ).toBe(true);
+    expect(
+      createServiceAccountSchema.safeParse({
+        name: "CI Bot",
+        description: "For CI/CD",
+        expires_at: "2027-01-01T00:00:00Z",
+      }).success,
+    ).toBe(true);
   });
 
-  it("validates with name and description", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "CI Bot",
-      description: "Used for CI/CD pipeline",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("validates with all fields", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "CI Bot",
-      description: "Used for CI/CD pipeline",
-      expires_at: "2027-01-01T00:00:00Z",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects missing name", () => {
-    const result = createServiceAccountSchema.safeParse({});
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.name).toBeDefined();
+  it("rejects missing or empty name", () => {
+    const missing = createServiceAccountSchema.safeParse({});
+    expect(missing.success).toBe(false);
+    if (!missing.success) {
+      expect(missing.error.flatten().fieldErrors.name).toBeDefined();
     }
+    expect(createServiceAccountSchema.safeParse({ name: "" }).success).toBe(false);
   });
 
-  it("rejects empty name", () => {
-    const result = createServiceAccountSchema.safeParse({ name: "" });
-    expect(result.success).toBe(false);
+  it("enforces name max length of 255", () => {
+    expect(createServiceAccountSchema.safeParse({ name: "x".repeat(255) }).success).toBe(true);
+    expect(createServiceAccountSchema.safeParse({ name: "x".repeat(256) }).success).toBe(false);
   });
 
-  it("rejects name over 255 characters", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "x".repeat(256),
-    });
-    expect(result.success).toBe(false);
+  it("enforces description max length of 1000", () => {
+    const base = { name: "CI Bot" };
+    expect(
+      createServiceAccountSchema.safeParse({ ...base, description: "x".repeat(1000) }).success,
+    ).toBe(true);
+    expect(
+      createServiceAccountSchema.safeParse({ ...base, description: "x".repeat(1001) }).success,
+    ).toBe(false);
   });
 
-  it("accepts name at exactly 255 characters", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "x".repeat(255),
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects description over 1000 characters", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "CI Bot",
-      description: "x".repeat(1001),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts description at exactly 1000 characters", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "CI Bot",
-      description: "x".repeat(1000),
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts empty description", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "CI Bot",
-      description: "",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts empty expires_at", () => {
-    const result = createServiceAccountSchema.safeParse({
-      name: "CI Bot",
-      expires_at: "",
-    });
-    expect(result.success).toBe(true);
+  it("accepts empty optional strings", () => {
+    expect(
+      createServiceAccountSchema.safeParse({ name: "CI Bot", description: "" }).success,
+    ).toBe(true);
+    expect(
+      createServiceAccountSchema.safeParse({ name: "CI Bot", expires_at: "" }).success,
+    ).toBe(true);
   });
 });
 
 describe("grantServiceAccountPermissionSchema", () => {
   const validUUID = "550e8400-e29b-41d4-a716-446655440000";
 
-  it("validates with valid collection_id and permission", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
-      collection_id: validUUID,
-      permission: "editor",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts permission 'owner'", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
-      collection_id: validUUID,
-      permission: "owner",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts permission 'editor'", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
-      collection_id: validUUID,
-      permission: "editor",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts permission 'viewer'", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
-      collection_id: validUUID,
-      permission: "viewer",
-    });
-    expect(result.success).toBe(true);
-  });
+  it.each(["owner", "editor", "viewer"])(
+    "accepts permission level '%s'",
+    (permission) => {
+      expect(
+        grantServiceAccountPermissionSchema.safeParse({ collection_id: validUUID, permission })
+          .success,
+      ).toBe(true);
+    },
+  );
 
   it("rejects invalid permission level", () => {
     const result = grantServiceAccountPermissionSchema.safeParse({
@@ -234,46 +121,36 @@ describe("grantServiceAccountPermissionSchema", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.permission).toBeDefined();
+      expect(result.error.flatten().fieldErrors.permission).toBeDefined();
     }
   });
 
-  it("rejects missing permission", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
-      collection_id: validUUID,
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid UUID for collection_id", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
+  it("rejects invalid or missing collection_id", () => {
+    const withInvalid = grantServiceAccountPermissionSchema.safeParse({
       collection_id: "not-a-uuid",
       permission: "editor",
     });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      expect(errors.collection_id).toBeDefined();
+    expect(withInvalid.success).toBe(false);
+    if (!withInvalid.success) {
+      expect(withInvalid.error.flatten().fieldErrors.collection_id).toBeDefined();
     }
+
+    expect(
+      grantServiceAccountPermissionSchema.safeParse({ permission: "editor" }).success,
+    ).toBe(false);
+    expect(
+      grantServiceAccountPermissionSchema.safeParse({ collection_id: "", permission: "editor" })
+        .success,
+    ).toBe(false);
   });
 
-  it("rejects missing collection_id", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
-      permission: "editor",
-    });
-    expect(result.success).toBe(false);
+  it("rejects missing permission", () => {
+    expect(
+      grantServiceAccountPermissionSchema.safeParse({ collection_id: validUUID }).success,
+    ).toBe(false);
   });
 
-  it("rejects empty collection_id", () => {
-    const result = grantServiceAccountPermissionSchema.safeParse({
-      collection_id: "",
-      permission: "editor",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects empty object", () => {
+  it("rejects empty object with multiple errors", () => {
     const result = grantServiceAccountPermissionSchema.safeParse({});
     expect(result.success).toBe(false);
     if (!result.success) {

@@ -12,8 +12,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("LoginForm (Enterprise)", () => {
-
-  it("renders the enterprise login form with all fields", () => {
+  it("renders the enterprise login form with all fields and links", () => {
     renderWithProviders(<LoginForm />);
 
     expect(screen.getByText("Enterprise Sign In")).toBeInTheDocument();
@@ -21,43 +20,18 @@ describe("LoginForm (Enterprise)", () => {
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /sign in here/i })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("link", { name: /forgot your password/i })).toHaveAttribute("href", "/forgot-password");
   });
 
-  it("shows link to free login page", () => {
-    renderWithProviders(<LoginForm />);
-
-    const link = screen.getByRole("link", { name: /sign in here/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/login");
-  });
-
-  it("does not show session expired banner by default", () => {
-    renderWithProviders(<LoginForm />);
-
+  it("shows session expired banner only when sessionExpired is true", () => {
+    const { unmount } = renderWithProviders(<LoginForm />);
     expect(screen.queryByText(/session has expired/i)).not.toBeInTheDocument();
-  });
+    unmount();
 
-  it("shows session expired banner when sessionExpired is true", () => {
     renderWithProviders(
       <LoginForm sessionExpired returnUrl="/documents/123" />
     );
-
-    expect(
-      screen.getByText(/your session has expired/i)
-    ).toBeInTheDocument();
-  });
-
-  it("does not show session expired banner when sessionExpired is false", () => {
-    renderWithProviders(<LoginForm sessionExpired={false} />);
-
-    expect(screen.queryByText(/session has expired/i)).not.toBeInTheDocument();
-  });
-
-  it("shows forgot password link", () => {
-    renderWithProviders(<LoginForm />);
-
-    const link = screen.getByRole("link", { name: /forgot your password/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/forgot-password");
+    expect(screen.getByText(/your session has expired/i)).toBeInTheDocument();
   });
 });

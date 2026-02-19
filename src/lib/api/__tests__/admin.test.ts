@@ -28,24 +28,13 @@ describe("admin API", () => {
   });
 
   describe("getTenant", () => {
-    it("calls GET /admin/tenant and returns tenant data", async () => {
+    it("calls GET /admin/tenant and returns unwrapped tenant data", async () => {
       mockGet.mockResolvedValue({ data: { data: mockTenant } });
 
       const result = await getTenant();
 
       expect(mockGet).toHaveBeenCalledWith("/admin/tenant");
       expect(result).toEqual(mockTenant);
-    });
-
-    it("returns the unwrapped tenant object", async () => {
-      mockGet.mockResolvedValue({ data: { data: mockTenant } });
-
-      const result = await getTenant();
-
-      expect(result.id).toBe("t-1");
-      expect(result.name).toBe("Acme Corp");
-      expect(result.slug).toBe("acme-corp");
-      expect(result.is_active).toBe(true);
     });
 
     it("propagates errors from the API client", async () => {
@@ -56,68 +45,35 @@ describe("admin API", () => {
   });
 
   describe("updateTenant", () => {
-    it("calls PUT /admin/tenant with name update", async () => {
-      const updatedTenant = { ...mockTenant, name: "New Name" };
+    it.each([
+      ["name", { name: "New Name" }],
+      ["slug", { slug: "new-slug" }],
+      ["is_active", { is_active: false }],
+    ] as const)("updates %s field", async (_field, payload) => {
+      const updatedTenant = { ...mockTenant, ...payload };
       mockPut.mockResolvedValue({ data: { data: updatedTenant } });
 
-      const result = await updateTenant({ name: "New Name" });
+      const result = await updateTenant(payload);
 
-      expect(mockPut).toHaveBeenCalledWith("/admin/tenant", {
-        name: "New Name",
-      });
-      expect(result.name).toBe("New Name");
+      expect(mockPut).toHaveBeenCalledWith("/admin/tenant", payload);
+      expect(result).toEqual(updatedTenant);
     });
 
-    it("calls PUT /admin/tenant with slug update", async () => {
-      const updatedTenant = { ...mockTenant, slug: "new-slug" };
+    it("updates multiple fields at once", async () => {
+      const payload = { name: "Updated Corp", slug: "updated-corp" };
+      const updatedTenant = { ...mockTenant, ...payload };
       mockPut.mockResolvedValue({ data: { data: updatedTenant } });
 
-      const result = await updateTenant({ slug: "new-slug" });
+      const result = await updateTenant(payload);
 
-      expect(mockPut).toHaveBeenCalledWith("/admin/tenant", {
-        slug: "new-slug",
-      });
-      expect(result.slug).toBe("new-slug");
-    });
-
-    it("calls PUT /admin/tenant with is_active update", async () => {
-      const updatedTenant = { ...mockTenant, is_active: false };
-      mockPut.mockResolvedValue({ data: { data: updatedTenant } });
-
-      const result = await updateTenant({ is_active: false });
-
-      expect(mockPut).toHaveBeenCalledWith("/admin/tenant", {
-        is_active: false,
-      });
-      expect(result.is_active).toBe(false);
-    });
-
-    it("calls PUT /admin/tenant with multiple fields", async () => {
-      const updatedTenant = {
-        ...mockTenant,
-        name: "Updated Corp",
-        slug: "updated-corp",
-      };
-      mockPut.mockResolvedValue({ data: { data: updatedTenant } });
-
-      const result = await updateTenant({
-        name: "Updated Corp",
-        slug: "updated-corp",
-      });
-
-      expect(mockPut).toHaveBeenCalledWith("/admin/tenant", {
-        name: "Updated Corp",
-        slug: "updated-corp",
-      });
+      expect(mockPut).toHaveBeenCalledWith("/admin/tenant", payload);
       expect(result).toEqual(updatedTenant);
     });
 
     it("propagates errors from the API client", async () => {
       mockPut.mockRejectedValue(new Error("Forbidden"));
 
-      await expect(updateTenant({ name: "Fail" })).rejects.toThrow(
-        "Forbidden"
-      );
+      await expect(updateTenant({ name: "Fail" })).rejects.toThrow("Forbidden");
     });
   });
 });

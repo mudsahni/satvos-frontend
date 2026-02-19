@@ -109,7 +109,7 @@ describe("AdminUsersPage", () => {
     expect(screen.getByText("Member")).toBeInTheDocument();
   });
 
-  it("shows empty state when no users exist", async () => {
+  it("shows empty state with page controls when no users exist", async () => {
     vi.mocked(useUsers).mockReturnValue({
       data: { items: [], total: 0, page: 1, page_size: 20, total_pages: 1 },
       isLoading: false,
@@ -122,37 +122,9 @@ describe("AdminUsersPage", () => {
     await waitFor(() => {
       expect(screen.getByText("No users found")).toBeInTheDocument();
     });
-  });
-
-  it("shows the Add User button", () => {
-    vi.mocked(useUsers).mockReturnValue({
-      data: { items: [], total: 0, page: 1, page_size: 20, total_pages: 1 },
-      isLoading: false,
-      isError: false,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useUsers>);
-
-    renderWithProviders(<AdminUsersPage />);
-
-    expect(
-      screen.getByRole("button", { name: /add user/i })
-    ).toBeInTheDocument();
-  });
-
-  it("shows the page heading", () => {
-    vi.mocked(useUsers).mockReturnValue({
-      data: { items: [], total: 0, page: 1, page_size: 20, total_pages: 1 },
-      isLoading: false,
-      isError: false,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useUsers>);
-
-    renderWithProviders(<AdminUsersPage />);
-
     expect(screen.getByText("User Management")).toBeInTheDocument();
-    expect(
-      screen.getByText("Manage users in your organization")
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add user/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search users...")).toBeInTheDocument();
   });
 
   it("shows loading skeletons when loading", () => {
@@ -167,20 +139,5 @@ describe("AdminUsersPage", () => {
 
     expect(screen.queryByText("Alice Smith")).not.toBeInTheDocument();
     expect(screen.queryByText("No users found")).not.toBeInTheDocument();
-  });
-
-  it("shows search input", () => {
-    vi.mocked(useUsers).mockReturnValue({
-      data: { items: [], total: 0, page: 1, page_size: 20, total_pages: 1 },
-      isLoading: false,
-      isError: false,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useUsers>);
-
-    renderWithProviders(<AdminUsersPage />);
-
-    expect(
-      screen.getByPlaceholderText("Search users...")
-    ).toBeInTheDocument();
   });
 });

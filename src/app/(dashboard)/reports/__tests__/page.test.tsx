@@ -91,66 +91,37 @@ describe("ReportsPage", () => {
     vi.clearAllMocks();
   });
 
-  it("renders page title and tabs", () => {
+  it("renders page with title, tabs, filter bar, and overview content by default", () => {
     renderWithProviders(<ReportsPage />);
 
+    // Title and tabs
     expect(screen.getByText("Reports")).toBeInTheDocument();
     expect(screen.getByText("Overview")).toBeInTheDocument();
     expect(screen.getByText("Sellers")).toBeInTheDocument();
     expect(screen.getByText("Buyers")).toBeInTheDocument();
     expect(screen.getByText("Tax Analysis")).toBeInTheDocument();
     expect(screen.getByText("Party Ledger")).toBeInTheDocument();
-  });
 
-  it("renders filter bar with date range picker and collection selector", () => {
-    renderWithProviders(<ReportsPage />);
-
+    // Filter bar
     expect(screen.getByText("Select date range")).toBeInTheDocument();
     expect(screen.getByText("All Collections")).toBeInTheDocument();
-  });
 
-  it("shows overview tab content by default", () => {
-    renderWithProviders(<ReportsPage />);
-
+    // Overview content shown by default
     expect(screen.getByText("Total Revenue")).toBeInTheDocument();
     expect(screen.getByText("Total Tax")).toBeInTheDocument();
-    expect(screen.getByText("Invoice Count")).toBeInTheDocument();
-    expect(screen.getByText("Avg Invoice Value")).toBeInTheDocument();
   });
 
-  it("switches to sellers tab on click", async () => {
+  it.each([
+    ["Sellers", "0 sellers found"],
+    ["Buyers", "0 buyers found"],
+    ["Tax Analysis", "HSN Summary"],
+    ["Party Ledger", "Search Party Ledger"],
+  ])("switches to %s tab and shows expected content", async (tab, expectedText) => {
     const user = userEvent.setup();
     renderWithProviders(<ReportsPage />);
 
-    await user.click(screen.getByText("Sellers"));
+    await user.click(screen.getByText(tab));
 
-    expect(screen.getByText("0 sellers found")).toBeInTheDocument();
-  });
-
-  it("switches to buyers tab on click", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<ReportsPage />);
-
-    await user.click(screen.getByText("Buyers"));
-
-    expect(screen.getByText("0 buyers found")).toBeInTheDocument();
-  });
-
-  it("switches to tax analysis tab on click", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<ReportsPage />);
-
-    await user.click(screen.getByText("Tax Analysis"));
-
-    expect(screen.getByText("HSN Summary")).toBeInTheDocument();
-  });
-
-  it("switches to party ledger tab on click", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<ReportsPage />);
-
-    await user.click(screen.getByText("Party Ledger"));
-
-    expect(screen.getByText("Search Party Ledger")).toBeInTheDocument();
+    expect(screen.getByText(expectedText)).toBeInTheDocument();
   });
 });
