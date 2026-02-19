@@ -60,8 +60,13 @@ import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { formatRelativeTime } from "@/lib/utils/format";
+import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
 import { UserName } from "@/components/ui/user-name";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 interface DocumentDetailPageProps {
   params: Promise<{ id: string }>;
@@ -241,7 +246,7 @@ export default function DocumentDetailPage({
             <span className="text-foreground truncate">{document.name}</span>
           </div>
           <span className="hidden sm:block shrink-0 ml-4">
-            Created {formatRelativeTime(document.created_at)} by <span className="text-foreground"><UserName id={document.created_by} /></span>
+            Created <Tooltip><TooltipTrigger asChild><span className="cursor-default">{formatRelativeTime(document.created_at)}</span></TooltipTrigger><TooltipContent>{formatDateTime(document.created_at)}</TooltipContent></Tooltip> by <span className="text-foreground"><UserName id={document.created_by} /></span>
           </span>
         </div>
 

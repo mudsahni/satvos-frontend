@@ -50,7 +50,12 @@ import { useDocuments, useDeleteDocument } from "@/lib/hooks/use-documents";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { getDocuments } from "@/lib/api/documents";
 import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
-import { formatRelativeTime } from "@/lib/utils/format";
+import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { DuplicateBadge } from "@/components/documents/duplicate-badge";
@@ -353,7 +358,12 @@ export default function DocumentsPage() {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
                         <div>
-                          <div>{formatRelativeTime(doc.created_at)}</div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="w-fit cursor-default">{formatRelativeTime(doc.created_at)}</div>
+                            </TooltipTrigger>
+                            <TooltipContent>{formatDateTime(doc.created_at)}</TooltipContent>
+                          </Tooltip>
                           <div className="text-xs">
                             by <span className="text-foreground"><UserName id={doc.created_by} /></span>
                           </div>

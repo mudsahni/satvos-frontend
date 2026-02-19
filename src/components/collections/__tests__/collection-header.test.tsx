@@ -74,7 +74,8 @@ describe("CollectionHeader", () => {
 
   it("shows created date when created_at is valid", () => {
     renderWithProviders(<CollectionHeader collection={baseCollection} />);
-    expect(screen.getByText(/Created Jan 1, 2024/)).toBeInTheDocument();
+    expect(screen.getByText("Jan 1, 2024")).toBeInTheDocument();
+    expect(screen.getByText(/Created/)).toBeInTheDocument();
   });
 
   it("hides created date when created_at is null", () => {
