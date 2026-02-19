@@ -17,6 +17,16 @@ function makeDuplicateResult(
     actual_value: "1 duplicate(s) found [error]",
     validated_at: "2025-08-15T10:00:00Z",
     reconciliation_critical: false,
+    metadata: {
+      duplicates: [
+        {
+          document_id: "abc-123",
+          document_name: "Invoice-A.pdf",
+          match_type: "strong",
+          created_at: "2025-08-01T00:00:00Z",
+        },
+      ],
+    },
     ...overrides,
   };
 }
@@ -122,10 +132,25 @@ describe("DuplicateBadge", () => {
     ).toBeInTheDocument();
   });
 
-  it("match document name links to search page", async () => {
+  it("match document name links directly to document when ID is available", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <DuplicateBadge validationResults={[makeDuplicateResult()]} />
+    );
+
+    await user.click(screen.getByRole("button"));
+
+    const link = screen.getByRole("link", { name: "Invoice-A.pdf" });
+    expect(link).toHaveAttribute("href", "/documents/abc-123");
+  });
+
+  it("falls back to search link when no document ID in metadata", async () => {
+    const user = userEvent.setup();
+    const resultWithoutMetadata = makeDuplicateResult({
+      metadata: undefined,
+    });
+    renderWithProviders(
+      <DuplicateBadge validationResults={[resultWithoutMetadata]} />
     );
 
     await user.click(screen.getByRole("button"));
@@ -143,6 +168,16 @@ describe("DuplicateBadge", () => {
       message:
         'Matching documents: "Old-Invoice.pdf" [weak] (uploaded 2024-03-15)',
       actual_value: "1 duplicate(s) found [warning]",
+      metadata: {
+        duplicates: [
+          {
+            document_id: "weak-123",
+            document_name: "Old-Invoice.pdf",
+            match_type: "weak",
+            created_at: "2024-03-15T00:00:00Z",
+          },
+        ],
+      },
     });
     renderWithProviders(
       <DuplicateBadge validationResults={[weakResult]} />
@@ -160,6 +195,22 @@ describe("DuplicateBadge", () => {
       message:
         'Matching documents: "Invoice-A.pdf" [exact_irn] (uploaded 2025-08-01), "Invoice-B.pdf" [weak] (uploaded 2024-03-15)',
       actual_value: "2 duplicate(s) found [error]",
+      metadata: {
+        duplicates: [
+          {
+            document_id: "abc-123",
+            document_name: "Invoice-A.pdf",
+            match_type: "exact_irn",
+            created_at: "2025-08-01T00:00:00Z",
+          },
+          {
+            document_id: "def-456",
+            document_name: "Invoice-B.pdf",
+            match_type: "weak",
+            created_at: "2024-03-15T00:00:00Z",
+          },
+        ],
+      },
     });
     renderWithProviders(
       <DuplicateBadge validationResults={[multiResult]} />
@@ -175,6 +226,22 @@ describe("DuplicateBadge", () => {
       message:
         'Matching documents: "Invoice-A.pdf" [exact_irn] (uploaded 2025-08-01), "Invoice-B.pdf" [weak] (uploaded 2024-03-15)',
       actual_value: "2 duplicate(s) found [error]",
+      metadata: {
+        duplicates: [
+          {
+            document_id: "abc-123",
+            document_name: "Invoice-A.pdf",
+            match_type: "exact_irn",
+            created_at: "2025-08-01T00:00:00Z",
+          },
+          {
+            document_id: "def-456",
+            document_name: "Invoice-B.pdf",
+            match_type: "weak",
+            created_at: "2024-03-15T00:00:00Z",
+          },
+        ],
+      },
     });
     renderWithProviders(
       <DuplicateBadge validationResults={[multiResult]} />

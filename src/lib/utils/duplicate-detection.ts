@@ -7,6 +7,7 @@ export type EffectiveSeverity = "error" | "warning";
 export type MatchType = "exact_irn" | "strong" | "weak";
 
 export interface DuplicateMatchInfo {
+  documentId?: string;
   documentName: string;
   matchType: MatchType;
   uploadDate: string;
@@ -87,8 +88,8 @@ export function parseDuplicateResult(
     return { found: false, unavailable: false };
   }
 
-  // Actual duplicates detected — extract match details from message
-  const matches = extractMatches(result.message);
+  // Actual duplicates detected — prefer structured metadata, fall back to message regex
+  const matches = extractMatchesFromMetadata(result.metadata) ?? extractMatches(result.message);
   const matchCount = extractMatchCount(result.actual_value ?? "");
 
   // Guard: if we can't parse any matches from the message, treat as unavailable
@@ -127,6 +128,40 @@ function extractEffectiveSeverity(actualValue: string): EffectiveSeverity {
 function extractMatchCount(actualValue: string): number {
   const match = actualValue.match(/^(\d+)\s+duplicate/);
   return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Extract match details from the structured metadata.duplicates array.
+ * Returns null if metadata is missing or invalid so the caller falls back to regex.
+ */
+function extractMatchesFromMetadata(
+  metadata: Record<string, unknown> | undefined
+): DuplicateMatchInfo[] | null {
+  if (!metadata) return null;
+  const duplicates = metadata.duplicates;
+  if (!Array.isArray(duplicates) || duplicates.length === 0) return null;
+
+  const matches: DuplicateMatchInfo[] = [];
+  for (const dup of duplicates) {
+    if (typeof dup !== "object" || !dup) continue;
+    const d = dup as Record<string, unknown>;
+    const matchType = d.match_type as string | undefined;
+    if (!matchType || !["exact_irn", "strong", "weak"].includes(matchType))
+      continue;
+
+    matches.push({
+      documentId: typeof d.document_id === "string" ? d.document_id : undefined,
+      documentName:
+        typeof d.document_name === "string" ? d.document_name : "Unknown",
+      matchType: matchType as MatchType,
+      uploadDate:
+        typeof d.created_at === "string"
+          ? d.created_at.slice(0, 10)
+          : "unknown",
+    });
+  }
+
+  return matches.length > 0 ? matches : null;
 }
 
 /**
