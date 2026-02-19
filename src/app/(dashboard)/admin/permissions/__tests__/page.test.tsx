@@ -1,4 +1,5 @@
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test/test-utils";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
@@ -49,7 +50,7 @@ describe("PermissionsOverviewPage", () => {
 
   it("shows collections table when loaded", async () => {
     vi.mocked(useCollections).mockReturnValue({
-      data: { items: mockCollections, total: 2, page: 1, page_size: 100, total_pages: 1 },
+      data: { items: mockCollections, total: 2, page: 1, page_size: 20, total_pages: 1 },
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -68,7 +69,7 @@ describe("PermissionsOverviewPage", () => {
 
   it("shows empty state when no collections exist", async () => {
     vi.mocked(useCollections).mockReturnValue({
-      data: { items: [], total: 0, page: 1, page_size: 100, total_pages: 1 },
+      data: { items: [], total: 0, page: 1, page_size: 20, total_pages: 1 },
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -87,7 +88,7 @@ describe("PermissionsOverviewPage", () => {
 
   it("shows Manage links for each collection", async () => {
     vi.mocked(useCollections).mockReturnValue({
-      data: { items: mockCollections, total: 2, page: 1, page_size: 100, total_pages: 1 },
+      data: { items: mockCollections, total: 2, page: 1, page_size: 20, total_pages: 1 },
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -113,7 +114,7 @@ describe("PermissionsOverviewPage", () => {
 
   it("shows permission badges for each collection", async () => {
     vi.mocked(useCollections).mockReturnValue({
-      data: { items: mockCollections, total: 2, page: 1, page_size: 100, total_pages: 1 },
+      data: { items: mockCollections, total: 2, page: 1, page_size: 20, total_pages: 1 },
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -130,7 +131,7 @@ describe("PermissionsOverviewPage", () => {
 
   it("shows page heading", () => {
     vi.mocked(useCollections).mockReturnValue({
-      data: { items: [], total: 0, page: 1, page_size: 100, total_pages: 1 },
+      data: { items: [], total: 0, page: 1, page_size: 20, total_pages: 1 },
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -158,5 +159,57 @@ describe("PermissionsOverviewPage", () => {
 
     expect(screen.queryByText("Invoices Q1")).not.toBeInTheDocument();
     expect(screen.queryByText("No collections")).not.toBeInTheDocument();
+  });
+
+  it("passes correct pagination params to useCollections", () => {
+    vi.mocked(useCollections).mockReturnValue({
+      data: { items: mockCollections, total: 2, page: 1, page_size: 20, total_pages: 1 },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useCollections>);
+
+    renderWithProviders(<PermissionsOverviewPage />);
+
+    expect(useCollections).toHaveBeenCalledWith({ limit: 20, offset: 0 });
+  });
+
+  it("shows pagination when there are multiple pages", async () => {
+    vi.mocked(useCollections).mockReturnValue({
+      data: { items: mockCollections, total: 50, page: 1, page_size: 20, total_pages: 3 },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useCollections>);
+
+    renderWithProviders(<PermissionsOverviewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Invoices Q1")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/Showing 1–20 of 50/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next page/i })).toBeInTheDocument();
+  });
+
+  it("navigates to next page when clicking next", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(useCollections).mockReturnValue({
+      data: { items: mockCollections, total: 50, page: 1, page_size: 20, total_pages: 3 },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useCollections>);
+
+    renderWithProviders(<PermissionsOverviewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Invoices Q1")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /next page/i }));
+
+    expect(useCollections).toHaveBeenCalledWith({ limit: 20, offset: 20 });
   });
 });

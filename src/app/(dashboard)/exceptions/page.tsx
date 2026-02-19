@@ -31,7 +31,12 @@ import { getDocuments } from "@/lib/api/documents";
 import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { useStats } from "@/lib/hooks/use-stats";
-import { formatRelativeTime } from "@/lib/utils/format";
+import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { cn } from "@/lib/utils";
 import { UserName } from "@/components/ui/user-name";
@@ -331,7 +336,12 @@ function NeedsAttentionContent() {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{doc.name}</p>
                       <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        <span>{formatRelativeTime(doc.created_at)}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-default">{formatRelativeTime(doc.created_at)}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>{formatDateTime(doc.created_at)}</TooltipContent>
+                        </Tooltip>
                         <span>&middot;</span>
                         <span className="text-foreground"><UserName id={doc.created_by} /></span>
                         {collectionName && (

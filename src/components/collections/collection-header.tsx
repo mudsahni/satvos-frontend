@@ -16,7 +16,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TallyExportDialog } from "@/components/collections/tally-export-dialog";
 import { Collection, getCollectionDocumentCount } from "@/types/collection";
-import { formatDate } from "@/lib/utils/format";
+import { formatDate, formatDateTime } from "@/lib/utils/format";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { UserName } from "@/components/ui/user-name";
 
@@ -108,7 +113,7 @@ export function CollectionHeader({
               {formatDate(collection.created_at) !== "-" && (
                 <>
                   <span>|</span>
-                  <span>Created {formatDate(collection.created_at)} by <span className="text-foreground"><UserName id={collection.created_by} /></span></span>
+                  <span>Created <Tooltip><TooltipTrigger asChild><span className="cursor-default">{formatDate(collection.created_at)}</span></TooltipTrigger><TooltipContent>{formatDateTime(collection.created_at)}</TooltipContent></Tooltip> by <span className="text-foreground"><UserName id={collection.created_by} /></span></span>
                 </>
               )}
             </div>

@@ -30,7 +30,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { DuplicateBadge } from "@/components/documents/duplicate-badge";
 import { Document } from "@/types/document";
-import { formatRelativeTime } from "@/lib/utils/format";
+import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { UserName } from "@/components/ui/user-name";
 
@@ -240,7 +245,12 @@ export function DocumentsTable({
                 </TableCell>
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
                   <div>
-                    <div>{formatRelativeTime(doc.created_at)}</div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-fit cursor-default">{formatRelativeTime(doc.created_at)}</div>
+                      </TooltipTrigger>
+                      <TooltipContent>{formatDateTime(doc.created_at)}</TooltipContent>
+                    </Tooltip>
                     <div className="text-xs">
                       by <span className="text-foreground"><UserName id={doc.created_by} /></span>
                     </div>

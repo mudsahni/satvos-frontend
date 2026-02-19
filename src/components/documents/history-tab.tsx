@@ -19,6 +19,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { AuditEntry } from "@/types/audit";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
@@ -310,9 +315,12 @@ export function HistoryTab({ documentId }: HistoryTabProps) {
                     </p>
                   )}
                   <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                    <span title={formatDateTime(entry.created_at)}>
-                      {formatRelativeTime(entry.created_at)}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">{formatRelativeTime(entry.created_at)}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>{formatDateTime(entry.created_at)}</TooltipContent>
+                    </Tooltip>
                     {entry.user_id ? (
                       <span className="flex items-center gap-1">
                         <User className="h-3 w-3" />
