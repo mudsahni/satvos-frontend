@@ -121,7 +121,7 @@ describe("HistoryTab", () => {
   });
 
   describe("document.parse_completed", () => {
-    it("shows Parsing Completed with parser model", async () => {
+    it("shows Parsing Completed without model name", async () => {
       mockGetDocumentAudit.mockResolvedValue(
         createAuditResponse([
           createAuditEntry({
@@ -136,7 +136,8 @@ describe("HistoryTab", () => {
       await waitFor(() => {
         expect(screen.getByText("Parsing Completed")).toBeInTheDocument();
       });
-      expect(screen.getByText("Parsed with gpt-4o")).toBeInTheDocument();
+      expect(screen.getByText("Document successfully parsed")).toBeInTheDocument();
+      expect(screen.queryByText(/gpt-4o/)).not.toBeInTheDocument();
     });
   });
 

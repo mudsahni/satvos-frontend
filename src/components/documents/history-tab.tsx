@@ -55,9 +55,7 @@ function getActionDisplay(entry: AuditEntry): ActionDisplay {
         icon: <FileText className="h-4 w-4" />,
         colorClass: "bg-success-bg text-success border-transparent",
         title: "Parsing Completed",
-        description: changes.parser_model
-          ? `Parsed with ${changes.parser_model}`
-          : "Document successfully parsed",
+        description: "Document successfully parsed",
       };
 
     case "document.parse_failed":
