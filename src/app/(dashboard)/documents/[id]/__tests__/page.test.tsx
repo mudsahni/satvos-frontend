@@ -35,7 +35,7 @@ vi.mock("@/lib/hooks/use-mobile", () => ({
 }));
 
 vi.mock("@/components/ui/user-name", () => ({
-  UserName: ({ id }: { id: string }) => <span>Test User</span>,
+  UserName: ({ }: { id: string }) => <span>Test User</span>,
 }));
 
 vi.mock("@/components/documents/status-badge", () => ({

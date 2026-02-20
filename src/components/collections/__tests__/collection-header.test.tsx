@@ -6,7 +6,7 @@ import { Collection } from "@/types/collection";
 
 // Mock UserName to prevent network requests
 vi.mock("@/components/ui/user-name", () => ({
-  UserName: ({ id }: { id: string }) => <span>Test User</span>,
+  UserName: ({ }: { id: string }) => <span>Test User</span>,
 }));
 
 // Mock next/navigation
