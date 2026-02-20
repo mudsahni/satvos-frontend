@@ -14,8 +14,8 @@ vi.mock("@/lib/hooks/use-collections", () => ({
   useCollections: vi.fn(() => ({ data: { items: [] } })),
 }));
 
-vi.mock("@/lib/hooks/use-users", () => ({
-  useUser: () => ({ data: { full_name: "Test User" }, isLoading: false }),
+vi.mock("@/components/ui/user-name", () => ({
+  UserName: ({ id }: { id: string }) => <span>Test User</span>,
 }));
 
 vi.mock("@/components/documents/status-badge", () => ({
