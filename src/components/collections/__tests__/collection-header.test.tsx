@@ -4,9 +4,9 @@ import { renderWithProviders } from "@/test/test-utils";
 import { CollectionHeader } from "../collection-header";
 import { Collection } from "@/types/collection";
 
-// Mock useUser to prevent network requests from UserName component
-vi.mock("@/lib/hooks/use-users", () => ({
-  useUser: () => ({ data: { full_name: "Test User" }, isLoading: false }),
+// Mock UserName to prevent network requests
+vi.mock("@/components/ui/user-name", () => ({
+  UserName: ({ }: { id: string }) => <span>Test User</span>,
 }));
 
 // Mock next/navigation
