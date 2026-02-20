@@ -15,31 +15,22 @@ interface UserNameProps {
   fallback?: string;
 }
 
-/** Resolves a user or service account ID to their display name. Tries user lookup first, falls back to service account. */
+/** Resolves a user or service account ID to their display name. Fires both lookups in parallel — whichever returns data first wins. */
 export function UserName({ id, fallback }: UserNameProps) {
-  const {
-    data: user,
-    isLoading: userLoading,
-    isError: userError,
-  } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["user", id],
     queryFn: () => getUser(id),
     enabled: !!id,
   });
 
-  const userResolved = !userLoading && !user;
-
   const { data: serviceAccount, isLoading: saLoading } = useQuery({
     queryKey: ["service-account", id],
     queryFn: () => getServiceAccount(id),
-    enabled: !!id && userResolved,
+    enabled: !!id,
     retry: false,
   });
 
-  if (userLoading || (userError && saLoading)) {
-    return <span className="inline-block h-3 w-16 animate-pulse rounded bg-muted" />;
-  }
-
+  // Render as soon as either resolves with data — no waterfall
   if (user?.full_name) {
     return (
       <span className="inline-flex items-center gap-1.5">
@@ -65,6 +56,11 @@ export function UserName({ id, fallback }: UserNameProps) {
         <TooltipContent>Service account</TooltipContent>
       </Tooltip>
     );
+  }
+
+  // Still loading — show skeleton only if either could still return data
+  if (userLoading || saLoading) {
+    return <span className="inline-block h-3 w-16 animate-pulse rounded bg-muted" />;
   }
 
   return <>{fallback || id}</>;
