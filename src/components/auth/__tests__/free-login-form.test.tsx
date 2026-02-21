@@ -131,6 +131,35 @@ describe("FreeLoginForm", () => {
     expect(screen.getByText("Or")).toBeInTheDocument();
   });
 
+  it("shows INVITATION_PENDING warning when user has not accepted invitation", async () => {
+    const invitationPendingError = {
+      response: {
+        status: 403,
+        data: {
+          error: {
+            code: "INVITATION_PENDING",
+            message: "Invitation pending",
+          },
+        },
+      },
+      isAxiosError: true,
+    };
+    mockLogin.mockRejectedValueOnce(invitationPendingError);
+
+    const user = userEvent.setup();
+    renderWithProviders(<FreeLoginForm />);
+
+    await user.type(screen.getByLabelText("Email"), "invited@test.com");
+    await user.type(screen.getByLabelText("Password"), "somepassword");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/please check your email and accept the invitation/i)
+      ).toBeInTheDocument();
+    });
+  });
+
   it("shows PASSWORD_LOGIN_NOT_ALLOWED error with Google sign-in prompt", async () => {
     const passwordNotAllowedError = {
       response: {

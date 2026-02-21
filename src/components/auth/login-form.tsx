@@ -24,7 +24,7 @@ import { loginSchema, type LoginFormData, getSafeRedirectUrl } from "@/lib/utils
 import { login } from "@/lib/api/auth";
 import { getUser } from "@/lib/api/users";
 import { useAuthStore } from "@/store/auth-store";
-import { getErrorMessage, renewAuthCookie } from "@/lib/api/client";
+import { getErrorMessage, isApiError, renewAuthCookie } from "@/lib/api/client";
 import { decodeJwtPayload } from "@/types/auth";
 
 interface LoginFormProps {
@@ -40,6 +40,7 @@ export function LoginForm({
   const queryClient = useQueryClient();
   const returnUrl = getSafeRedirectUrl(returnUrlProp ?? null);
   const [error, setError] = useState<string | null>(null);
+  const [invitationPending, setInvitationPending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const loginToStore = useAuthStore((state) => state.login);
@@ -104,7 +105,15 @@ export function LoginForm({
       router.push(returnUrl);
       router.refresh();
     } catch (err) {
-      setError(getErrorMessage(err));
+      if (isApiError(err, "INVITATION_PENDING")) {
+        setInvitationPending(true);
+        setError(
+          "Please check your email and accept the invitation to set your password before signing in."
+        );
+      } else {
+        setInvitationPending(false);
+        setError(getErrorMessage(err));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +137,7 @@ export function LoginForm({
             </Alert>
           )}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant={invitationPending ? "warning" : "destructive"}>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}

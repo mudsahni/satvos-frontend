@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  Send,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -70,6 +72,7 @@ import {
   useCreateUser,
   useUpdateUser,
   useDeleteUser,
+  useResendInvitation,
 } from "@/lib/hooks/use-users";
 import { useAuthStore } from "@/store/auth-store";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -84,6 +87,10 @@ import { Role } from "@/lib/constants";
 import { User } from "@/types/user";
 import { RoleBadge } from "@/components/admin/role-badge";
 import { RoleInfoPanel } from "@/components/admin/role-info-panel";
+
+function isPendingInvitation(user: User): boolean {
+  return !user.email_verified && user.role !== "free";
+}
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuthStore();
@@ -106,6 +113,7 @@ export default function AdminUsersPage() {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
+  const resendInvitation = useResendInvitation();
 
   let users = data?.items || [];
   if (roleFilter !== "all") {
@@ -137,7 +145,7 @@ export default function AdminUsersPage() {
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
           <Plus />
-          Add User
+          Invite User
         </Button>
       </div>
 
@@ -251,6 +259,11 @@ export default function AdminUsersPage() {
                         <TableCell className="hidden md:table-cell">
                           {user.email_verified ? (
                             <CheckCircle2 className="h-4 w-4 text-success" />
+                          ) : isPendingInvitation(user) ? (
+                            <Badge variant="warning">
+                              <Clock className="h-3 w-3" />
+                              Pending
+                            </Badge>
                           ) : (
                             <XCircle className="h-4 w-4 text-muted-foreground" />
                           )}
@@ -286,6 +299,14 @@ export default function AdminUsersPage() {
                                 <Edit />
                                 Edit
                               </DropdownMenuItem>
+                              {isPendingInvitation(user) && (
+                                <DropdownMenuItem
+                                  onClick={() => resendInvitation.mutate(user.id)}
+                                >
+                                  <Send />
+                                  Resend Invitation
+                                </DropdownMenuItem>
+                              )}
                               {user.id !== currentUser?.id && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -397,7 +418,6 @@ function CreateUserDialog({
     defaultValues: {
       email: "",
       full_name: "",
-      password: "",
       role: "member",
     },
   });
@@ -411,9 +431,10 @@ function CreateUserDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add User</DialogTitle>
+          <DialogTitle>Invite User</DialogTitle>
           <DialogDescription>
-            Create a new user in your organization
+            Invite a new user to your organization. They will receive an email
+            to set their password.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -451,20 +472,6 @@ function CreateUserDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register("password")}
-              disabled={isSubmitting}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
             <Select
               value={watch("role")}
@@ -490,7 +497,7 @@ function CreateUserDialog({
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="animate-spin" />}
-              Create User
+              Send Invitation
             </Button>
           </DialogFooter>
         </form>
@@ -525,7 +532,6 @@ function EditUserDialog({
           full_name: user.full_name,
           role: user.role,
           is_active: user.is_active,
-          password: "",
         }
       : undefined,
   });
@@ -547,7 +553,6 @@ function EditUserDialog({
         </DialogHeader>
         <form
           onSubmit={handleSubmit(async (data) => {
-            if (!data.password) delete data.password;
             await onSubmit(data);
             reset();
           })}
@@ -577,22 +582,6 @@ function EditUserDialog({
             {errors.email && (
               <p className="text-sm text-destructive">
                 {errors.email.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-password">
-              New Password (leave blank to keep current)
-            </Label>
-            <Input
-              id="edit-password"
-              type="password"
-              {...register("password")}
-              disabled={isSubmitting}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
               </p>
             )}
           </div>
@@ -648,7 +637,13 @@ function EditUserDialog({
             <div className="space-y-2 border-t pt-4 text-sm text-muted-foreground">
               <div className="flex justify-between">
                 <span>Email Verified</span>
-                <span>{user.email_verified ? "Yes" : "No"}</span>
+                <span>
+                  {user.email_verified
+                    ? "Yes"
+                    : isPendingInvitation(user)
+                      ? "Pending Invitation"
+                      : "No"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Auth Provider</span>

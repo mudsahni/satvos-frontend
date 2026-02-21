@@ -55,6 +55,7 @@ const PUBLIC_AUTH_PATHS = [
   "/auth/verify-email",
   "/auth/forgot-password",
   "/auth/reset-password",
+  "/auth/accept-invitation",
 ];
 
 // Request interceptor - attach auth token (skip public auth endpoints)
