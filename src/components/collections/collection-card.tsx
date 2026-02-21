@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FolderOpen, FileText, MoreHorizontal, Settings, Trash2, Download } from "lucide-react";
+import { FolderOpen, FileText, MoreHorizontal, Settings, Trash2, Download, Archive } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ interface CollectionCardProps {
   isExportingCsv?: boolean;
   onExportTally?: (id: string, name: string, companyName?: string) => void;
   isExportingTally?: boolean;
+  onDownloadAll?: (id: string, name: string) => void;
   canDelete?: boolean;
 }
 
@@ -47,6 +48,7 @@ export function CollectionCard({
   isExportingCsv,
   onExportTally,
   isExportingTally,
+  onDownloadAll,
   canDelete = false,
 }: CollectionCardProps) {
   const [tallyDialogOpen, setTallyDialogOpen] = useState(false);
@@ -113,6 +115,14 @@ export function CollectionCard({
                   >
                     <Download />
                     Export Tally XML
+                  </DropdownMenuItem>
+                )}
+                {onDownloadAll && (
+                  <DropdownMenuItem
+                    onClick={() => onDownloadAll(collection.id, collection.name)}
+                  >
+                    <Archive />
+                    Download All (.zip)
                   </DropdownMenuItem>
                 )}
                 {canDelete && (

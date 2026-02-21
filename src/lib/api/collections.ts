@@ -135,17 +135,23 @@ export async function deleteCollectionPermission(
   );
 }
 
-// CSV Export
-export async function exportCollectionCsv(
-  collectionId: string,
-  collectionName?: string
-): Promise<void> {
+// CSV Export — blob fetcher (no download trigger)
+export async function fetchCollectionCsvBlob(
+  collectionId: string
+): Promise<Blob> {
   const response = await apiClient.get(
     `/collections/${collectionId}/export/csv`,
     { responseType: "blob" }
   );
+  return new Blob([response.data], { type: "text/csv" });
+}
 
-  const blob = new Blob([response.data], { type: "text/csv" });
+// CSV Export — fetch + download
+export async function exportCollectionCsv(
+  collectionId: string,
+  collectionName?: string
+): Promise<void> {
+  const blob = await fetchCollectionCsvBlob(collectionId);
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   try {
@@ -159,12 +165,11 @@ export async function exportCollectionCsv(
   }
 }
 
-// Tally XML Export
-export async function exportCollectionTally(
+// Tally XML Export — blob fetcher (no download trigger)
+export async function fetchCollectionTallyBlob(
   collectionId: string,
-  collectionName?: string,
   companyName?: string
-): Promise<void> {
+): Promise<Blob> {
   const params: Record<string, string> = {};
   if (companyName) params.company_name = companyName;
 
@@ -172,8 +177,16 @@ export async function exportCollectionTally(
     `/collections/${collectionId}/export/tally`,
     { responseType: "blob", params }
   );
+  return new Blob([response.data], { type: "application/xml" });
+}
 
-  const blob = new Blob([response.data], { type: "application/xml" });
+// Tally XML Export — fetch + download
+export async function exportCollectionTally(
+  collectionId: string,
+  collectionName?: string,
+  companyName?: string
+): Promise<void> {
+  const blob = await fetchCollectionTallyBlob(collectionId, companyName);
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   try {

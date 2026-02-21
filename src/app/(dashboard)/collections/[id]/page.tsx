@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionHeader } from "@/components/collections/collection-header";
+import { ZipExportDialog } from "@/components/collections/zip-export-dialog";
 import {
   CollectionFilters,
   ValidationStatusFilter,
@@ -87,6 +88,7 @@ export default function CollectionDetailPage({
   const assignDocument = useAssignDocument();
   const exportCsv = useExportCollectionCsv();
   const exportTally = useExportCollectionTally();
+  const [zipDialogOpen, setZipDialogOpen] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
 
   const {
@@ -273,6 +275,14 @@ export default function CollectionDetailPage({
         isExportingCsv={exportCsv.isPending}
         onExportTally={(companyName) => exportTally.mutate({ id, name: collection?.name, companyName })}
         isExportingTally={exportTally.isPending}
+        onDownloadAll={() => setZipDialogOpen(true)}
+      />
+
+      <ZipExportDialog
+        open={zipDialogOpen}
+        onOpenChange={setZipDialogOpen}
+        collectionId={id}
+        collectionName={collection?.name || "collection"}
       />
 
       {/* Filters */}
