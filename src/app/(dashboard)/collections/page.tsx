@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import Link from "next/link";
 import { Plus, Search, FolderOpen, Upload, Loader2 } from "lucide-react";
+import { ZipExportDialog } from "@/components/collections/zip-export-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ export default function CollectionsPage() {
   const { user } = useAuthStore();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [zipTarget, setZipTarget] = useState<{ id: string; name: string } | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
@@ -171,6 +173,7 @@ export default function CollectionsPage() {
                 isExportingCsv={exportCsv.isPending}
                 onExportTally={(id, name, companyName) => exportTally.mutate({ id, name, companyName })}
                 isExportingTally={exportTally.isPending}
+                onDownloadAll={(id, name) => setZipTarget({ id, name })}
                 canDelete={canDelete(collection)}
               />
             ))}
@@ -185,6 +188,14 @@ export default function CollectionsPage() {
           />
         </>
       )}
+
+      {/* ZIP export dialog */}
+      <ZipExportDialog
+        open={!!zipTarget}
+        onOpenChange={(open) => { if (!open) setZipTarget(null); }}
+        collectionId={zipTarget?.id ?? ""}
+        collectionName={zipTarget?.name ?? ""}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

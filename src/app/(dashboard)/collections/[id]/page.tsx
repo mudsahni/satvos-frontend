@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CollectionHeader } from "@/components/collections/collection-header";
+import { ZipExportDialog } from "@/components/collections/zip-export-dialog";
 import {
   CollectionFilters,
   ValidationStatusFilter,
@@ -26,6 +27,7 @@ import {
   useAssignDocument,
 } from "@/lib/hooks/use-documents";
 import { useBulkActions } from "@/lib/hooks/use-bulk-actions";
+import { useDownloadSelected } from "@/lib/hooks/use-download-selected";
 import { getDocuments } from "@/lib/api/documents";
 import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { toast } from "@/lib/hooks/use-toast";
@@ -87,6 +89,7 @@ export default function CollectionDetailPage({
   const assignDocument = useAssignDocument();
   const exportCsv = useExportCollectionCsv();
   const exportTally = useExportCollectionTally();
+  const [zipDialogOpen, setZipDialogOpen] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
 
   const {
@@ -199,6 +202,13 @@ export default function CollectionDetailPage({
     [documents]
   );
 
+  const zipFilename = useMemo(
+    () => `${collection?.name || "collection"}-selected`,
+    [collection?.name]
+  );
+  const { downloadSelected: handleDownloadSelected, isDownloading: isDownloadingSelected } =
+    useDownloadSelected({ docMap, zipFilename });
+
   // Compute review status counts for selected documents
   const reviewStatusCounts = useMemo(() => {
     if (selectedIds.length === 0) return undefined;
@@ -227,7 +237,6 @@ export default function CollectionDetailPage({
   const showSelectAllBanner =
     pageFullySelected &&
     sortedDocuments.length > paginatedDocuments.length;
-
 
   if (collectionLoading) {
     return (
@@ -273,6 +282,14 @@ export default function CollectionDetailPage({
         isExportingCsv={exportCsv.isPending}
         onExportTally={(companyName) => exportTally.mutate({ id, name: collection?.name, companyName })}
         isExportingTally={exportTally.isPending}
+        onDownloadAll={() => setZipDialogOpen(true)}
+      />
+
+      <ZipExportDialog
+        open={zipDialogOpen}
+        onOpenChange={setZipDialogOpen}
+        collectionId={id}
+        collectionName={collection?.name || "collection"}
       />
 
       {/* Filters */}
@@ -296,6 +313,8 @@ export default function CollectionDetailPage({
           onReject={handleBulkReject}
           onDelete={handleBulkDelete}
           onAssign={() => setShowAssignDialog(true)}
+          onDownloadSelected={handleDownloadSelected}
+          isDownloading={isDownloadingSelected}
           isProcessing={isBulkProcessing}
           reviewStatusCounts={reviewStatusCounts}
         />

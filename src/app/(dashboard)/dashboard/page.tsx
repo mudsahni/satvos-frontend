@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   FolderOpen,
@@ -10,19 +11,31 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Loader2,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/store/auth-store";
-import { useCollections } from "@/lib/hooks/use-collections";
+import { useCollections, useDeleteCollection, useExportCollectionCsv, useExportCollectionTally } from "@/lib/hooks/use-collections";
 import { useDocuments } from "@/lib/hooks/use-documents";
 import { useStats } from "@/lib/hooks/use-stats";
 import { canCreateCollections } from "@/lib/constants";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { StatusBadge } from "@/components/documents/status-badge";
 import { CollectionCard, CollectionCardSkeleton } from "@/components/collections/collection-card";
+import { ZipExportDialog } from "@/components/collections/zip-export-dialog";
 import { cn } from "@/lib/utils";
 import { GreetingBanner } from "@/components/dashboard/greeting-banner";
 
@@ -72,6 +85,19 @@ export default function DashboardPage() {
     sort_by: "created_at",
     sort_order: "desc",
   });
+
+  const exportCsv = useExportCollectionCsv();
+  const exportTally = useExportCollectionTally();
+  const deleteCollection = useDeleteCollection();
+  const [zipTarget, setZipTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (deleteId) {
+      await deleteCollection.mutateAsync(deleteId);
+      setDeleteId(null);
+    }
+  };
 
   const collections = collectionsData?.items || [];
   const documents = documentsData?.items || [];
@@ -187,7 +213,17 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {collections.slice(0, 6).map((collection) => (
-              <CollectionCard key={collection.id} collection={collection} />
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                onExportCsv={(id, name) => exportCsv.mutate({ id, name })}
+                isExportingCsv={exportCsv.isPending}
+                onExportTally={(id, name, companyName) => exportTally.mutate({ id, name, companyName })}
+                isExportingTally={exportTally.isPending}
+                onDownloadAll={(id, name) => setZipTarget({ id, name })}
+                onDelete={setDeleteId}
+                canDelete={collection.user_permission === "owner"}
+              />
             ))}
           </div>
         )}
@@ -272,6 +308,39 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
+
+      {/* ZIP export dialog */}
+      <ZipExportDialog
+        open={!!zipTarget}
+        onOpenChange={(open) => { if (!open) setZipTarget(null); }}
+        collectionId={zipTarget?.id ?? ""}
+        collectionName={zipTarget?.name ?? ""}
+      />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Collection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this collection? This action cannot
+              be undone and will also delete all files and documents in this
+              collection.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteCollection.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCollection.isPending && <Loader2 className="animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

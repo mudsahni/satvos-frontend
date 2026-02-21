@@ -59,6 +59,7 @@ import { AssignReviewer } from "@/components/documents/assign-reviewer";
 import { DocumentViewer } from "@/components/documents/document-viewer";
 import { DocumentTabs } from "@/components/documents/document-tabs";
 import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
 import { UserName } from "@/components/ui/user-name";
@@ -90,13 +91,20 @@ export default function DocumentDetailPage({
   const reviewDocument = useReviewDocument();
   const addTag = useAddDocumentTag();
   const deleteTag = useDeleteDocumentTag();
+  const { user } = useAuthStore();
 
   const [reviewNotes, setReviewNotes] = useState("");
   const [confirmAction, setConfirmAction] = useState<"approved" | "rejected" | null>(null);
 
-  // Keyboard shortcuts
+  // Permission check (computed early so hooks like useEffect can reference it)
+  const collectionPermission = collection?.user_permission;
+  const canEditData =
+    collectionPermission === "owner" || collectionPermission === "editor";
+  const canReview = canEditData || (!!user && !!document && document.assigned_to === user.id);
+
+  // Keyboard shortcuts — only for users who can review
   useEffect(() => {
-    if (!document || document.parsing_status !== "completed") {
+    if (!document || document.parsing_status !== "completed" || !canReview) {
       return;
     }
 
@@ -117,7 +125,7 @@ export default function DocumentDetailPage({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [document]);
+  }, [document, canReview]);
 
   if (isLoading) {
     return (
@@ -158,11 +166,6 @@ export default function DocumentDetailPage({
       </div>
     );
   }
-
-  // Permission check: backend provides the effective permission on the collection
-  const collectionPermission = collection?.user_permission;
-  const canEditData =
-    collectionPermission === "owner" || collectionPermission === "editor";
 
   const handleAddTag = async (key: string, value: string) => {
     await addTag.mutateAsync({
@@ -286,22 +289,23 @@ export default function DocumentDetailPage({
                 )}
               </>
             )}
-            {/* Review Actions */}
-            {document.parsing_status === "completed" && (
-              <>
-                {document.review_status !== "pending" && (
-                  <Badge
-                    variant={document.review_status === "approved" ? "success" : "error"}
-                    className="py-1"
-                  >
-                    {document.review_status === "approved" ? (
-                      <CheckCircle className={"mr-2 h-4 w-4"}/>
-                    ) : (
-                      <XCircle className={"mr-2 h-4 w-4"} />
-                    )}
-                    {document.review_status === "approved" ? "Approved" : "Rejected"}
-                  </Badge>
+            {/* Review status badge — always visible when reviewed */}
+            {document.parsing_status === "completed" && document.review_status !== "pending" && (
+              <Badge
+                variant={document.review_status === "approved" ? "success" : "error"}
+                className="py-1"
+              >
+                {document.review_status === "approved" ? (
+                  <CheckCircle className={"mr-2 h-4 w-4"}/>
+                ) : (
+                  <XCircle className={"mr-2 h-4 w-4"} />
                 )}
+                {document.review_status === "approved" ? "Approved" : "Rejected"}
+              </Badge>
+            )}
+            {/* Review Actions — only for editors/owners or assigned reviewer */}
+            {document.parsing_status === "completed" && canReview && (
+              <>
                 <span className="text-xs text-muted-foreground mr-1 hidden lg:inline">
                   A to approve, R to reject
                 </span>
@@ -328,26 +332,26 @@ export default function DocumentDetailPage({
               </>
             )}
 
-            {/* Actions overflow menu — icon only */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Document actions">
-                  {(triggerParsing.isPending || triggerValidation.isPending) ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <MoreVertical />
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={handleReparse}
-                  disabled={triggerParsing.isPending}
-                >
-                  <RefreshCw className={cn(triggerParsing.isPending && "animate-spin")} />
-                  {triggerParsing.isPending ? "Re-Parsing..." : "Re-Parse"}
-                </DropdownMenuItem>
-                {canEditData && (
+            {/* Actions overflow menu — only for editors/owners */}
+            {canEditData && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Document actions">
+                    {(triggerParsing.isPending || triggerValidation.isPending) ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <MoreVertical />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={handleReparse}
+                    disabled={triggerParsing.isPending}
+                  >
+                    <RefreshCw className={cn(triggerParsing.isPending && "animate-spin")} />
+                    {triggerParsing.isPending ? "Re-Parsing..." : "Re-Parse"}
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={handleRevalidate}
                     disabled={triggerValidation.isPending || document.parsing_status !== "completed"}
@@ -355,9 +359,9 @@ export default function DocumentDetailPage({
                     <RefreshCw className={cn(triggerValidation.isPending && "animate-spin")} />
                     {triggerValidation.isPending ? "Re-Validating..." : "Re-Validate"}
                   </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </header>

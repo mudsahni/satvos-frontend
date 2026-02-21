@@ -225,4 +225,71 @@ describe("BulkActionsBar", () => {
       ).toBeInTheDocument();
     });
   });
+
+  describe("download-only mode", () => {
+    const downloadOnlyProps = {
+      selectedIds: ["doc-1", "doc-2"],
+      onDeselect: vi.fn(),
+      onDownloadSelected: vi.fn(),
+    };
+
+    it("renders download button when onDownloadSelected is provided", () => {
+      renderWithProviders(<BulkActionsBar {...downloadOnlyProps} />);
+      expect(screen.getByRole("button", { name: /download/i })).toBeInTheDocument();
+    });
+
+    it("does not render approve, reject, or delete buttons when not provided", () => {
+      renderWithProviders(<BulkActionsBar {...downloadOnlyProps} />);
+      expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /reject/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
+    });
+
+    it("calls onDownloadSelected with selectedIds when download is clicked", async () => {
+      vi.useRealTimers();
+      const user = userEvent.setup();
+      renderWithProviders(<BulkActionsBar {...downloadOnlyProps} />);
+
+      await user.click(screen.getByRole("button", { name: /download/i }));
+      expect(downloadOnlyProps.onDownloadSelected).toHaveBeenCalledWith(["doc-1", "doc-2"]);
+    });
+
+    it("disables download button when isDownloading is true", () => {
+      renderWithProviders(<BulkActionsBar {...downloadOnlyProps} isDownloading />);
+      expect(screen.getByRole("button", { name: /download/i })).toBeDisabled();
+    });
+
+    it("disables download button when isProcessing is true", () => {
+      renderWithProviders(<BulkActionsBar {...downloadOnlyProps} isProcessing />);
+      expect(screen.getByRole("button", { name: /download/i })).toBeDisabled();
+    });
+  });
+
+  describe("optional approve/reject", () => {
+    it("does not render approve button when onApprove is not provided", () => {
+      renderWithProviders(
+        <BulkActionsBar
+          selectedIds={["doc-1"]}
+          onDeselect={vi.fn()}
+          onReject={vi.fn().mockResolvedValue({ succeeded: 1, failed: 0 })}
+          onDelete={vi.fn().mockResolvedValue({ succeeded: 1, failed: 0 })}
+        />
+      );
+      expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /reject/i })).toBeInTheDocument();
+    });
+
+    it("does not render reject button when onReject is not provided", () => {
+      renderWithProviders(
+        <BulkActionsBar
+          selectedIds={["doc-1"]}
+          onDeselect={vi.fn()}
+          onApprove={vi.fn().mockResolvedValue({ succeeded: 1, failed: 0 })}
+          onDelete={vi.fn().mockResolvedValue({ succeeded: 1, failed: 0 })}
+        />
+      );
+      expect(screen.getByRole("button", { name: /approve/i })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /reject/i })).not.toBeInTheDocument();
+    });
+  });
 });

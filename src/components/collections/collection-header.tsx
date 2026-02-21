@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Settings, Upload, FileText, FolderOpen, Download, Loader2, ChevronDown } from "lucide-react";
+import { ArrowLeft, Settings, Upload, FileText, FolderOpen, Download, Loader2, ChevronDown, Archive } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TallyExportDialog } from "@/components/collections/tally-export-dialog";
@@ -34,6 +35,7 @@ interface CollectionHeaderProps {
   isExportingCsv?: boolean;
   onExportTally?: (companyName?: string) => void;
   isExportingTally?: boolean;
+  onDownloadAll?: () => void;
 }
 
 export function CollectionHeader({
@@ -45,6 +47,7 @@ export function CollectionHeader({
   isExportingCsv,
   onExportTally,
   isExportingTally,
+  onDownloadAll,
 }: CollectionHeaderProps) {
   const router = useRouter();
   const [tallyDialogOpen, setTallyDialogOpen] = useState(false);
@@ -64,7 +67,7 @@ export function CollectionHeader({
   if (!collection) return null;
 
   const isOwner = collection.user_permission === "owner";
-  const hasExport = !!onExportCsv || !!onExportTally;
+  const hasExport = !!onExportCsv || !!onExportTally || !!onDownloadAll;
   const isExporting = isExportingCsv || isExportingTally;
 
   return (
@@ -145,6 +148,15 @@ export function CollectionHeader({
                   >
                     Export Tally XML
                   </DropdownMenuItem>
+                )}
+                {onDownloadAll && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={onDownloadAll}>
+                      <Archive />
+                      Download All (.zip)
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

@@ -8,6 +8,8 @@ import {
   X,
   AlertTriangle,
   UserPlus,
+  Download,
+  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -39,10 +41,12 @@ interface ReviewStatusCounts {
 interface BulkActionsBarProps {
   selectedIds: string[];
   onDeselect: () => void;
-  onApprove: (ids: string[]) => Promise<BulkActionResult>;
-  onReject: (ids: string[]) => Promise<BulkActionResult>;
+  onApprove?: (ids: string[]) => Promise<BulkActionResult>;
+  onReject?: (ids: string[]) => Promise<BulkActionResult>;
   onDelete?: (ids: string[]) => Promise<BulkActionResult>;
   onAssign?: () => void;
+  onDownloadSelected?: (ids: string[]) => void;
+  isDownloading?: boolean;
   isProcessing?: boolean;
   reviewStatusCounts?: ReviewStatusCounts;
 }
@@ -152,6 +156,8 @@ export function BulkActionsBar({
   onReject,
   onDelete,
   onAssign,
+  onDownloadSelected,
+  isDownloading = false,
   isProcessing = false,
   reviewStatusCounts,
 }: BulkActionsBarProps) {
@@ -177,11 +183,11 @@ export function BulkActionsBar({
     setConfirmAction(null);
 
     let result: BulkActionResult;
-    if (action === "approve") {
+    if (action === "approve" && onApprove) {
       result = await onApprove(selectedIds);
-    } else if (action === "reject") {
+    } else if (action === "reject" && onReject) {
       result = await onReject(selectedIds);
-    } else if (onDelete) {
+    } else if (action === "delete" && onDelete) {
       result = await onDelete(selectedIds);
     } else {
       return;
@@ -245,6 +251,17 @@ export function BulkActionsBar({
           </Button>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            {onDownloadSelected && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onDownloadSelected(selectedIds)}
+                disabled={isProcessing || isDownloading}
+              >
+                {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
+                Download
+              </Button>
+            )}
             {onAssign && (
               <Button
                 size="sm"
@@ -256,26 +273,30 @@ export function BulkActionsBar({
                 Assign
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
-              onClick={() => setConfirmAction("approve")}
-              disabled={isProcessing}
-            >
-              <CheckCircle />
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
-              onClick={() => setConfirmAction("reject")}
-              disabled={isProcessing}
-            >
-              <XCircle />
-              Reject
-            </Button>
+            {onApprove && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-success-border bg-success-bg text-success hover:bg-success/15 hover:text-success"
+                onClick={() => setConfirmAction("approve")}
+                disabled={isProcessing}
+              >
+                <CheckCircle />
+                Approve
+              </Button>
+            )}
+            {onReject && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-warning-border bg-warning-bg text-warning hover:bg-warning/15 hover:text-warning"
+                onClick={() => setConfirmAction("reject")}
+                disabled={isProcessing}
+              >
+                <XCircle />
+                Reject
+              </Button>
+            )}
             {onDelete && (
               <Button
                 size="sm"
