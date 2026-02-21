@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import Link from "next/link";
 import { Search, FileText, MoreHorizontal, Trash2, Loader2 } from "lucide-react";
@@ -44,12 +44,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useDocuments, useDeleteDocument } from "@/lib/hooks/use-documents";
 import { useCollections } from "@/lib/hooks/use-collections";
 import { getDocuments } from "@/lib/api/documents";
 import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
+import { useBulkActions } from "@/lib/hooks/use-bulk-actions";
+import { useDownloadSelected } from "@/lib/hooks/use-download-selected";
+import { BulkActionsBar } from "@/components/documents/bulk-actions-bar";
 import { formatRelativeTime, formatDateTime } from "@/lib/utils/format";
 import {
   Tooltip,
@@ -147,6 +151,62 @@ export default function DocumentsPage() {
     setPage(1);
   };
 
+  // Selection for bulk download
+  const {
+    selectedIds,
+    setSelectedIds,
+    clearSelection,
+  } = useBulkActions({ resetDeps: [debouncedSearch, collectionFilter, parsingFilter, validationFilter, reviewFilter] });
+
+  // In non-search mode, docMap only has the current page — clear selection on page change
+  // to prevent downloading stale IDs. In search mode, all docs are in memory so cross-page
+  // selection is safe.
+  const prevPage = useRef(page);
+  useEffect(() => {
+    if (prevPage.current !== page && !hasSearch) {
+      clearSelection();
+    }
+    prevPage.current = page;
+  }, [page, hasSearch, clearSelection]);
+
+  // Build a lookup map for documents
+  const docMap = useMemo(() => {
+    const allDocs = hasSearch ? (allDocsQuery.data || []) : (paginatedQuery.data?.items || []);
+    return new Map(allDocs.map((d) => [d.id, d]));
+  }, [hasSearch, allDocsQuery.data, paginatedQuery.data]);
+
+  const { downloadSelected: handleDownloadSelected, isDownloading: isDownloadingSelected } =
+    useDownloadSelected({ docMap });
+
+  const pageFullySelected = documents.length > 0 && documents.every((d) => selectedIds.includes(d.id));
+  const someSelected = documents.some((d) => selectedIds.includes(d.id)) && !pageFullySelected;
+
+  // All filtered IDs — only meaningful when all docs are in memory (hasSearch)
+  const allFilteredIds = useMemo(() => filtered.map((d) => d.id), [filtered]);
+  const allFilteredSelected =
+    hasSearch &&
+    allFilteredIds.length > 0 &&
+    allFilteredIds.length === selectedIds.length &&
+    allFilteredIds.every((id) => selectedIds.includes(id));
+  const showSelectAllBanner =
+    hasSearch &&
+    pageFullySelected &&
+    filtered.length > documents.length;
+
+  const toggleSelectAll = useCallback(() => {
+    if (pageFullySelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(documents.map((d) => d.id));
+    }
+  }, [pageFullySelected, documents, setSelectedIds]);
+
+  const toggleSelect = useCallback((docId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
+    );
+  }, [setSelectedIds]);
+
   const deleteDocument = useDeleteDocument();
 
   const handleDelete = async () => {
@@ -180,6 +240,15 @@ export default function DocumentsPage() {
           View and manage your processed documents
         </p>
       </div>
+
+      {selectedIds.length > 0 && (
+        <BulkActionsBar
+          selectedIds={selectedIds}
+          onDeselect={clearSelection}
+          onDownloadSelected={handleDownloadSelected}
+          isDownloading={isDownloadingSelected}
+        />
+      )}
 
       <Card>
         <CardHeader>
@@ -294,10 +363,42 @@ export default function DocumentsPage() {
             </div>
           ) : (
             <>
+            {showSelectAllBanner && (
+              <div className="flex items-center justify-center gap-1 rounded-md bg-muted/50 py-2 mb-2 text-sm text-muted-foreground">
+                {allFilteredSelected ? (
+                  <>
+                    All {allFilteredIds.length} documents selected.
+                    <button
+                      className="font-medium text-primary hover:underline"
+                      onClick={() => setSelectedIds([])}
+                    >
+                      Clear selection
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    All {documents.length} on this page selected.
+                    <button
+                      className="font-medium text-primary hover:underline"
+                      onClick={() => setSelectedIds(allFilteredIds)}
+                    >
+                      Select all {allFilteredIds.length} documents
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={pageFullySelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all documents"
+                    />
+                  </TableHead>
                   <TableHead className="text-sm normal-case tracking-normal">Name</TableHead>
                   <TableHead className="hidden md:table-cell text-sm normal-case tracking-normal">Collection</TableHead>
                   <TableHead className="text-sm normal-case tracking-normal">Parsing</TableHead>
@@ -315,6 +416,13 @@ export default function DocumentsPage() {
                   );
                   return (
                     <TableRow key={doc.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(doc.id)}
+                          onCheckedChange={() => toggleSelect(doc.id)}
+                          aria-label={`Select ${doc.name}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 min-w-0">
                           <Link

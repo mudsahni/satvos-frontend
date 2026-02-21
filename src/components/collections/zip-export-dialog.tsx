@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { Loader2, CheckCircle2, AlertCircle, Archive } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -33,11 +34,16 @@ export function ZipExportDialog({
   collectionName,
 }: ZipExportDialogProps) {
   const [companyName, setCompanyName] = useState("");
+  const [includeCsv, setIncludeCsv] = useState(true);
+  const [includeTally, setIncludeTally] = useState(true);
+  const [includeDocuments, setIncludeDocuments] = useState(true);
   const [state, setState] = useState<ExportState>("idle");
   const [phase, setPhase] = useState("");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [errorMessage, setErrorMessage] = useState("");
   const abortRef = useRef<AbortController | null>(null);
+
+  const nothingSelected = !includeCsv && !includeTally && !includeDocuments;
 
   const reset = useCallback(() => {
     setState("idle");
@@ -45,6 +51,9 @@ export function ZipExportDialog({
     setProgress({ current: 0, total: 0 });
     setErrorMessage("");
     setCompanyName("");
+    setIncludeCsv(true);
+    setIncludeTally(true);
+    setIncludeDocuments(true);
     abortRef.current = null;
   }, []);
 
@@ -71,6 +80,9 @@ export function ZipExportDialog({
         collectionId,
         collectionName,
         companyName: companyName.trim() || undefined,
+        includeCsv,
+        includeTally,
+        includeDocuments,
         signal: controller.signal,
         onProgress: (p, current, total) => {
           setPhase(p);
@@ -92,7 +104,7 @@ export function ZipExportDialog({
         err instanceof Error ? err.message : "An unexpected error occurred."
       );
     }
-  }, [collectionId, collectionName, companyName, handleClose]);
+  }, [collectionId, collectionName, companyName, includeCsv, includeTally, includeDocuments, handleClose]);
 
   const progressPercent =
     progress.total > 0
@@ -108,32 +120,71 @@ export function ZipExportDialog({
             Download All as ZIP
           </DialogTitle>
           <DialogDescription>
-            Download CSV export, Tally XML export, and all original document
-            files bundled in a single ZIP archive.
+            Choose which content to include in the ZIP archive.
           </DialogDescription>
         </DialogHeader>
 
         {state === "idle" && (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="zip-company-name">
-                Company Name (optional, for Tally export)
-              </Label>
-              <Input
-                id="zip-company-name"
-                placeholder={collectionName}
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleExport();
-                }}
-              />
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Include in ZIP</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="zip-include-csv"
+                      checked={includeCsv}
+                      onCheckedChange={(v) => setIncludeCsv(!!v)}
+                    />
+                    <Label htmlFor="zip-include-csv" className="text-sm font-normal cursor-pointer">
+                      CSV Export
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="zip-include-tally"
+                      checked={includeTally}
+                      onCheckedChange={(v) => setIncludeTally(!!v)}
+                    />
+                    <Label htmlFor="zip-include-tally" className="text-sm font-normal cursor-pointer">
+                      Tally XML Export
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="zip-include-docs"
+                      checked={includeDocuments}
+                      onCheckedChange={(v) => setIncludeDocuments(!!v)}
+                    />
+                    <Label htmlFor="zip-include-docs" className="text-sm font-normal cursor-pointer">
+                      All Document Files
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              {includeTally && (
+                <div className="space-y-2">
+                  <Label htmlFor="zip-company-name">
+                    Company Name (optional, for Tally export)
+                  </Label>
+                  <Input
+                    id="zip-company-name"
+                    placeholder={collectionName}
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !nothingSelected) handleExport();
+                    }}
+                  />
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => handleClose(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleExport}>
+              <Button onClick={handleExport} disabled={nothingSelected}>
                 <Archive />
                 Download
               </Button>

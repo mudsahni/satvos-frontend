@@ -41,7 +41,7 @@ export async function GET(
     );
   }
 
-  // Step 2: Fetch file from S3 (server-side — no CORS restrictions)
+  // Step 2: Fetch file from S3 and stream the response back
   const fileResponse = await fetch(downloadUrl);
 
   if (!fileResponse.ok) {
@@ -51,11 +51,13 @@ export async function GET(
     );
   }
 
-  const fileBuffer = await fileResponse.arrayBuffer();
   const contentType =
     fileResponse.headers.get("content-type") || "application/octet-stream";
+  const contentLength = fileResponse.headers.get("content-length");
 
-  return new NextResponse(fileBuffer, {
-    headers: { "Content-Type": contentType },
-  });
+  const headers: Record<string, string> = { "Content-Type": contentType };
+  if (contentLength) headers["Content-Length"] = contentLength;
+
+  // Stream the body directly — avoids buffering entire file in memory
+  return new NextResponse(fileResponse.body, { headers });
 }

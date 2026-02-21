@@ -3,23 +3,27 @@ import { fetchCollectionCsvBlob, fetchCollectionTallyBlob } from "@/lib/api/coll
 import { getDocuments } from "@/lib/api/documents";
 import { getAuthState } from "@/store/auth-store";
 import { fetchAllPaginated } from "./fetch-all-paginated";
+import { triggerBlobDownload } from "./download";
 import type { Document } from "@/types/document";
 
 export interface ZipExportOptions {
   collectionId: string;
   collectionName: string;
   companyName?: string;
+  includeCsv?: boolean;
+  includeTally?: boolean;
+  includeDocuments?: boolean;
   onProgress?: (phase: string, current: number, total: number) => void;
   signal?: AbortSignal;
 }
 
 /** Sanitize a string for use as a filename */
-function sanitizeFilename(name: string): string {
+export function sanitizeFilename(name: string): string {
   return name.replace(/[/\\?%*:|"<>]/g, "_").trim() || "unnamed";
 }
 
 /** Get extension from a filename, defaulting to .pdf */
-function getExtension(name: string): string {
+export function getExtension(name: string): string {
   const dot = name.lastIndexOf(".");
   if (dot > 0) return name.slice(dot);
   return ".pdf";
@@ -33,13 +37,13 @@ const COMPRESSED_EXTENSIONS = new Set([
   ".docx", ".xlsx", ".pptx",
 ]);
 
-function isCompressedFormat(filename: string): boolean {
+export function isCompressedFormat(filename: string): boolean {
   const ext = filename.slice(filename.lastIndexOf(".")).toLowerCase();
   return COMPRESSED_EXTENSIONS.has(ext);
 }
 
 /** Generate a unique filename, adding (1), (2) etc. for duplicates */
-function deduplicateFilename(docName: string, usedNames: Set<string>): string {
+export function deduplicateFilename(docName: string, usedNames: Set<string>): string {
   const ext = getExtension(docName);
   const base = sanitizeFilename(docName.replace(/\.[^.]+$/, ""));
   let filename = `${base}${ext}`;
@@ -56,8 +60,11 @@ function deduplicateFilename(docName: string, usedNames: Set<string>): string {
  * Fetch file content via the server-side proxy route.
  * This avoids CORS issues with presigned S3 URLs by fetching server-side.
  */
-async function fetchFileContent(fileId: string, signal?: AbortSignal): Promise<ArrayBuffer> {
-  const { accessToken } = getAuthState();
+async function fetchFileContent(
+  fileId: string,
+  accessToken: string | null,
+  signal?: AbortSignal
+): Promise<ArrayBuffer> {
   const response = await fetch(`/api/files/${fileId}/download`, {
     headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     signal,
@@ -66,133 +73,202 @@ async function fetchFileContent(fileId: string, signal?: AbortSignal): Promise<A
   return response.arrayBuffer();
 }
 
-export async function exportCollectionZip(options: ZipExportOptions): Promise<void> {
-  const { collectionId, collectionName, companyName, onProgress, signal } = options;
-  const safeName = sanitizeFilename(collectionName);
+// ── Shared streaming ZIP helpers ──
 
-  // Phase 1: Fetch all documents in the collection
-  onProgress?.("Fetching document list...", 0, 0);
-  signal?.throwIfAborted();
+interface StreamingZip {
+  addEntry: (path: string, data: Uint8Array, store: boolean) => void;
+  finalize: (emptyFallback?: string) => Blob;
+  hasContent: () => boolean;
+}
 
-  const documents = await fetchAllPaginated(
-    ({ limit, offset }) => getDocuments({ limit, offset, collection_id: collectionId }),
-    { signal }
-  );
-
-  // Phase 2: Fetch CSV and Tally exports in parallel
-  onProgress?.("Generating exports...", 0, 2);
-  signal?.throwIfAborted();
-
-  const [csvResult, tallyResult] = await Promise.allSettled([
-    fetchCollectionCsvBlob(collectionId),
-    fetchCollectionTallyBlob(collectionId, companyName),
-  ]);
-
-  onProgress?.("Generating exports...", 2, 2);
-
-  // ── Streaming ZIP construction ──
-  // Instead of loading every file into a giant object and calling zipSync(),
-  // we use fflate's streaming Zip class. Each file is added incrementally
-  // and its raw buffer can be garbage-collected immediately. Peak memory
-  // drops from (all raw files + ZIP output) to (one raw file + ZIP chunks).
+/**
+ * Creates a streaming ZIP builder using fflate.
+ * Files are added incrementally — each raw buffer can be GC'd immediately
+ * after being pushed into the ZIP stream. Peak memory is (one raw file + ZIP chunks)
+ * rather than (all raw files + ZIP output).
+ */
+function createStreamingZip(): StreamingZip {
   const chunks: Uint8Array[] = [];
   let zipError: Error | null = null;
+  let contentAdded = false;
 
   const zip = new Zip((err, data) => {
     if (err) { zipError = err; return; }
     chunks.push(data);
   });
 
-  function addToZip(path: string, data: Uint8Array, store: boolean) {
+  function addEntry(path: string, data: Uint8Array, store: boolean) {
     if (zipError) throw zipError;
     const entry = store
       ? new ZipPassThrough(path)
       : new ZipDeflate(path, { level: 6 });
     zip.add(entry);
     entry.push(data, true);
+    contentAdded = true;
   }
 
-  let hasContent = false;
-
-  // Add CSV export
-  if (csvResult.status === "fulfilled") {
-    const csvBytes = new Uint8Array(await csvResult.value.arrayBuffer());
-    addToZip(`exports/${safeName}.csv`, csvBytes, false);
-    hasContent = true;
+  function finalize(emptyFallback = "This archive had no content."): Blob {
+    if (!contentAdded) {
+      addEntry("README.txt", strToU8(emptyFallback), false);
+    }
+    zip.end();
+    if (zipError) throw zipError;
+    return new Blob(chunks.map((c) => c.buffer as ArrayBuffer), { type: "application/zip" });
   }
 
-  // Add Tally XML export
-  if (tallyResult.status === "fulfilled") {
-    const xmlBytes = new Uint8Array(await tallyResult.value.arrayBuffer());
-    addToZip(`exports/${safeName}.xml`, xmlBytes, false);
-    hasContent = true;
-  }
+  return { addEntry, finalize, hasContent: () => contentAdded };
+}
 
-  // Phase 3: Download files and stream into ZIP (avoids holding all in memory)
-  const docsWithFiles = documents.filter((d: Document) => d.file_id);
-  const totalFiles = docsWithFiles.length;
+interface DownloadFilesIntoZipOptions {
+  docs: Array<{ name: string; file_id: string }>;
+  accessToken: string | null;
+  addEntry: StreamingZip["addEntry"];
+  pathPrefix?: string;
+  signal?: AbortSignal;
+  onProgress?: (current: number, total: number) => void;
+}
+
+/**
+ * Download files with limited concurrency (3 workers) and stream each into the ZIP
+ * as soon as it arrives. Abort errors propagate; other failures are skipped gracefully.
+ *
+ * The shared `nextIndex` counter is safe because JS is single-threaded — the
+ * only yield points are `await` calls, and the post-increment + array access
+ * is atomic within a single microtask.
+ */
+async function downloadFilesIntoZip(options: DownloadFilesIntoZipOptions): Promise<void> {
+  const { docs, accessToken, addEntry, pathPrefix = "", signal, onProgress } = options;
+  const totalFiles = docs.length;
   let filesDownloaded = 0;
   const usedNames = new Set<string>();
-
-  onProgress?.("Downloading files...", 0, totalFiles);
-
-  // Download with limited concurrency — each file is added to the ZIP
-  // as soon as it arrives, then its raw buffer can be GC'd.
   let nextIndex = 0;
 
-  async function downloadWorker() {
-    while (nextIndex < docsWithFiles.length) {
+  onProgress?.(0, totalFiles);
+
+  async function worker() {
+    while (nextIndex < docs.length) {
       signal?.throwIfAborted();
-      const doc = docsWithFiles[nextIndex++];
+      const doc = docs[nextIndex++];
 
       try {
-        const buffer = await fetchFileContent(doc.file_id, signal);
+        const buffer = await fetchFileContent(doc.file_id, accessToken, signal);
         const data = new Uint8Array(buffer);
         const filename = deduplicateFilename(doc.name, usedNames);
-        const path = `documents/${filename}`;
-
-        // Store already-compressed formats as-is; deflate everything else
-        addToZip(path, data, isCompressedFormat(filename));
-        hasContent = true;
-        // `data` / `buffer` references go out of scope here → eligible for GC
-      } catch {
-        // Skip failed files gracefully
+        const path = pathPrefix ? `${pathPrefix}/${filename}` : filename;
+        addEntry(path, data, isCompressedFormat(filename));
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") throw err;
       }
 
       filesDownloaded++;
-      onProgress?.("Downloading files...", filesDownloaded, totalFiles);
+      onProgress?.(filesDownloaded, totalFiles);
     }
   }
 
-  if (docsWithFiles.length > 0) {
-    const workers = Array.from(
-      { length: Math.min(3, docsWithFiles.length) },
-      () => downloadWorker()
+  if (docs.length > 0) {
+    await Promise.all(
+      Array.from({ length: Math.min(3, docs.length) }, () => worker())
     );
-    await Promise.all(workers);
+  }
+}
+
+// ── Public API ──
+
+export async function exportCollectionZip(options: ZipExportOptions): Promise<void> {
+  const {
+    collectionId, collectionName, companyName, onProgress, signal,
+    includeCsv = true, includeTally = true, includeDocuments = true,
+  } = options;
+  const safeName = sanitizeFilename(collectionName);
+
+  // Cache auth token once — avoids calling getAuthState() per file
+  const { accessToken } = getAuthState();
+
+  // Phase 1: Fetch all documents in the collection (needed if downloading files)
+  let documents: Document[] = [];
+  if (includeDocuments) {
+    onProgress?.("Fetching document list...", 0, 0);
+    signal?.throwIfAborted();
+
+    documents = await fetchAllPaginated(
+      ({ limit, offset }) => getDocuments({ limit, offset, collection_id: collectionId }),
+      { signal }
+    );
   }
 
-  // Empty ZIP guard
-  if (!hasContent) {
-    addToZip("README.txt", strToU8("This collection had no exportable content."), false);
+  // Phase 2: Fetch CSV and Tally exports in parallel (only the ones requested)
+  const csvPromise = includeCsv ? fetchCollectionCsvBlob(collectionId) : null;
+  const tallyPromise = includeTally ? fetchCollectionTallyBlob(collectionId, companyName) : null;
+  const exportCount = [csvPromise, tallyPromise].filter(Boolean).length;
+
+  if (exportCount > 0) {
+    onProgress?.("Generating exports...", 0, exportCount);
+    signal?.throwIfAborted();
   }
 
-  // Finalize the ZIP (writes central directory)
-  zip.end();
-  if (zipError) throw zipError;
+  const [csvResult, tallyResult] = await Promise.allSettled([
+    csvPromise ?? Promise.resolve(null),
+    tallyPromise ?? Promise.resolve(null),
+  ]);
 
-  // Phase 4: Trigger download — Blob accepts chunk array (no concatenation copy)
+  if (exportCount > 0) {
+    onProgress?.("Generating exports...", exportCount, exportCount);
+  }
+
+  // ── Build streaming ZIP ──
+  const sz = createStreamingZip();
+
+  if (csvResult.status === "fulfilled" && csvResult.value) {
+    sz.addEntry(`exports/${safeName}.csv`, new Uint8Array(await csvResult.value.arrayBuffer()), false);
+  }
+  if (tallyResult.status === "fulfilled" && tallyResult.value) {
+    sz.addEntry(`exports/${safeName}.xml`, new Uint8Array(await tallyResult.value.arrayBuffer()), false);
+  }
+
+  // Phase 3: Download files and stream into ZIP
+  if (includeDocuments) {
+    const docsWithFiles = documents.filter((d: Document) => d.file_id);
+    await downloadFilesIntoZip({
+      docs: docsWithFiles,
+      accessToken,
+      addEntry: sz.addEntry,
+      pathPrefix: "documents",
+      signal,
+      onProgress: (current, total) => onProgress?.("Downloading files...", current, total),
+    });
+  }
+
+  // Finalize and trigger download
   onProgress?.("Preparing download...", 0, 0);
-  const blob = new Blob(chunks.map((c) => c.buffer as ArrayBuffer), { type: "application/zip" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  try {
-    a.href = url;
-    a.download = `${safeName}.zip`;
-    document.body.appendChild(a);
-    a.click();
-  } finally {
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  }
+  const blob = sz.finalize("This collection had no exportable content.");
+  triggerBlobDownload(blob, `${safeName}.zip`);
+}
+
+// ── Download Selected Documents as ZIP ──
+
+export interface DownloadSelectedOptions {
+  documents: Array<{ id: string; name: string; file_id: string }>;
+  zipFilename?: string;
+  onProgress?: (phase: string, current: number, total: number) => void;
+  signal?: AbortSignal;
+}
+
+export async function downloadSelectedDocumentsZip(options: DownloadSelectedOptions): Promise<void> {
+  const { documents, zipFilename = "selected-documents", onProgress, signal } = options;
+  const safeName = sanitizeFilename(zipFilename);
+  const { accessToken } = getAuthState();
+
+  const sz = createStreamingZip();
+
+  await downloadFilesIntoZip({
+    docs: documents,
+    accessToken,
+    addEntry: sz.addEntry,
+    signal,
+    onProgress: (current, total) => onProgress?.("Downloading files...", current, total),
+  });
+
+  onProgress?.("Preparing download...", 0, 0);
+  const blob = sz.finalize("No files could be downloaded.");
+  triggerBlobDownload(blob, `${safeName}.zip`);
 }

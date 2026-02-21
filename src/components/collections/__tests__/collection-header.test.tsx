@@ -171,5 +171,43 @@ describe("CollectionHeader", () => {
       expect(screen.getByText("Export CSV")).toBeInTheDocument();
       expect(screen.getByText("Export Tally XML")).toBeInTheDocument();
     });
+
+    it("shows Download All (.zip) option when onDownloadAll is provided", async () => {
+      const user = userEvent.setup();
+      renderWithProviders(
+        <CollectionHeader
+          collection={baseCollection}
+          onDownloadAll={() => {}}
+        />
+      );
+
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      expect(screen.getByText("Download All (.zip)")).toBeInTheDocument();
+    });
+
+    it("calls onDownloadAll when Download All (.zip) is clicked", async () => {
+      const user = userEvent.setup();
+      const onDownloadAll = vi.fn();
+      renderWithProviders(
+        <CollectionHeader
+          collection={baseCollection}
+          onDownloadAll={onDownloadAll}
+        />
+      );
+
+      await user.click(screen.getByRole("button", { name: /export/i }));
+      await user.click(screen.getByText("Download All (.zip)"));
+      expect(onDownloadAll).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows Export dropdown when only onDownloadAll is provided", () => {
+      renderWithProviders(
+        <CollectionHeader
+          collection={baseCollection}
+          onDownloadAll={() => {}}
+        />
+      );
+      expect(screen.getByRole("button", { name: /export/i })).toBeInTheDocument();
+    });
   });
 });

@@ -27,6 +27,7 @@ import {
   useAssignDocument,
 } from "@/lib/hooks/use-documents";
 import { useBulkActions } from "@/lib/hooks/use-bulk-actions";
+import { useDownloadSelected } from "@/lib/hooks/use-download-selected";
 import { getDocuments } from "@/lib/api/documents";
 import { fetchAllPaginated } from "@/lib/utils/fetch-all-paginated";
 import { toast } from "@/lib/hooks/use-toast";
@@ -201,6 +202,13 @@ export default function CollectionDetailPage({
     [documents]
   );
 
+  const zipFilename = useMemo(
+    () => `${collection?.name || "collection"}-selected`,
+    [collection?.name]
+  );
+  const { downloadSelected: handleDownloadSelected, isDownloading: isDownloadingSelected } =
+    useDownloadSelected({ docMap, zipFilename });
+
   // Compute review status counts for selected documents
   const reviewStatusCounts = useMemo(() => {
     if (selectedIds.length === 0) return undefined;
@@ -229,7 +237,6 @@ export default function CollectionDetailPage({
   const showSelectAllBanner =
     pageFullySelected &&
     sortedDocuments.length > paginatedDocuments.length;
-
 
   if (collectionLoading) {
     return (
@@ -306,6 +313,8 @@ export default function CollectionDetailPage({
           onReject={handleBulkReject}
           onDelete={handleBulkDelete}
           onAssign={() => setShowAssignDialog(true)}
+          onDownloadSelected={handleDownloadSelected}
+          isDownloading={isDownloadingSelected}
           isProcessing={isBulkProcessing}
           reviewStatusCounts={reviewStatusCounts}
         />

@@ -226,6 +226,47 @@ describe("CollectionCard", () => {
       expect(screen.queryByText("Export Tally XML")).not.toBeInTheDocument();
     });
   });
+
+  describe("download all ZIP action", () => {
+    it("shows Download All (.zip) menu item when onDownloadAll is provided", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection();
+      renderWithProviders(
+        <CollectionCard collection={collection} onDownloadAll={() => {}} />
+      );
+
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      expect(screen.getByText("Download All (.zip)")).toBeInTheDocument();
+    });
+
+    it("does not show Download All (.zip) when onDownloadAll is not provided", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection();
+      renderWithProviders(<CollectionCard collection={collection} />);
+
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+
+      expect(screen.queryByText("Download All (.zip)")).not.toBeInTheDocument();
+    });
+
+    it("calls onDownloadAll with collection id and name when clicked", async () => {
+      const user = userEvent.setup();
+      const collection = createMockCollection({ id: "col-zip", name: "Zip Test" });
+      const onDownloadAll = vi.fn();
+      renderWithProviders(
+        <CollectionCard collection={collection} onDownloadAll={onDownloadAll} />
+      );
+
+      const trigger = screen.getByRole("button");
+      await user.click(trigger);
+      await user.click(screen.getByText("Download All (.zip)"));
+
+      expect(onDownloadAll).toHaveBeenCalledWith("col-zip", "Zip Test");
+    });
+  });
 });
 
 describe("CollectionCardSkeleton", () => {

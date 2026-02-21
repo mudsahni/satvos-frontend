@@ -116,6 +116,28 @@ export function useDocument(id: string) {
   - `DuplicateInvoiceAlert` — alert banner used in validation tab
 - Badge appears: document detail header, documents table name cells, collection documents table
 
+### ZIP Export & Download Selected
+- `exportCollectionZip` supports `includeCsv`, `includeTally`, `includeDocuments` flags (all default `true`)
+- `downloadSelectedDocumentsZip` downloads a subset of documents as a flat ZIP
+- Both use shared internal helpers (`createStreamingZip`, `downloadFilesIntoZip`) for streaming fflate ZIP construction with 3-worker concurrency
+- `useDownloadSelected` hook (`src/lib/hooks/use-download-selected.ts`) — shared by collection detail and documents pages. Takes a `docMap` and optional `zipFilename`, returns `{ downloadSelected, isDownloading }`.
+
+### BulkActionsBar
+- `onApprove`, `onReject`, `onDelete` are all **optional** — buttons only render when the corresponding handler is provided
+- `onDownloadSelected` + `isDownloading` enable a download-only mode (used on the documents page where there's no approve/reject)
+- Supports `reviewStatusCounts` for enriched confirmation dialog text
+
+### Review Permission Gating
+On the document detail page, review actions (approve/reject) are visible to:
+- **Editors/owners** of the collection (`canEditData`)
+- **The assigned reviewer** (`document.assigned_to === user.id`)
+
+```typescript
+const canReview = canEditData || (!!user && !!document && document.assigned_to === user.id);
+```
+
+The overflow menu (Re-Parse, Re-Validate) is gated by `canEditData` only — viewers and assigned reviewers without edit permission don't see it.
+
 ### Form Handling
 ```typescript
 const form = useForm<FormData>({
@@ -139,6 +161,11 @@ const form = useForm<FormData>({
 | `src/lib/utils/duplicate-detection.ts` | Duplicate invoice detection parsing utility |
 | `src/components/documents/duplicate-badge.tsx` | Clickable duplicate badge with dialog |
 | `src/components/documents/duplicate-invoice-alert.tsx` | Duplicate alert banner for validation tab |
+| `src/lib/utils/zip-export.ts` | ZIP export logic (streaming fflate, progress, concurrency); `exportCollectionZip` + `downloadSelectedDocumentsZip` |
+| `src/lib/utils/download.ts` | Shared `triggerBlobDownload` helper |
+| `src/lib/hooks/use-download-selected.ts` | Shared hook for bulk-download-as-ZIP with toast feedback |
+| `src/components/collections/zip-export-dialog.tsx` | Progress dialog for ZIP export with content selection checkboxes |
+| `src/app/api/files/[id]/download/route.ts` | Server-side proxy for S3 file downloads (CORS bypass) |
 | `src/test/test-utils.tsx` | `renderWithProviders` for component tests |
 
 ## Layout Structure

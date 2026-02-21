@@ -10,6 +10,7 @@ import {
   CollectionListParams,
 } from "@/types/collection";
 import { PermissionLevel } from "@/lib/constants";
+import { triggerBlobDownload } from "@/lib/utils/download";
 
 // Backend sends `current_user_permission`; frontend type uses `user_permission`.
 // Map the field so all UI code sees `user_permission`.
@@ -152,17 +153,7 @@ export async function exportCollectionCsv(
   collectionName?: string
 ): Promise<void> {
   const blob = await fetchCollectionCsvBlob(collectionId);
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  try {
-    a.href = url;
-    a.download = `${collectionName || collectionId}.csv`;
-    document.body.appendChild(a);
-    a.click();
-  } finally {
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  }
+  triggerBlobDownload(blob, `${collectionName || collectionId}.csv`);
 }
 
 // Tally XML Export — blob fetcher (no download trigger)
@@ -187,15 +178,5 @@ export async function exportCollectionTally(
   companyName?: string
 ): Promise<void> {
   const blob = await fetchCollectionTallyBlob(collectionId, companyName);
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  try {
-    a.href = url;
-    a.download = `${collectionName || collectionId}.xml`;
-    document.body.appendChild(a);
-    a.click();
-  } finally {
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  }
+  triggerBlobDownload(blob, `${collectionName || collectionId}.xml`);
 }
