@@ -218,7 +218,7 @@ export function LoginForm({
           </div>
 
           <p className="text-center text-sm text-muted-foreground">
-            Free user?{" "}
+            Not an enterprise user?{" "}
             <Link href="/login" className="text-primary hover:underline font-medium">
               Sign in here
             </Link>
