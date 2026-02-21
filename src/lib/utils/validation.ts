@@ -55,7 +55,6 @@ export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export const createUserSchema = z.object({
   email: z.string().email("Invalid email address"),
   full_name: z.string().min(1, "Full name is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["admin", "manager", "member", "viewer", "free", "service"]),
 });
 
@@ -64,16 +63,25 @@ export type CreateUserFormData = z.infer<typeof createUserSchema>;
 export const updateUserSchema = z.object({
   email: z.string().email("Invalid email address").optional(),
   full_name: z.string().min(1, "Full name is required").optional(),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .optional()
-    .or(z.literal("")),
   role: z.enum(["admin", "manager", "member", "viewer", "free", "service"]).optional(),
   is_active: z.boolean().optional(),
 });
 
 export type UpdateUserFormData = z.infer<typeof updateUserSchema>;
+
+export const acceptInvitationSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
+    confirm_password: z.string(),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+export type AcceptInvitationFormData = z.infer<typeof acceptInvitationSchema>;
 
 export const createCollectionSchema = z.object({
   name: z.string().min(1, "Name is required").max(255, "Name is too long"),

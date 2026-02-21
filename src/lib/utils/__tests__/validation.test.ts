@@ -252,7 +252,6 @@ describe("createUserSchema", () => {
   const valid = {
     email: "newuser@example.com",
     full_name: "John Doe",
-    password: "password123",
     role: "member",
   };
 
@@ -281,7 +280,7 @@ describe("createUserSchema", () => {
     const result = createUserSchema.safeParse({});
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.length).toBeGreaterThanOrEqual(4);
+      expect(result.error.issues.length).toBeGreaterThanOrEqual(3);
     }
   });
 });
@@ -300,21 +299,9 @@ describe("updateUserSchema", () => {
     ["full_name only", { full_name: "Jane Doe" }],
     ["role only", { role: "admin" }],
     ["is_active only", { is_active: false }],
-    ["all fields", { email: "new@example.com", full_name: "Updated Name", password: "longpassword", role: "manager", is_active: true }],
+    ["all fields", { email: "new@example.com", full_name: "Updated Name", role: "manager", is_active: true }],
   ])("validates partial update with %s", (_label, data) => {
     expect(updateUserSchema.safeParse(data).success).toBe(true);
-  });
-
-  it("allows empty password (for clearing the field)", () => {
-    expect(updateUserSchema.safeParse({ password: "" }).success).toBe(true);
-  });
-
-  it("allows valid password of 8 or more characters", () => {
-    expect(updateUserSchema.safeParse({ password: "newpassword123" }).success).toBe(true);
-  });
-
-  it("rejects password shorter than 8 characters (non-empty)", () => {
-    expect(updateUserSchema.safeParse({ password: "short" }).success).toBe(false);
   });
 
   it("rejects invalid email when provided", () => {

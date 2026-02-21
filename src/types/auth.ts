@@ -91,6 +91,18 @@ export interface SocialLoginResponse {
   is_new_user: boolean;
 }
 
+export interface AcceptInvitationRequest {
+  token: string;
+  password: string;
+}
+
+export interface AcceptInvitationResponse {
+  user: User;
+  access_token: string;
+  refresh_token: string;
+  expires_at?: string;
+}
+
 export interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;

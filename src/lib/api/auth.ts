@@ -11,6 +11,8 @@ import {
   ResetPasswordRequest,
   SocialLoginRequest,
   SocialLoginResponse,
+  AcceptInvitationRequest,
+  AcceptInvitationResponse,
 } from "@/types/auth";
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -73,6 +75,14 @@ export async function resetPassword(data: ResetPasswordRequest): Promise<{ messa
 export async function socialLogin(data: SocialLoginRequest): Promise<SocialLoginResponse> {
   const response = await apiClient.post<ApiResponse<SocialLoginResponse>>(
     "/auth/social-login",
+    data
+  );
+  return response.data.data;
+}
+
+export async function acceptInvitation(data: AcceptInvitationRequest): Promise<AcceptInvitationResponse> {
+  const response = await apiClient.post<ApiResponse<AcceptInvitationResponse>>(
+    "/auth/accept-invitation",
     data
   );
   return response.data.data;

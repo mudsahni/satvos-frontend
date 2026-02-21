@@ -131,6 +131,11 @@ export function ForgotPasswordForm() {
             Send reset link
           </Button>
 
+          <p className="text-center text-xs text-muted-foreground">
+            If you were recently invited, check your email for the invitation
+            link instead.
+          </p>
+
           <p className="text-center text-sm text-muted-foreground">
             <Link
               href="/login"

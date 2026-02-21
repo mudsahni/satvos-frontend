@@ -132,7 +132,7 @@ export default function UsersPage() {
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
           <Plus />
-          Add User
+          Invite User
         </Button>
       </div>
 
@@ -331,7 +331,6 @@ function CreateUserDialog({
     defaultValues: {
       email: "",
       full_name: "",
-      password: "",
       role: "member",
     },
   });
@@ -350,9 +349,10 @@ function CreateUserDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add User</DialogTitle>
+          <DialogTitle>Invite User</DialogTitle>
           <DialogDescription>
-            Create a new user in your organization
+            Invite a new user to your organization. They will receive an email
+            to set their password.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
@@ -382,20 +382,6 @@ function CreateUserDialog({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register("password")}
-              disabled={isSubmitting}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
             <Select
               value={watch("role")}
@@ -421,7 +407,7 @@ function CreateUserDialog({
               {isSubmitting && (
                 <Loader2 className="animate-spin" />
               )}
-              Create User
+              Send Invitation
             </Button>
           </DialogFooter>
         </form>
@@ -457,7 +443,6 @@ function EditUserDialog({
           full_name: user.full_name,
           role: user.role,
           is_active: user.is_active,
-          password: "",
         }
       : undefined,
   });
@@ -468,10 +453,6 @@ function EditUserDialog({
   };
 
   const handleFormSubmit = async (data: UpdateUserFormData) => {
-    // Remove empty password
-    if (!data.password) {
-      delete data.password;
-    }
     await onSubmit(data);
     reset();
   };
@@ -507,22 +488,6 @@ function EditUserDialog({
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-password">
-              New Password (leave blank to keep current)
-            </Label>
-            <Input
-              id="edit-password"
-              type="password"
-              {...register("password")}
-              disabled={isSubmitting}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
             )}
           </div>
           <div className="space-y-2">

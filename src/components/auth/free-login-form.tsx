@@ -41,6 +41,7 @@ export function FreeLoginForm({
   const queryClient = useQueryClient();
   const returnUrl = getSafeRedirectUrl(returnUrlProp ?? null);
   const [error, setError] = useState<string | null>(null);
+  const [invitationPending, setInvitationPending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setSocialLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -108,11 +109,18 @@ export function FreeLoginForm({
       router.push(returnUrl);
       router.refresh();
     } catch (err) {
-      if (isApiError(err, "PASSWORD_LOGIN_NOT_ALLOWED")) {
+      if (isApiError(err, "INVITATION_PENDING")) {
+        setInvitationPending(true);
+        setError(
+          "Please check your email and accept the invitation to set your password before signing in."
+        );
+      } else if (isApiError(err, "PASSWORD_LOGIN_NOT_ALLOWED")) {
+        setInvitationPending(false);
         setError(
           "This account uses Google sign-in. Please use the Google button below to log in."
         );
       } else {
+        setInvitationPending(false);
         setError(getErrorMessage(err));
       }
     } finally {
@@ -182,7 +190,7 @@ export function FreeLoginForm({
             </Alert>
           )}
           {error && (
-            <Alert variant="destructive">
+            <Alert variant={invitationPending ? "warning" : "destructive"}>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}

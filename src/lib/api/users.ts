@@ -38,6 +38,13 @@ export async function deleteUser(id: string): Promise<void> {
   await apiClient.delete(`/users/${id}`);
 }
 
+export async function resendInvitation(id: string): Promise<{ message: string }> {
+  const response = await apiClient.post<ApiResponse<{ message: string }>>(
+    `/users/${id}/resend-invitation`
+  );
+  return response.data.data;
+}
+
 // Search users (for permission assignment)
 export async function searchUsers(query: string): Promise<User[]> {
   const response = await apiClient.get<ApiResponse<User[]>>("/users/search", {

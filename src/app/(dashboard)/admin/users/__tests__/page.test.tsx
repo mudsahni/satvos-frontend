@@ -16,6 +16,10 @@ vi.mock("@/lib/hooks/use-users", () => ({
     mutateAsync: vi.fn().mockResolvedValue(undefined),
     isPending: false,
   })),
+  useResendInvitation: vi.fn(() => ({
+    mutate: vi.fn(),
+    isPending: false,
+  })),
 }));
 
 vi.mock("@/store/auth-store", () => ({
@@ -123,7 +127,7 @@ describe("AdminUsersPage", () => {
       expect(screen.getByText("No users found")).toBeInTheDocument();
     });
     expect(screen.getByText("User Management")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add user/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /invite user/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Search users...")).toBeInTheDocument();
   });
 

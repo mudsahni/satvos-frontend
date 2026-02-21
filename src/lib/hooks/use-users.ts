@@ -8,6 +8,7 @@ import {
   updateUser,
   deleteUser,
   searchUsers,
+  resendInvitation,
 } from "@/lib/api/users";
 import {
   UserListParams,
@@ -44,8 +45,19 @@ export function useCreateUser() {
     mutationFn: (data: CreateUserRequest) => createUser(data),
     invalidateKeys: [["users"]],
     successMessage: {
-      title: "User created",
-      description: "The user has been created successfully.",
+      title: "User invited",
+      description: "An invitation email has been sent.",
+    },
+  });
+}
+
+export function useResendInvitation() {
+  return useMutationWithToast({
+    mutationFn: (id: string) => resendInvitation(id),
+    invalidateKeys: [["users"]],
+    successMessage: {
+      title: "Invitation resent",
+      description: "The invitation email has been resent.",
     },
   });
 }

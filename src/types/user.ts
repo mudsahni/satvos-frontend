@@ -20,7 +20,7 @@ export interface User {
 export interface CreateUserRequest {
   email: string;
   full_name: string;
-  password: string;
+  password?: string;
   role: Role;
 }
 
