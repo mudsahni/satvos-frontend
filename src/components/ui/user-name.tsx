@@ -21,6 +21,7 @@ export function UserName({ id, fallback }: UserNameProps) {
     queryKey: ["user", id],
     queryFn: () => getUser(id),
     enabled: !!id,
+    retry: false,
   });
 
   const { data: serviceAccount, isLoading: saLoading } = useQuery({
@@ -63,5 +64,13 @@ export function UserName({ id, fallback }: UserNameProps) {
     return <span className="inline-block h-3 w-16 animate-pulse rounded bg-muted" />;
   }
 
-  return <>{fallback || id}</>;
+  // Both lookups failed (likely 403 for non-admin users) — show graceful fallback
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted">
+        <User className="h-2.5 w-2.5 text-muted-foreground" />
+      </span>
+      {fallback || "Team member"}
+    </span>
+  );
 }

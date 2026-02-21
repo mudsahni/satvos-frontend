@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   Settings,
@@ -23,23 +21,14 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthStore } from "@/store/auth-store";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { clearAuthCookie } from "@/lib/utils/cookies";
+import { useAuth } from "@/lib/hooks/use-auth";
 
 interface TopNavProps {
   onSearchClick?: () => void;
 }
 
 export function TopNav({ onSearchClick }: TopNavProps) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const { user, logout, tenantSlug } = useAuthStore();
-
-  const handleLogout = () => {
-    queryClient.clear();
-    logout();
-    clearAuthCookie();
-    router.push("/");
-  };
+  const { user, tenantSlug, logout } = useAuth();
 
   const userInitials = user?.full_name
     ? user.full_name
@@ -128,7 +117,7 @@ export function TopNav({ onSearchClick }: TopNavProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={handleLogout}
+              onClick={logout}
               className="cursor-pointer text-destructive focus:text-destructive"
             >
               <LogOut />
